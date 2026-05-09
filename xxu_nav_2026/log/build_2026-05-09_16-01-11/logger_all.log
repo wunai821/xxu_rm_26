@@ -1,0 +1,255 @@
+[0.054s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--packages-select', 'small_point_lio']
+[0.054s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=False, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=24, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=['small_point_lio'], packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x73317d5745f0>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x73317d6c6db0>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x73317d6c6db0>>)
+[0.074s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.074s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.074s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.074s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.074s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.074s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.074s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/naiwu/xxu_2026/xxu_nav_2026'
+[0.074s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.074s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.075s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.089s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extensions ['ignore', 'ignore_ament_install']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'ignore'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'ignore_ament_install'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extensions ['colcon_pkg']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'colcon_pkg'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extensions ['colcon_meta']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'colcon_meta'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extensions ['ros']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'ros'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extensions ['cmake', 'python']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'cmake'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'python'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extensions ['python_setup_py']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/cpp_lidar_filter) by extension 'python_setup_py'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extensions ['ignore', 'ignore_ament_install']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'ignore'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'ignore_ament_install'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extensions ['colcon_pkg']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'colcon_pkg'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extensions ['colcon_meta']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'colcon_meta'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extensions ['ros']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'ros'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extensions ['cmake', 'python']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'cmake'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'python'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extensions ['python_setup_py']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2) by extension 'python_setup_py'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extensions ['ignore', 'ignore_ament_install']
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extension 'ignore'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extension 'ignore_ament_install'
+[0.090s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extensions ['colcon_pkg']
+[0.091s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extension 'colcon_pkg'
+[0.091s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extensions ['colcon_meta']
+[0.091s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extension 'colcon_meta'
+[0.091s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extensions ['ros']
+[0.091s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore) by extension 'ros'
+[0.092s] DEBUG:colcon.colcon_core.package_identification:Package 'src/m-explore-ros2/explore' with type 'ros.ament_cmake' and name 'explore_lite'
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extension 'ignore'
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extension 'ignore_ament_install'
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extensions ['colcon_pkg']
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extension 'colcon_pkg'
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extensions ['colcon_meta']
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extension 'colcon_meta'
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extensions ['ros']
+[0.092s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/explore_lite_msgs) by extension 'ros'
+[0.093s] DEBUG:colcon.colcon_core.package_identification:Package 'src/m-explore-ros2/explore_lite_msgs' with type 'ros.ament_cmake' and name 'explore_lite_msgs'
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extensions ['ignore', 'ignore_ament_install']
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extension 'ignore'
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extension 'ignore_ament_install'
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extensions ['colcon_pkg']
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extension 'colcon_pkg'
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extensions ['colcon_meta']
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extension 'colcon_meta'
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extensions ['ros']
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/m-explore-ros2/map_merge) by extension 'ros'
+[0.093s] DEBUG:colcon.colcon_core.package_identification:Package 'src/m-explore-ros2/map_merge' with type 'ros.ament_cmake' and name 'multirobot_map_merge'
+[0.093s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extensions ['ignore', 'ignore_ament_install']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extension 'ignore'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extension 'ignore_ament_install'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extensions ['colcon_pkg']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extension 'colcon_pkg'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extensions ['colcon_meta']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extension 'colcon_meta'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extensions ['ros']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/small_point_lio) by extension 'ros'
+[0.094s] DEBUG:colcon.colcon_core.package_identification:Package 'src/small_point_lio' with type 'ros.ament_cmake' and name 'small_point_lio'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extensions ['ignore', 'ignore_ament_install']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extension 'ignore'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extension 'ignore_ament_install'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extensions ['colcon_pkg']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extension 'colcon_pkg'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extensions ['colcon_meta']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extension 'colcon_meta'
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extensions ['ros']
+[0.094s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_chassis_controller) by extension 'ros'
+[0.095s] DEBUG:colcon.colcon_core.package_identification:Package 'src/xxu_chassis_controller' with type 'ros.ament_cmake' and name 'xxu_chassis_controller'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extensions ['ignore', 'ignore_ament_install']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extension 'ignore'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extension 'ignore_ament_install'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extensions ['colcon_pkg']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extension 'colcon_pkg'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extensions ['colcon_meta']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extension 'colcon_meta'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extensions ['ros']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_description) by extension 'ros'
+[0.095s] DEBUG:colcon.colcon_core.package_identification:Package 'src/xxu_description' with type 'ros.ament_cmake' and name 'xxu_description'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extensions ['ignore', 'ignore_ament_install']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extension 'ignore'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extension 'ignore_ament_install'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extensions ['colcon_pkg']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extension 'colcon_pkg'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extensions ['colcon_meta']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extension 'colcon_meta'
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extensions ['ros']
+[0.095s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_pointcloud_processing) by extension 'ros'
+[0.096s] DEBUG:colcon.colcon_core.package_identification:Package 'src/xxu_pointcloud_processing' with type 'ros.ament_cmake' and name 'xxu_pointcloud_processing'
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extensions ['ignore', 'ignore_ament_install']
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extension 'ignore'
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extension 'ignore_ament_install'
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extensions ['colcon_pkg']
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extension 'colcon_pkg'
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extensions ['colcon_meta']
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extension 'colcon_meta'
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extensions ['ros']
+[0.096s] Level 1:colcon.colcon_core.package_identification:_identify(src/xxu_slam_toolbox) by extension 'ros'
+[0.096s] DEBUG:colcon.colcon_core.package_identification:Package 'src/xxu_slam_toolbox' with type 'ros.ament_cmake' and name 'xxu_slam_toolbox'
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'explore_lite_msgs' in 'src/m-explore-ros2/explore_lite_msgs'
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'multirobot_map_merge' in 'src/m-explore-ros2/map_merge'
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'xxu_chassis_controller' in 'src/xxu_chassis_controller'
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'xxu_pointcloud_processing' in 'src/xxu_pointcloud_processing'
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'explore_lite' in 'src/m-explore-ros2/explore'
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'xxu_description' in 'src/xxu_description'
+[0.107s] INFO:colcon.colcon_core.package_selection:Skipping not selected package 'xxu_slam_toolbox' in 'src/xxu_slam_toolbox'
+[0.107s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.107s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[0.109s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 475 installed packages in /opt/ros/jazzy
+[0.110s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'cmake_args' from command line to 'None'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'cmake_target' from command line to 'None'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'cmake_clean_cache' from command line to 'False'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'cmake_clean_first' from command line to 'False'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'cmake_force_configure' from command line to 'False'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'ament_cmake_args' from command line to 'None'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'catkin_cmake_args' from command line to 'None'
+[0.140s] Level 5:colcon.colcon_core.verb:set package 'small_point_lio' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.140s] DEBUG:colcon.colcon_core.verb:Building package 'small_point_lio' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio', 'merge_install': False, 'path': '/home/naiwu/xxu_2026/xxu_nav_2026/src/small_point_lio', 'symlink_install': False, 'test_result_base': None}
+[0.140s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.140s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.140s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/naiwu/xxu_2026/xxu_nav_2026/src/small_point_lio' with build type 'ament_cmake'
+[0.140s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/naiwu/xxu_2026/xxu_nav_2026/src/small_point_lio'
+[0.141s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.142s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.142s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.147s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/small_point_lio -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio
+[0.686s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/small_point_lio -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio
+[0.687s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio -- -j24 -l24
+[0.746s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio -- -j24 -l24
+[0.754s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio
+[0.770s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(small_point_lio)
+[0.770s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio
+[0.772s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio' for CMake module files
+[0.772s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio' for CMake config files
+[0.773s] Level 1:colcon.colcon_core.shell:create_environment_hook('small_point_lio', 'cmake_prefix_path')
+[0.773s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/cmake_prefix_path.ps1'
+[0.773s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/cmake_prefix_path.dsv'
+[0.773s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/cmake_prefix_path.sh'
+[0.774s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib'
+[0.774s] Level 1:colcon.colcon_core.shell:create_environment_hook('small_point_lio', 'ld_library_path_lib')
+[0.774s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/ld_library_path_lib.ps1'
+[0.774s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/ld_library_path_lib.dsv'
+[0.774s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/ld_library_path_lib.sh'
+[0.774s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/bin'
+[0.774s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/pkgconfig/small_point_lio.pc'
+[0.774s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/python3.12/site-packages'
+[0.775s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/bin'
+[0.775s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.ps1'
+[0.775s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.dsv'
+[0.775s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.sh'
+[0.776s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.bash'
+[0.776s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.zsh'
+[0.776s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/colcon-core/packages/small_point_lio)
+[0.776s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(small_point_lio)
+[0.776s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio' for CMake module files
+[0.777s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio' for CMake config files
+[0.777s] Level 1:colcon.colcon_core.shell:create_environment_hook('small_point_lio', 'cmake_prefix_path')
+[0.777s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/cmake_prefix_path.ps1'
+[0.777s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/cmake_prefix_path.dsv'
+[0.777s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/cmake_prefix_path.sh'
+[0.777s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib'
+[0.777s] Level 1:colcon.colcon_core.shell:create_environment_hook('small_point_lio', 'ld_library_path_lib')
+[0.777s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/ld_library_path_lib.ps1'
+[0.778s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/ld_library_path_lib.dsv'
+[0.778s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/hook/ld_library_path_lib.sh'
+[0.778s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/bin'
+[0.778s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/pkgconfig/small_point_lio.pc'
+[0.778s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/python3.12/site-packages'
+[0.778s] Level 1:colcon.colcon_core.environment:checking '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/bin'
+[0.778s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.ps1'
+[0.779s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.dsv'
+[0.779s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.sh'
+[0.779s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.bash'
+[0.779s] INFO:colcon.colcon_core.shell:Creating package script '/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.zsh'
+[0.779s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/colcon-core/packages/small_point_lio)
+[0.779s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[0.779s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[0.779s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[0.779s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[0.785s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[0.785s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[0.785s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[0.800s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[0.800s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/naiwu/xxu_2026/xxu_nav_2026/install/local_setup.ps1'
+[0.801s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/naiwu/xxu_2026/xxu_nav_2026/install/_local_setup_util_ps1.py'
+[0.801s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/naiwu/xxu_2026/xxu_nav_2026/install/setup.ps1'
+[0.802s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/naiwu/xxu_2026/xxu_nav_2026/install/local_setup.sh'
+[0.802s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/naiwu/xxu_2026/xxu_nav_2026/install/_local_setup_util_sh.py'
+[0.802s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/naiwu/xxu_2026/xxu_nav_2026/install/setup.sh'
+[0.810s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/naiwu/xxu_2026/xxu_nav_2026/install/local_setup.bash'
+[0.810s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/naiwu/xxu_2026/xxu_nav_2026/install/setup.bash'
+[0.811s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/naiwu/xxu_2026/xxu_nav_2026/install/local_setup.zsh'
+[0.811s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/naiwu/xxu_2026/xxu_nav_2026/install/setup.zsh'

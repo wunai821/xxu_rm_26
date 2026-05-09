@@ -187,6 +187,18 @@ def generate_launch_description():
         ],
     )
 
+    pointcloud_frame_republisher = Node(
+        package="xxu_description",
+        executable="pointcloud_frame_republisher.py",
+        name="pointcloud_frame_republisher",
+        output="screen",
+        parameters=[{"target_frame": "radar_link"}],
+        remappings=[
+            ("points_in", "/mid360/points_raw"),
+            ("points_out", "/mid360/points_lio"),
+        ],
+    )
+
     pointcloud_processor = Node(
         package="xxu_pointcloud_processing",
         executable="pointcloud_processor",
@@ -272,6 +284,7 @@ def generate_launch_description():
         bridge_imu,
         bridge_lidar,
         scan_frame_republisher,
+        pointcloud_frame_republisher,
         pointcloud_processor,
         small_point_lio,
         bridge_clock,

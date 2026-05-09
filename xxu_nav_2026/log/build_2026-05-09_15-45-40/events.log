@@ -1,0 +1,10 @@
+[0.000000] (-) TimerEvent: {}
+[0.000356] (-) JobUnselected: {'identifier': 'explore_lite'}
+[0.000394] (-) JobUnselected: {'identifier': 'explore_lite_msgs'}
+[0.000414] (-) JobUnselected: {'identifier': 'multirobot_map_merge'}
+[0.000430] (-) JobUnselected: {'identifier': 'small_point_lio'}
+[0.000447] (-) JobUnselected: {'identifier': 'xxu_chassis_controller'}
+[0.000462] (-) JobUnselected: {'identifier': 'xxu_description'}
+[0.000475] (-) JobUnselected: {'identifier': 'xxu_pointcloud_processing'}
+[0.000489] (-) JobUnselected: {'identifier': 'xxu_slam_toolbox'}
+[0.000504] (-) EventReactorShutdown: {}
