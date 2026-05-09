@@ -1,0 +1,44 @@
+[0.014s] Invoking command in '/home/naiwu/xxu_2026/build/xxu_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/install/xxu_description
+[0.037s] -- Found ament_cmake: 2.5.5 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.324s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.347s] -- Found ament_lint_auto: 0.17.4 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[0.488s] -- Added test 'flake8' to check Python code syntax and style conventions
+[0.488s] -- Configured 'flake8' exclude dirs and/or files: 
+[0.490s] -- Added test 'lint_cmake' to check CMake code style
+[0.490s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[0.492s] -- Added test 'xmllint' to check XML markup files
+[0.495s] -- Configuring done (0.5s)
+[0.502s] -- Generating done (0.0s)
+[0.504s] -- Build files have been written to: /home/naiwu/xxu_2026/build/xxu_description
+[0.508s] Invoked command in '/home/naiwu/xxu_2026/build/xxu_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/install/xxu_description
+[0.510s] Invoking command in '/home/naiwu/xxu_2026/build/xxu_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/build/xxu_description -- -j24 -l24
+[0.562s] Invoked command in '/home/naiwu/xxu_2026/build/xxu_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/build/xxu_description -- -j24 -l24
+[0.575s] Invoking command in '/home/naiwu/xxu_2026/build/xxu_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/build/xxu_description
+[0.584s] -- Install configuration: ""
+[0.585s] -- Execute custom install script
+[0.585s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/launch/__pycache__/display.launch.cpython-312.pyc
+[0.597s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/launch/__pycache__/gazebo.launch.cpython-312.pyc
+[0.608s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/launch/display.launch.py
+[0.619s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/launch/gazebo.launch.py
+[0.630s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/meshes/.gitkeep
+[0.642s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/rviz/display.rviz
+[0.655s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/urdf/wheel.urdf.xacro
+[0.666s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/urdf/xxu.urdf.xacro
+[0.678s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/urdf/xxu_gazebo.urdf.xacro
+[0.689s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/worlds/empty_with_sensors.sdf
+[0.700s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/ament_index/resource_index/package_run_dependencies/xxu_description
+[0.712s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/ament_index/resource_index/parent_prefix_path/xxu_description
+[0.724s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/environment/ament_prefix_path.sh
+[0.738s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/environment/ament_prefix_path.dsv
+[0.749s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/environment/path.sh
+[0.760s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/environment/path.dsv
+[0.771s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/local_setup.bash
+[0.783s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/local_setup.sh
+[0.798s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/local_setup.zsh
+[0.810s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/local_setup.dsv
+[0.823s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/package.dsv
+[0.839s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/ament_index/resource_index/packages/xxu_description
+[0.849s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/cmake/xxu_descriptionConfig.cmake
+[0.863s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/cmake/xxu_descriptionConfig-version.cmake
+[0.875s] -- Symlinking: /home/naiwu/xxu_2026/install/xxu_description/share/xxu_description/package.xml
+[0.891s] Invoked command in '/home/naiwu/xxu_2026/build/xxu_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/build/xxu_description

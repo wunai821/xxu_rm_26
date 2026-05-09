@@ -1,0 +1,4 @@
+source;share/xxu_pointcloud_processing/local_setup.bash
+source;share/xxu_pointcloud_processing/local_setup.dsv
+source;share/xxu_pointcloud_processing/local_setup.sh
+source;share/xxu_pointcloud_processing/local_setup.zsh

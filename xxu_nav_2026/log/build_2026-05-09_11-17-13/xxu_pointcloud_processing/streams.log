@@ -1,0 +1,64 @@
+[0.006s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_pointcloud_processing -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing
+[0.098s] -- The C compiler identification is GNU 13.3.0
+[0.134s] -- The CXX compiler identification is GNU 13.3.0
+[0.152s] -- Detecting C compiler ABI info
+[0.225s] -- Detecting C compiler ABI info - done
+[0.232s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.232s] -- Detecting C compile features
+[0.233s] -- Detecting C compile features - done
+[0.240s] -- Detecting CXX compiler ABI info
+[0.323s] -- Detecting CXX compiler ABI info - done
+[0.330s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.330s] -- Detecting CXX compile features
+[0.330s] -- Detecting CXX compile features - done
+[0.334s] -- Found ament_cmake: 2.5.5 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.462s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[0.575s] -- Found rclcpp: 28.1.16 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.624s] -- Found rosidl_generator_c: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.644s] -- Found rosidl_generator_cpp: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.663s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.685s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.774s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[0.778s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[0.862s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[0.885s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[0.907s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.990s] -- Found sensor_msgs: 5.3.6 (/opt/ros/jazzy/share/sensor_msgs/cmake)
+[1.055s] -- Found tf2_ros: 0.36.19 (/opt/ros/jazzy/share/tf2_ros/cmake)
+[1.199s] -- Found ament_lint_auto: 0.17.4 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[1.293s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[1.293s] -- Configured cppcheck include dirs: 
+[1.293s] -- Configured cppcheck exclude dirs and/or files: 
+[1.294s] -- Added test 'lint_cmake' to check CMake code style
+[1.294s] -- Added test 'uncrustify' to check C / C++ code style
+[1.294s] -- Configured uncrustify additional arguments: 
+[1.295s] -- Added test 'xmllint' to check XML markup files
+[1.296s] -- Configuring done (1.3s)
+[1.305s] -- Generating done (0.0s)
+[1.308s] -- Build files have been written to: /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing
+[1.315s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_pointcloud_processing -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing
+[1.315s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing -- -j24 -l24
+[1.367s] [ 50%] Building CXX object CMakeFiles/pointcloud_processor.dir/src/pointcloud_processor.cpp.o
+[7.616s] [100%] Linking CXX executable pointcloud_processor
+[7.915s] [100%] Built target pointcloud_processor
+[7.923s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing -- -j24 -l24
+[7.924s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing
+[7.931s] -- Install configuration: ""
+[7.931s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/lib/xxu_pointcloud_processing/pointcloud_processor
+[7.934s] -- Set non-toolchain portion of runtime path of "/home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/lib/xxu_pointcloud_processing/pointcloud_processor" to ""
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/package_run_dependencies/xxu_pointcloud_processing
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/parent_prefix_path/xxu_pointcloud_processing
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/ament_prefix_path.sh
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/ament_prefix_path.dsv
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/path.sh
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/path.dsv
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.bash
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.sh
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.zsh
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.dsv
+[7.934s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/package.dsv
+[7.935s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/packages/xxu_pointcloud_processing
+[7.935s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/cmake/xxu_pointcloud_processingConfig.cmake
+[7.935s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/cmake/xxu_pointcloud_processingConfig-version.cmake
+[7.935s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/package.xml
+[7.936s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing

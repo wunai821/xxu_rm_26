@@ -1,0 +1,16 @@
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/lib/xxu_pointcloud_processing/pointcloud_processor
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/package_run_dependencies/xxu_pointcloud_processing
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/parent_prefix_path/xxu_pointcloud_processing
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/ament_prefix_path.sh
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/ament_prefix_path.dsv
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/path.sh
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/path.dsv
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.bash
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.sh
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.zsh
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.dsv
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/package.dsv
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/packages/xxu_pointcloud_processing
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/cmake/xxu_pointcloud_processingConfig.cmake
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/cmake/xxu_pointcloud_processingConfig-version.cmake
+/home/naiwu/xxu_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/package.xml

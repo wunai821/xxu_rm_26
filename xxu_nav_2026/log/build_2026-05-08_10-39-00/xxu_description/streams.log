@@ -1,0 +1,35 @@
+[0.011s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description -- -j24 -l24
+[0.048s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description -- -j24 -l24
+[0.059s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description
+[0.068s] -- Install configuration: ""
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/launch
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/launch/__pycache__
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/launch/__pycache__/display.launch.cpython-312.pyc
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/launch/gazebo.launch.py
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/launch/display.launch.py
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/meshes
+[0.068s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/meshes/.gitkeep
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/rviz
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/rviz/display.rviz
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/urdf
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/urdf/xxu.urdf.xacro
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/urdf/wheel.urdf.xacro
+[0.069s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/urdf/xxu_gazebo.urdf.xacro
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/worlds
+[0.069s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/worlds/empty_with_sensors.sdf
+[0.069s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/ament_index/resource_index/package_run_dependencies/xxu_description
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/ament_index/resource_index/parent_prefix_path/xxu_description
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/environment/ament_prefix_path.sh
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/environment/ament_prefix_path.dsv
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/environment/path.sh
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/environment/path.dsv
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/local_setup.bash
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/local_setup.sh
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/local_setup.zsh
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/local_setup.dsv
+[0.070s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/package.dsv
+[0.070s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/ament_index/resource_index/packages/xxu_description
+[0.071s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/cmake/xxu_descriptionConfig.cmake
+[0.071s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/cmake/xxu_descriptionConfig-version.cmake
+[0.071s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/package.xml
+[0.071s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_description

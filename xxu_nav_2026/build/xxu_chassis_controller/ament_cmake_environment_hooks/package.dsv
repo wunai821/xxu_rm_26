@@ -1,0 +1,4 @@
+source;share/xxu_chassis_controller/local_setup.bash
+source;share/xxu_chassis_controller/local_setup.dsv
+source;share/xxu_chassis_controller/local_setup.sh
+source;share/xxu_chassis_controller/local_setup.zsh
