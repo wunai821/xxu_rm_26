@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+<!--
+  Gazebo Harmonic 传感器插件宏定义文件
+  ======================================
+  为 URDF/Xacro 模型提供 IMU 和 3D LiDAR 传感器的 Gazebo 插件配置。
+
+  Gazebo Harmonic 的传感器挂载方式：
+    - type="imu" / type="gpu_lidar" 是 Gazebo 内置传感器类型
+    - <topic>      传感器数据通过 Gazebo Transport 发布到该 GZ 话题
+    - <frame_id>   设置消息头中的坐标系（注意：Gazebo Harmonic 有一个 bug，
+                   会忽略 frame_id 标签，导致传感器始终附着在 odom_link 上）
+    - <pose>       传感器相对于 reference_link 的位姿（x y z roll pitch yaw）
+    - 需配合 ros_gz_bridge 的 parameter_bridge 将 GZ 话题桥接到 ROS 2 话题
+
+  注意：
+    由于 Gazebo Harmonic 的传感器放置 bug，即使指定了 reference_link，
+    传感器也会被放置到 TF 树的根节点（odom_link），且 frame_id 会被忽略。
+    因此在实际使用中，需要通过 frame_republisher（如 scan_frame_republisher.py）
+    将 frame_id 修正为正确的坐标系（如 radar_link），并通过 ros_gz_bridge
+    的 remap 规则将桥接后的话题映射到正确的命名空间。
+-->
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ====================================================================== -->
+  <!--                       IMU（惯性测量单元）插件                            -->
+  <!-- ====================================================================== -->
+  <!--
+    参数说明：
+      reference_link  - 传感器挂载的 link 名称
+      sensor_name     - Gazebo 内部传感器名称（需唯一），默认 'imu_sensor'
+      topic           - Gazebo Transport 发布话题，默认 '/imu'
+      frame_id        - 传感器数据消息中的 frame_id，默认 'radar_link'
+      update_rate     - 数据发布频率 (Hz)，IMU 通常 100-200 Hz，默认 100
+      pose            - 传感器相对于 reference_link 的位姿，格式: 'x y z roll pitch yaw'
+      visualize       - Gazebo 可视化模式，IMU 通常不需要显示，默认 false
+    噪声参数：
+      角速度噪声 σ = 0.0001 rad/s（≈ 0.0057 deg/s），模拟 MEMS 陀螺仪角度随机游走
+      线加速度噪声 σ = 0.001 m/s²（≈ 0.0001 g），模拟 MEMS 加速度计随机游走
+      加速度计噪声比陀螺仪噪声大一个数量级，符合一般 MEMS 器件特性
+  -->
+
+  <xacro:macro
+    name="gazebo_imu_plugin"
+    params="
+      reference_link
+      sensor_name:='imu_sensor'
+      topic:='/imu'
+      frame_id:='radar_link'
+      update_rate:='100'
+      pose:='0 0 0 0 0 0'
+      angular_velocity_noise_stddev:='0.0001'
+      linear_acceleration_noise_stddev:='0.001'
+      visualize:='false'">
+
+    <!--
+      Gazebo reference 标签：将传感器关联到指定的 link。
+      注意：Gazebo Harmonic 存在已知 bug，可能忽略此 reference，将传感器挂载到 odom_link。
+    -->
+    <gazebo reference="${reference_link}">
+      <!-- sensor type="imu"：Gazebo 内置 IMU 传感器，输出角速度和线加速度 -->
+      <sensor name="${sensor_name}" type="imu">
+
+        <!-- 传感器始终开启（1 = true），不随仿真暂停而关闭 -->
+        <always_on>1</always_on>
+
+        <!-- 传感器数据更新频率，单位 Hz -->
+        <update_rate>${update_rate}</update_rate>
+
+        <!-- IMU 通常不需要在 Gazebo 窗口中显示 -->
+        <visualize>${visualize}</visualize>
+
+        <!-- Gazebo Transport 发布话题名 -->
+        <topic>${topic}</topic>
+
+        <!-- 设置 ROS 2 消息中的 frame_id 字段 -->
+        <frame_id>${frame_id}</frame_id>
+
+        <!-- 传感器在 reference_link 坐标系下的位姿，格式: x y z roll pitch yaw -->
+        <pose>${pose}</pose>
+
+        <!-- IMU 噪声模型配置 -->
+        <imu>
+          <!--
+            角速度噪声（单位: rad/s）：
+              高斯噪声，均值为 0，标准差 0.0001 rad/s ≈ 0.0057 deg/s
+              模拟 MEMS 陀螺仪的角度随机游走噪声
+          -->
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0</mean><stddev>${angular_velocity_noise_stddev}</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>${angular_velocity_noise_stddev}</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>${angular_velocity_noise_stddev}</stddev></noise></z>
+          </angular_velocity>
+
+          <!--
+            线加速度噪声（单位: m/s²）：
+              高斯噪声，均值为 0，标准差 0.001 m/s² ≈ 0.0001 g
+              模拟 MEMS 加速度计的随机游走噪声
+              一般加速度计噪声比陀螺仪噪声大一个数量级
+          -->
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0</mean><stddev>${linear_acceleration_noise_stddev}</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>${linear_acceleration_noise_stddev}</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>${linear_acceleration_noise_stddev}</stddev></noise></z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- ====================================================================== -->
+  <!--                    3D LiDAR 插件（仿 Livox MID-360）                     -->
+  <!-- ====================================================================== -->
+  <!--
+    整体参数说明（仿 Livox MID-360 半球形非重复扫描 3D LiDAR）：
+      水平方向：360° 全覆盖（-π ~ +π），1024 个采样点 → 角度分辨率约 0.35°
+      垂直方向：-7° ~ +52°（-0.122 ~ +0.908 rad），64 层 → 角度分辨率约 0.92°
+      测距范围：0.1 ~ 40 米，分辨率 1 cm
+      噪声：高斯噪声，标准差 2 cm（模拟固态 LiDAR 的测距误差，一般在 1~3 cm）
+
+    参数说明：
+      reference_link      - 传感器挂载的 link 名称（通常为 radar_link）
+      pose                - 传感器相对于 reference_link 的位姿，格式: 'x y z roll pitch yaw'
+      sensor_name         - Gazebo 内部传感器名称（需唯一），默认 'mid360_lidar'
+      topic               - Gazebo Transport 发布话题根名称，默认 '/mid360'
+                            gpu_lidar 会自动派生: /mid360 → LaserScan, /mid360/points → PointCloud2
+      frame_id            - 传感器数据消息中的 frame_id，默认 'radar_link'
+      update_rate         - 数据发布频率 (Hz)，MID-360 约 10 Hz，默认 10
+      horizontal_samples  - 水平方向采样点数（360°/1024 ≈ 0.35°/点），默认 1024
+      vertical_samples    - 垂直方向采样层数（仿 MID-360 的 64 线），默认 64
+      range_min           - 最小测距 (m)，MID-360 盲区约 10 cm，默认 0.1
+      range_max           - 最大测距 (m)，MID-360 标称 40 m，默认 40.0
+      range_resolution    - 测距分辨率 (m)，即 1 cm，默认 0.01
+      range_noise_stddev  - 测距噪声标准差 (m)，高斯噪声 σ = 2 cm，默认 0.02
+      visualize           - Gazebo 可视化模式: false=不显示射线（推荐）, true=显示扫描射线（调试用）
+  -->
+
+  <xacro:macro
+    name="gazebo_mid360_lidar_plugin"
+    params="
+      reference_link
+      pose
+      sensor_name:='mid360_lidar'
+      topic:='/mid360'
+      frame_id:='radar_link'
+      update_rate:='10'
+      horizontal_samples:='1024'
+      vertical_samples:='64'
+      range_min:='0.1'
+      range_max:='40.0'
+      range_resolution:='0.01'
+      range_noise_stddev:='0.02'
+      visualize:='true'">
+
+    <gazebo reference="${reference_link}">
+      <!-- sensor type="gpu_lidar"：GPU 加速的 3D LiDAR 传感器 -->
+      <sensor name="${sensor_name}" type="gpu_lidar">
+
+        <always_on>1</always_on>
+
+        <!-- 在 Gazebo 窗口中显示/隐藏扫描射线 -->
+        <visualize>${visualize}</visualize>
+
+        <update_rate>${update_rate}</update_rate>
+
+        <topic>${topic}</topic>
+
+        <frame_id>${frame_id}</frame_id>
+
+        <!-- 传感器在 reference_link 坐标系下的位姿，格式: x y z roll pitch yaw -->
+        <pose>${pose}</pose>
+
+        <!-- LiDAR 扫描配置 -->
+        <lidar>
+          <scan>
+            <!--
+              水平扫描配置：
+                360° 全覆盖（-π ~ +π），1024 个采样点
+                <resolution> 含义：1 = 每帧采样一次（非累积扫描）
+                注意：min_angle 和 max_angle 使用弧度制，需精确到 7 位小数避免浮点误差
+            -->
+            <horizontal>
+              <samples>${horizontal_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.1415926</min_angle>
+              <max_angle>3.1415926</max_angle>
+            </horizontal>
+
+            <!--
+              垂直扫描配置：
+                -7° ~ +52°（-0.122 ~ +0.908 rad），64 层
+                仿 Livox MID-360 的非重复扫描范围：
+                  -7° 为俯视盲区（低于水平面，避免扫到车体）
+                  +52° 为仰视上限（可探测高处障碍物）
+                <resolution> 含义：1 = 每帧采样一次
+            -->
+            <vertical>
+              <samples>${vertical_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.1221730</min_angle>
+              <max_angle>0.9075712</max_angle>
+            </vertical>
+          </scan>
+
+          <!-- 测距范围配置 -->
+          <range>
+            <min>${range_min}</min>
+            <max>${range_max}</max>
+            <resolution>${range_resolution}</resolution>
+          </range>
+
+          <!--
+            测距噪声模型：
+              高斯噪声，均值为 0，标准差 2 cm
+              模拟 LiDAR 的测距随机误差，会影响点的位置精度
+              一般固态 LiDAR 的测距精度在 1~3 cm 范围内
+          -->
+          <noise>
+            <type>gaussian</type>
+            <mean>0</mean>
+            <stddev>${range_noise_stddev}</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+
+</robot>

@@ -1,0 +1,151 @@
+<?xml version="1.0"?>
+<robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    XXU 简化模型
+    TF 树：odom_link -> base_footprint -> base_link -> radar_link, wheel_fl, wheel_fr, wheel_rl, wheel_rr
+  -->
+
+  <xacro:include filename="wheel.urdf.xacro"/>
+
+  <!-- 尺寸和质量参数 -->
+  <xacro:property name="base_radius" value="0.25"/>
+  <xacro:property name="base_height" value="0.18"/>
+  <xacro:property name="base_mass" value="4.935"/>
+
+  <!-- 雷达传感器参数（同时作为 IMU 的 TF 帧） -->
+  <xacro:property name="radar_length" value="0.065"/>
+  <xacro:property name="radar_width" value="0.065"/>
+  <xacro:property name="radar_height" value="0.060"/>
+  <xacro:property name="radar_size" value="${radar_length} ${radar_width} ${radar_height}"/>
+  <xacro:property name="radar_xyz" value="0.2 0 0.12"/>
+  <xacro:property name="radar_rpy" value="0 0.1745 0"/>
+  <xacro:property name="radar_mass" value="0.265"/>
+
+  <!-- 全向轮参数 -->
+  <xacro:property name="wheel_radius" value="0.07"/>
+  <xacro:property name="wheel_width" value="0.04"/>
+  <xacro:property name="wheel_mass" value="0.45"/>
+  <!-- 轮子连接位置（四角对称，连接点在 base_link 中心） -->
+  <xacro:property name="wheel_spacing" value="${(base_radius - wheel_radius) * 0.7071}"/>
+  <xacro:property name="wheel_z" value="${-base_height / 2}"/>
+  <xacro:property name="base_link_z" value="${-wheel_z + wheel_radius + 0.001}"/>
+
+  <!-- 颜色定义 -->
+  <xacro:macro name="solid_material" params="name rgba">
+    <material name="${name}">
+      <color rgba="${rgba}"/>
+    </material>
+  </xacro:macro>
+
+  <xacro:solid_material name="chassis_blue" rgba="0.10 0.25 0.80 1.0"/>
+  <xacro:solid_material name="radar_red" rgba="0.85 0.15 0.15 1.0"/>
+  <xacro:solid_material name="wheel_black" rgba="0.15 0.15 0.15 1.0"/>
+
+  <!-- 固定关节宏 -->
+  <xacro:macro name="fixed_joint" params="name parent child xyz:='0 0 0' rpy:='0 0 0'">
+    <joint name="${name}" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+  </xacro:macro>
+
+
+  <!-- 圆柱 link 宏，用于底盘主体 -->
+  <xacro:macro name="cylinder_link" params="name radius length mass ixx iyy izz material">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${ixx}" ixy="0" ixz="0" iyy="${iyy}" iyz="0" izz="${izz}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <!-- 盒体 link 宏 -->
+  <xacro:macro name="box_link" params="name size mass ixx iyy izz material">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${size}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${size}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${ixx}" ixy="0" ixz="0" iyy="${iyy}" iyz="0" izz="${izz}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <!-- odom_link -->
+  <link name="odom_link"/>
+
+  <!-- base_footprint：base_link 在地面的投影，轮子与地面保留 1 mm 缝隙 -->
+  <link name="base_footprint"/>
+  <xacro:fixed_joint name="odom_joint" parent="odom_link" child="base_footprint"/>
+
+  <!-- base_link -->
+  <xacro:cylinder_link
+    name="base_link"
+    radius="${base_radius}"
+    length="${base_height}"
+    mass="${base_mass}"
+    ixx="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
+    iyy="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
+    izz="${base_mass * base_radius * base_radius / 2}"
+    material="chassis_blue"/>
+
+  <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
+
+  <!-- radar_link -->
+  <xacro:box_link
+    name="radar_link"
+    size="${radar_size}"
+    mass="${radar_mass}"
+    ixx="${radar_mass * (radar_width * radar_width + radar_height * radar_height) / 12}"
+    iyy="${radar_mass * (radar_length * radar_length + radar_height * radar_height) / 12}"
+    izz="${radar_mass * (radar_length * radar_length + radar_width * radar_width) / 12}"
+    material="radar_red"/>
+
+  <xacro:fixed_joint name="radar_joint" parent="base_link" child="radar_link" xyz="${radar_xyz}" rpy="${radar_rpy}"/>
+
+  <!-- 四轮全向轮底盘，轮轴朝向 base_link 中心 -->
+  <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:fixed_joint name="wheel_fl_joint" parent="base_link" child="wheel_fl"
+    xyz="${wheel_spacing} ${wheel_spacing} ${wheel_z}" rpy="1.5708 0 -0.7854"/>
+
+  <xacro:wheel name="wheel_fr" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:fixed_joint name="wheel_fr_joint" parent="base_link" child="wheel_fr"
+    xyz="${wheel_spacing} -${wheel_spacing} ${wheel_z}" rpy="1.5708 0 -2.3562"/>
+
+  <xacro:wheel name="wheel_rl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:fixed_joint name="wheel_rl_joint" parent="base_link" child="wheel_rl"
+    xyz="-${wheel_spacing} ${wheel_spacing} ${wheel_z}" rpy="1.5708 0 0.7854"/>
+
+  <xacro:wheel name="wheel_rr" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:fixed_joint name="wheel_rr_joint" parent="base_link" child="wheel_rr"
+    xyz="-${wheel_spacing} -${wheel_spacing} ${wheel_z}" rpy="1.5708 0 2.3562"/>
+
+</robot>

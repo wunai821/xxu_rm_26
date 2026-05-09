@@ -1,0 +1,235 @@
+<?xml version="1.0"?>
+<robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    XXU Gazebo 仿真模型
+    TF 树：odom_link -> base_footprint -> base_link -> radar_link + 4 wheels (continuous joints)
+  -->
+
+  <xacro:include filename="wheel.urdf.xacro"/>
+  <xacro:include filename="plugins/gazebo_control_plugin.xacro"/>
+  <xacro:include filename="plugins/gazebo_sensor_plugin.xacro"/>
+
+  <xacro:arg name="controllers_file" default="src/xxu_description/config/xxu_ros2_control.yaml"/>
+
+  <!-- 尺寸和质量参数 -->
+  <xacro:property name="base_radius" value="0.25"/>
+  <xacro:property name="base_height" value="0.18"/>
+  <xacro:property name="base_mass" value="4.935"/>
+
+  <xacro:property name="radar_radius" value="0.0325"/>
+  <xacro:property name="radar_height" value="0.065"/>
+  <xacro:property name="radar_xyz" value="0.2 0 0.12"/>
+  <xacro:property name="radar_rpy" value="0 0.1745 0"/>
+  <xacro:property name="radar_mass" value="0.265"/>
+  <xacro:property name="mid360_range_max" value="40.0"/>
+
+  <xacro:property name="wheel_radius" value="0.07"/>
+  <xacro:property name="wheel_width" value="0.04"/>
+  <xacro:property name="wheel_mass" value="0.45"/>
+  <xacro:property name="wheel_spacing" value="${(base_radius - wheel_radius) * 0.7071}"/>
+  <xacro:property name="wheel_z" value="${-base_height / 2}"/>
+  <xacro:property name="base_link_z" value="${-wheel_z + wheel_radius + 0.001}"/>
+
+  <!-- 颜色定义 -->
+  <xacro:macro name="solid_material" params="name rgba">
+    <material name="${name}">
+      <color rgba="${rgba}"/>
+    </material>
+  </xacro:macro>
+
+  <xacro:solid_material name="chassis_blue" rgba="0.10 0.25 0.80 1.0"/>
+  <xacro:solid_material name="radar_red" rgba="0.85 0.15 0.15 1.0"/>
+  <xacro:solid_material name="wheel_black" rgba="0.15 0.15 0.15 1.0"/>
+
+  <!-- 固定关节宏 -->
+  <xacro:macro name="fixed_joint" params="name parent child xyz:='0 0 0' rpy:='0 0 0'">
+    <joint name="${name}" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- 连续关节宏 -->
+  <xacro:macro name="continuous_joint" params="name parent child xyz rpy">
+    <joint name="${name}" type="continuous">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="10" velocity="100"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- 圆柱 link 宏 -->
+  <xacro:macro name="cylinder_link" params="name radius length mass ixx iyy izz material">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${radius}" length="${length}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${ixx}" ixy="0" ixz="0" iyy="${iyy}" iyz="0" izz="${izz}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <!-- 盒体 link 宏 -->
+  <xacro:macro name="box_link" params="name size mass ixx iyy izz material">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${size}"/>
+        </geometry>
+        <material name="${material}"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${size}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${ixx}" ixy="0" ixz="0" iyy="${iyy}" iyz="0" izz="${izz}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <!-- odom_link -->
+  <link name="odom_link"/>
+  <link name="base_footprint"/>
+  <xacro:fixed_joint name="odom_joint" parent="odom_link" child="base_footprint"/>
+
+  <!-- base_link -->
+  <xacro:cylinder_link
+    name="base_link"
+    radius="${base_radius}"
+    length="${base_height}"
+    mass="${base_mass}"
+    ixx="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
+    iyy="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
+    izz="${base_mass * base_radius * base_radius / 2}"
+    material="chassis_blue"/>
+
+  <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
+
+  <!-- radar_link: Mid-360 圆柱外形 -->
+  <link name="radar_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${radar_radius}" length="${radar_height}"/>
+      </geometry>
+      <material name="radar_red"/>
+    </visual>
+    <!-- 顶部半球，模仿 Mid-360 外观 -->
+    <visual>
+      <origin xyz="0 0 ${radar_height / 2}" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="${radar_radius}"/>
+      </geometry>
+      <material name="radar_red"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="${radar_radius}" length="${radar_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${radar_mass}"/>
+      <inertia
+        ixx="${radar_mass * (3 * radar_radius * radar_radius + radar_height * radar_height) / 12}"
+        ixy="0" ixz="0"
+        iyy="${radar_mass * (3 * radar_radius * radar_radius + radar_height * radar_height) / 12}"
+        iyz="0"
+        izz="${radar_mass * radar_radius * radar_radius / 2}"/>
+    </inertial>
+  </link>
+  <xacro:fixed_joint name="radar_joint" parent="base_link" child="radar_link" xyz="${radar_xyz}" rpy="${radar_rpy}"/>
+
+  <!-- 四轮全向轮底盘（连续关节） -->
+  <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:continuous_joint name="wheel_fl_joint" parent="base_link" child="wheel_fl"
+    xyz="${wheel_spacing} ${wheel_spacing} ${wheel_z}" rpy="1.5708 0 -0.7854"/>
+
+  <xacro:wheel name="wheel_fr" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:continuous_joint name="wheel_fr_joint" parent="base_link" child="wheel_fr"
+    xyz="${wheel_spacing} -${wheel_spacing} ${wheel_z}" rpy="1.5708 0 -2.3562"/>
+
+  <xacro:wheel name="wheel_rl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:continuous_joint name="wheel_rl_joint" parent="base_link" child="wheel_rl"
+    xyz="-${wheel_spacing} ${wheel_spacing} ${wheel_z}" rpy="1.5708 0 0.7854"/>
+
+  <xacro:wheel name="wheel_rr" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
+  <xacro:continuous_joint name="wheel_rr_joint" parent="base_link" child="wheel_rr"
+    xyz="-${wheel_spacing} -${wheel_spacing} ${wheel_z}" rpy="1.5708 0 2.3562"/>
+
+  <xacro:gazebo_control_plugin
+    front_left_joint="wheel_fl_joint"
+    front_right_joint="wheel_fr_joint"
+    back_left_joint="wheel_rl_joint"
+    back_right_joint="wheel_rr_joint"
+    wheel_radius="${wheel_radius}"
+    controllers_file="$(arg controllers_file)"/>
+
+  <xacro:gazebo_imu_plugin reference_link="radar_link" frame_id="radar_link"/>
+
+  <xacro:gazebo_mid360_lidar_plugin
+    reference_link="radar_link"
+    topic="/mid360"
+    frame_id="radar_link"
+    range_max="${mid360_range_max}"
+    pose="0 0 ${radar_height / 2} 0 0 0"/>
+
+
+  <!-- 轮子物理属性 -->
+  <gazebo reference="wheel_fl">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+  <gazebo reference="wheel_fr">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+  <gazebo reference="wheel_rl">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+  <gazebo reference="wheel_rr">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+
+</robot>
