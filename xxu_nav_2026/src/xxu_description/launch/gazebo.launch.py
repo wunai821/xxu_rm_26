@@ -9,12 +9,12 @@ from launch.actions import (
     SetEnvironmentVariable,
 )
 from launch.event_handlers import OnProcessExit
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
+from launch_ros.substitutions import FindPackagePrefix, FindPackageShare
 
 
 def generate_launch_description():
@@ -32,12 +32,27 @@ def generate_launch_description():
     small_point_lio_config = PathJoinSubstitution(
         [FindPackageShare("small_point_lio"), "config", "xxu_gazebo_mid360.yaml"]
     )
+    mid360_scan_mode_csv = PathJoinSubstitution(
+        [FindPackageShare("xxu_livox_sim"), "config", "mid360.csv"]
+    )
+    livox_plugin_path = PathJoinSubstitution(
+        [FindPackagePrefix("xxu_livox_sim"), "lib", "xxu_livox_sim"]
+    )
     use_sim_time = LaunchConfiguration("use_sim_time")
     enable_lio = LaunchConfiguration("enable_lio")
+    use_livox_native = LaunchConfiguration("use_livox_native")
 
     gz_resource_path = SetEnvironmentVariable(
         "GZ_SIM_RESOURCE_PATH",
         [nav2_tb3_models_path, ":", EnvironmentVariable("GZ_SIM_RESOURCE_PATH")],
+    )
+    gz_system_plugin_path = SetEnvironmentVariable(
+        "GZ_SIM_SYSTEM_PLUGIN_PATH",
+        [
+            livox_plugin_path,
+            ":",
+            EnvironmentVariable("GZ_SIM_SYSTEM_PLUGIN_PATH", default_value=""),
+        ],
     )
 
     declare_use_sim_time = DeclareLaunchArgument(
@@ -49,6 +64,11 @@ def generate_launch_description():
         "enable_lio",
         default_value="true",
         description="Start Small Point-LIO and publish /odom",
+    )
+    declare_use_livox_native = DeclareLaunchArgument(
+        "use_livox_native",
+        default_value="false",
+        description="Use xxu_livox_sim Gazebo System plugin for Small Point-LIO input",
     )
 
     # robot_state_publisher
@@ -64,6 +84,8 @@ def generate_launch_description():
                     model_path,
                     " controllers_file:=",
                     controllers_file,
+                    " use_livox_native:=",
+                    use_livox_native,
                 ]),
                 value_type=str,
             ),
@@ -175,6 +197,20 @@ def generate_launch_description():
         ],
     )
 
+    bridge_livox_native = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="bridge_livox_native",
+        arguments=[
+            "/mid360/livox_points_gz@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+        ],
+        output="screen",
+        condition=IfCondition(use_livox_native),
+        remappings=[
+            ("/mid360/livox_points_gz", "/mid360/livox_points_raw"),
+        ],
+    )
+
     scan_frame_republisher = Node(
         package="xxu_description",
         executable="scan_frame_republisher.py",
@@ -192,10 +228,42 @@ def generate_launch_description():
         executable="pointcloud_frame_republisher.py",
         name="pointcloud_frame_republisher",
         output="screen",
+        condition=UnlessCondition(use_livox_native),
         parameters=[{"target_frame": "radar_link"}],
         remappings=[
             ("points_in", "/mid360/points_raw"),
             ("points_out", "/mid360/points_lio"),
+        ],
+    )
+
+    livox_pointcloud_shaper = Node(
+        package="xxu_livox_sim",
+        executable="livox_pointcloud_shaper",
+        name="livox_pointcloud_shaper",
+        output="screen",
+        condition=UnlessCondition(use_livox_native),
+        parameters=[{
+            "target_frame": "radar_link",
+            "scan_period": 0.1,
+            "max_points": 12000,
+            "scan_mode_csv": mid360_scan_mode_csv,
+        }],
+        remappings=[
+            ("points_in", "/mid360/points_lio"),
+            ("points_out", "/mid360/livox_points"),
+        ],
+    )
+
+    livox_native_frame_republisher = Node(
+        package="xxu_description",
+        executable="pointcloud_frame_republisher.py",
+        name="livox_native_frame_republisher",
+        output="screen",
+        condition=IfCondition(use_livox_native),
+        parameters=[{"target_frame": "radar_link"}],
+        remappings=[
+            ("points_in", "/mid360/livox_points_raw"),
+            ("points_out", "/mid360/livox_points"),
         ],
     )
 
@@ -274,8 +342,10 @@ def generate_launch_description():
 
     return LaunchDescription([
         gz_resource_path,
+        gz_system_plugin_path,
         declare_use_sim_time,
         declare_enable_lio,
+        declare_use_livox_native,
         robot_state_publisher,
         gz_sim,
         spawn_robot,
@@ -283,8 +353,11 @@ def generate_launch_description():
         chassis_controller,
         bridge_imu,
         bridge_lidar,
+        bridge_livox_native,
         scan_frame_republisher,
         pointcloud_frame_republisher,
+        livox_pointcloud_shaper,
+        livox_native_frame_republisher,
         pointcloud_processor,
         small_point_lio,
         bridge_clock,

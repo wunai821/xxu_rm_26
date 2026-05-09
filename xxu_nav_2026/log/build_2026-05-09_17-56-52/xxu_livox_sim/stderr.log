@@ -1,0 +1,13 @@
+/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/src/livox_mid360_system.cpp: In member function ‘virtual void xxu_livox_sim::LivoxMid360System::PreUpdate(const gz::sim::v10::UpdateInfo&, gz::sim::v10::EntityComponentManager&)’:
+/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/src/livox_mid360_system.cpp:144:23: error: no matching function for call to ‘gz::sim::v10::components::Component<gz::sim::v10::components::RaycastDataInfo, gz::sim::v10::components::RaycastDataTag, gz::sim::v10::serializers::DefaultSerializer<gz::sim::v10::components::RaycastDataInfo> >::SetData(gz::sim::v10::components::RaycastDataInfo&)’
+  144 |     component->SetData(raycastData);
+      |     ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+In file included from /usr/include/gz/sim10/gz/sim/EntityComponentManager.hh:41,
+                 from /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/src/livox_mid360_system.cpp:16:
+/usr/include/gz/sim10/gz/sim/components/Component.hh:455:8: note: candidate: ‘bool gz::sim::v10::components::Component<DataType, Identifier, Serializer>::SetData(const DataType&, const std::function<bool(const DataType&, const DataType&)>&) [with DataType = gz::sim::v10::components::RaycastDataInfo; Identifier = gz::sim::v10::components::RaycastDataTag; Serializer = gz::sim::v10::serializers::DefaultSerializer<gz::sim::v10::components::RaycastDataInfo>]’
+  455 |   bool Component<DataType, Identifier, Serializer>::SetData(
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/gz/sim10/gz/sim/components/Component.hh:455:8: note:   candidate expects 2 arguments, 1 provided
+gmake[2]: *** [CMakeFiles/livox_mid360_system.dir/build.make:76: CMakeFiles/livox_mid360_system.dir/src/livox_mid360_system.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:165: CMakeFiles/livox_mid360_system.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2

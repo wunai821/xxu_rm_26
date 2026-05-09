@@ -11,6 +11,7 @@
   <xacro:include filename="plugins/gazebo_sensor_plugin.xacro"/>
 
   <xacro:arg name="controllers_file" default="src/xxu_description/config/xxu_ros2_control.yaml"/>
+  <xacro:arg name="use_livox_native" default="false"/>
 
   <!-- 尺寸和质量参数 -->
   <xacro:property name="base_radius" value="0.25"/>
@@ -195,6 +196,15 @@
     frame_id="radar_link"
     range_max="${mid360_range_max}"
     pose="0 0 ${radar_height / 2} 0 0 0"/>
+
+  <xacro:if value="$(arg use_livox_native)">
+    <xacro:gazebo_mid360_livox_system_plugin
+      reference_link="radar_link"
+      topic="/mid360/livox_points_gz"
+      frame_id="radar_link"
+      range_max="${mid360_range_max}"
+      sensor_pose="0.20565 0 0.1520 0 0.1745 0"/>
+  </xacro:if>
 
 
   <!-- 轮子物理属性 -->

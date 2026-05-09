@@ -1,0 +1,289 @@
+[0.006s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim -- -j24 -l24
+[0.025s] -- Found ament_cmake: 2.5.5 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.165s] -- Found rclcpp: 28.1.16 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.182s] -- Found rosidl_generator_c: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.187s] -- Found rosidl_generator_cpp: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.192s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.200s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.233s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[0.234s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[0.282s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.318s] -- Found sensor_msgs: 5.3.6 (/opt/ros/jazzy/share/sensor_msgs/cmake)
+[0.360s] -- Looking for gz-sim -- found version 10.1.1
+[0.365s] -- Searching for dependencies of gz-sim
+[0.367s] -- Looking for sdformat -- found version 16.0.1
+[0.367s] -- Searching for dependencies of sdformat
+[0.371s] -- Checking for module 'tinyxml2'
+[0.383s] --   Found tinyxml2, version 10.0.0
+[0.412s] -- Looking for gz-math -- found version 9.0.0
+[0.412s] -- Searching for dependencies of gz-math
+[0.415s] -- Looking for gz-utils -- found version 4.0.0
+[0.415s] -- Searching for dependencies of gz-utils
+[0.416s] -- Looking for gz-utils -- found version 4.0.0
+[0.416s] -- Searching for dependencies of gz-utils
+[0.416s] -- Searching for <gz-utils> component [cli]
+[0.418s] -- Looking for gz-utils-cli -- found version 4.0.0
+[0.418s] -- Searching for dependencies of gz-utils-cli
+[0.423s] -- Looking for gz-plugin -- found version 4.0.0
+[0.423s] -- Searching for dependencies of gz-plugin
+[0.423s] -- Looking for gz-utils -- found version 4.0.0
+[0.424s] -- Searching for <gz-plugin> component [loader]
+[0.426s] -- Looking for gz-plugin-loader -- found version 4.0.0
+[0.426s] -- Searching for dependencies of gz-plugin-loader
+[0.426s] -- Searching for <gz-plugin> component [register]
+[0.428s] -- Looking for gz-plugin-register -- found version 4.0.0
+[0.429s] -- Searching for dependencies of gz-plugin-register
+[0.431s] -- Looking for gz-transport -- found version 15.0.2
+[0.431s] -- Searching for dependencies of gz-transport
+[0.519s] -- Found Protobuf: /usr/lib/x86_64-linux-gnu/libprotobuf.so (found version "3.21.12") 
+[0.530s] -- Config-file not installed for ZeroMQ -- checking for pkg-config
+[0.534s] -- Checking for module 'libzmq >= 4'
+[0.546s] --   Found libzmq, version 4.3.5
+[0.579s] -- Found ZeroMQ: TRUE (Required is at least version "4") 
+[0.583s] -- Checking for module 'uuid'
+[0.594s] --   Found uuid, version 2.39.3
+[0.619s] -- Found UUID: TRUE  
+[0.619s] -- Looking for gz-utils -- found version 4.0.0
+[0.622s] -- Looking for gz-msgs -- found version 12.0.1
+[0.622s] -- Searching for dependencies of gz-msgs
+[0.635s] -- Looking for gz-utils -- found version 4.0.0
+[0.635s] -- Looking for gz-math -- found version 9.0.0
+[0.641s] -- Searching for <gz-transport> component [log]
+[0.645s] -- Looking for gz-transport-log -- found version 15.0.2
+[0.645s] -- Searching for dependencies of gz-transport-log
+[0.645s] -- Searching for <gz-transport> component [parameters]
+[0.648s] -- Looking for gz-transport-parameters -- found version 15.0.2
+[0.649s] -- Searching for dependencies of gz-transport-parameters
+[0.649s] -- Looking for gz-msgs -- found version 12.0.1
+[0.652s] -- Looking for gz-common -- found version 7.1.1
+[0.652s] -- Searching for dependencies of gz-common
+[0.652s] -- Looking for gz-utils -- found version 4.0.0
+[0.652s] -- Searching for dependencies of gz-utils
+[0.652s] -- Searching for <gz-utils> component [log]
+[0.655s] -- Looking for gz-utils-log -- found version 4.0.0
+[0.655s] -- Searching for dependencies of gz-utils-log
+[0.657s] -- Found Threads: TRUE  
+[0.665s] -- Searching for <gz-common> component [av]
+[0.667s] -- Looking for gz-common-av -- found version 7.1.1
+[0.667s] -- Searching for dependencies of gz-common-av
+[0.671s] -- Checking for module 'libswscale'
+[0.683s] --   Found libswscale, version 7.5.100
+[0.709s] -- Found SWSCALE: TRUE  
+[0.713s] -- Checking for module 'libavdevice >= 56.4.100'
+[0.725s] --   Found libavdevice, version 60.3.100
+[0.759s] -- Found AVDEVICE: TRUE (Required is at least version "56.4.100") 
+[0.762s] -- Checking for module 'libavformat'
+[0.773s] --   Found libavformat, version 60.16.100
+[0.802s] -- Found AVFORMAT: TRUE  
+[0.806s] -- Checking for module 'libavcodec'
+[0.818s] --   Found libavcodec, version 60.31.102
+[0.847s] -- Found AVCODEC: TRUE  
+[0.851s] -- Checking for module 'libavutil'
+[0.862s] --   Found libavutil, version 58.29.100
+[0.890s] -- Found AVUTIL: TRUE  
+[0.890s] -- Searching for <gz-common> component [events]
+[0.892s] -- Looking for gz-common-events -- found version 7.1.1
+[0.892s] -- Searching for dependencies of gz-common-events
+[0.893s] -- Looking for gz-math -- found version 9.0.0
+[0.893s] -- Searching for <gz-common> component [graphics]
+[0.895s] -- Looking for gz-common-graphics -- found version 7.1.1
+[0.895s] -- Searching for dependencies of gz-common-graphics
+[0.895s] -- Looking for gz-math -- found version 9.0.0
+[0.898s] -- Found GzAssimp: TRUE (found version "5.3.0") 
+[0.899s] -- Searching for <gz-common> component [io]
+[0.901s] -- Looking for gz-common-io -- found version 7.1.1
+[0.901s] -- Searching for dependencies of gz-common-io
+[0.901s] -- Searching for <gz-common> component [profiler]
+[0.903s] -- Looking for gz-common-profiler -- found version 7.1.1
+[0.903s] -- Searching for dependencies of gz-common-profiler
+[0.904s] -- Searching for <gz-common> component [testing]
+[0.906s] -- Looking for gz-common-testing -- found version 7.1.1
+[0.906s] -- Searching for dependencies of gz-common-testing
+[0.911s] -- Looking for gz-fuel_tools -- found version 11.0.0
+[0.911s] -- Searching for dependencies of gz-fuel_tools
+[0.980s] -- Found CURL: /usr/lib/x86_64-linux-gnu/libcurl.so (found version "8.5.0")  
+[0.990s] -- Checking for module 'jsoncpp'
+[1.001s] --   Found jsoncpp, version 1.9.5
+[1.028s] -- Found JSONCPP: TRUE  
+[1.040s] -- Checking for module 'yaml-0.1'
+[1.051s] --   Found yaml-0.1, version 0.2.5
+[1.078s] -- Found YAML: TRUE  
+[1.081s] -- Checking for module 'libzip'
+[1.092s] --   Found libzip, version 1.7.3
+[1.118s] -- Found ZIP: TRUE  
+[1.118s] -- Looking for gz-utils -- found version 4.0.0
+[1.119s] -- Looking for gz-common -- found version 7.1.1
+[1.119s] -- Looking for gz-math -- found version 9.0.0
+[1.119s] -- Looking for gz-msgs -- found version 12.0.1
+[1.122s] -- Looking for gz-gui -- found version 10.0.0
+[1.122s] -- Searching for dependencies of gz-gui
+[1.141s] -- Looking for gz-utils -- found version 4.0.0
+[1.141s] -- Looking for gz-math -- found version 9.0.0
+[1.141s] -- Looking for gz-common -- found version 7.1.1
+[1.141s] -- Looking for gz-plugin -- found version 4.0.0
+[1.142s] -- Looking for gz-transport -- found version 15.0.2
+[1.145s] -- Looking for gz-rendering -- found version 10.0.1
+[1.145s] -- Searching for dependencies of gz-rendering
+[1.145s] -- Looking for gz-math -- found version 9.0.0
+[1.145s] -- Searching for dependencies of gz-math
+[1.145s] -- Looking for gz-utils -- found version 4.0.0
+[1.145s] -- Searching for <gz-math> component [eigen3]
+[1.147s] -- Looking for gz-math-eigen3 -- found version 9.0.0
+[1.147s] -- Searching for dependencies of gz-math-eigen3
+[1.153s] -- Looking for gz-common -- found version 7.1.1
+[1.153s] -- Searching for dependencies of gz-common
+[1.153s] -- Looking for gz-utils -- found version 4.0.0
+[1.158s] -- Searching for <gz-common> component [graphics]
+[1.158s] -- Searching for <gz-common> component [events]
+[1.159s] -- Searching for <gz-common> component [geospatial]
+[1.162s] -- Looking for gz-common-geospatial -- found version 7.1.1
+[1.162s] -- Searching for dependencies of gz-common-geospatial
+[1.162s] -- Looking for gz-math -- found version 9.0.0
+[1.163s] -- Looking for gz-common -- found version 7.1.1
+[1.163s] -- Looking for gz-plugin -- found version 4.0.0
+[1.163s] -- Searching for dependencies of gz-plugin
+[1.164s] -- Looking for gz-utils -- found version 4.0.0
+[1.164s] -- Searching for <gz-plugin> component [all]
+[1.166s] -- Looking for all libraries of gz-plugin -- found version 4.0.0
+[1.166s] -- Looking for gz-plugin -- found version 4.0.0
+[1.167s] -- Looking for gz-utils -- found version 4.0.0
+[1.175s] -- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so  found components: OpenGL 
+[1.176s] -- Looking for gz-msgs -- found version 12.0.1
+[1.184s] -- Performing Test HAVE_STDATOMIC
+[1.277s] -- Performing Test HAVE_STDATOMIC - Success
+[1.277s] -- Found WrapAtomic: TRUE  
+[1.288s] -- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so   
+[1.289s] -- Found WrapOpenGL: TRUE  
+[1.332s] -- Found XKB: /usr/lib/x86_64-linux-gnu/libxkbcommon.so (found suitable version "1.6.0", minimum required is "0.5.0") 
+[1.357s] -- Found WrapVulkanHeaders: /usr/include  
+[1.409s] -- Looking for gz-physics -- found version 9.1.0
+[1.409s] -- Searching for dependencies of gz-physics
+[1.409s] -- Looking for gz-common -- found version 7.1.1
+[1.409s] -- Looking for gz-math -- found version 9.0.0
+[1.410s] -- Looking for gz-plugin -- found version 4.0.0
+[1.410s] -- Looking for gz-utils -- found version 4.0.0
+[1.411s] -- Searching for <gz-physics> component [heightmap]
+[1.414s] -- Looking for gz-physics-heightmap -- found version 9.1.0
+[1.414s] -- Searching for dependencies of gz-physics-heightmap
+[1.414s] -- Looking for gz-common -- found version 7.1.1
+[1.415s] -- Searching for <gz-physics> component [mesh]
+[1.417s] -- Looking for gz-physics-mesh -- found version 9.1.0
+[1.417s] -- Searching for dependencies of gz-physics-mesh
+[1.417s] -- Looking for gz-common -- found version 7.1.1
+[1.418s] -- Searching for <gz-physics> component [sdf]
+[1.420s] -- Looking for gz-physics-sdf -- found version 9.1.0
+[1.420s] -- Searching for dependencies of gz-physics-sdf
+[1.420s] -- Looking for sdformat -- found version 16.0.1
+[1.425s] -- Looking for gz-sensors -- found version 10.0.1
+[1.425s] -- Searching for dependencies of gz-sensors
+[1.437s] -- Looking for gz-math -- found version 9.0.0
+[1.438s] -- Looking for gz-common -- found version 7.1.1
+[1.438s] -- Looking for gz-transport -- found version 15.0.2
+[1.438s] -- Looking for gz-rendering -- found version 10.0.1
+[1.438s] -- Looking for gz-msgs -- found version 12.0.1
+[1.439s] -- Looking for sdformat -- found version 16.0.1
+[1.439s] -- Searching for <gz-sensors> component [air_pressure]
+[1.441s] -- Looking for gz-sensors-air_pressure -- found version 10.0.1
+[1.441s] -- Searching for dependencies of gz-sensors-air_pressure
+[1.442s] -- Searching for <gz-sensors> component [air_speed]
+[1.444s] -- Looking for gz-sensors-air_speed -- found version 10.0.1
+[1.444s] -- Searching for dependencies of gz-sensors-air_speed
+[1.444s] -- Searching for <gz-sensors> component [altimeter]
+[1.447s] -- Looking for gz-sensors-altimeter -- found version 10.0.1
+[1.447s] -- Searching for dependencies of gz-sensors-altimeter
+[1.447s] -- Searching for <gz-sensors> component [imu]
+[1.449s] -- Looking for gz-sensors-imu -- found version 10.0.1
+[1.449s] -- Searching for dependencies of gz-sensors-imu
+[1.449s] -- Searching for <gz-sensors> component [force_torque]
+[1.452s] -- Looking for gz-sensors-force_torque -- found version 10.0.1
+[1.452s] -- Searching for dependencies of gz-sensors-force_torque
+[1.452s] -- Searching for <gz-sensors> component [logical_camera]
+[1.455s] -- Looking for gz-sensors-logical_camera -- found version 10.0.1
+[1.455s] -- Searching for dependencies of gz-sensors-logical_camera
+[1.455s] -- Searching for <gz-sensors> component [magnetometer]
+[1.457s] -- Looking for gz-sensors-magnetometer -- found version 10.0.1
+[1.457s] -- Searching for dependencies of gz-sensors-magnetometer
+[1.457s] -- Searching for <gz-sensors> component [navsat]
+[1.460s] -- Looking for gz-sensors-navsat -- found version 10.0.1
+[1.460s] -- Searching for dependencies of gz-sensors-navsat
+[1.460s] -- Searching for <gz-sensors> component [dvl]
+[1.462s] -- Looking for gz-sensors-dvl -- found version 10.0.1
+[1.462s] -- Searching for dependencies of gz-sensors-dvl
+[1.462s] -- Looking for gz-sensors -- found version 10.0.1
+[1.463s] -- Searching for dependencies of gz-sensors
+[1.477s] -- Looking for gz-math -- found version 9.0.0
+[1.477s] -- Looking for gz-common -- found version 7.1.1
+[1.477s] -- Looking for gz-transport -- found version 15.0.2
+[1.477s] -- Looking for gz-rendering -- found version 10.0.1
+[1.478s] -- Looking for gz-msgs -- found version 12.0.1
+[1.478s] -- Looking for sdformat -- found version 16.0.1
+[1.478s] -- Searching for <gz-sensors> component [rendering]
+[1.481s] -- Looking for gz-sensors-rendering -- found version 10.0.1
+[1.481s] -- Searching for dependencies of gz-sensors-rendering
+[1.483s] -- Searching for <gz-sensors> component [rendering]
+[1.483s] -- Searching for <gz-sensors> component [lidar]
+[1.485s] -- Looking for gz-sensors-lidar -- found version 10.0.1
+[1.485s] -- Searching for dependencies of gz-sensors-lidar
+[1.485s] -- Looking for gz-sensors -- found version 10.0.1
+[1.486s] -- Searching for <gz-sensors> component [gpu_lidar]
+[1.488s] -- Looking for gz-sensors-gpu_lidar -- found version 10.0.1
+[1.488s] -- Searching for dependencies of gz-sensors-gpu_lidar
+[1.488s] -- Looking for gz-sensors -- found version 10.0.1
+[1.489s] -- Searching for <gz-sensors> component [camera]
+[1.491s] -- Looking for gz-sensors-camera -- found version 10.0.1
+[1.491s] -- Searching for dependencies of gz-sensors-camera
+[1.491s] -- Looking for gz-sensors -- found version 10.0.1
+[1.492s] -- Searching for <gz-sensors> component [boundingbox_camera]
+[1.494s] -- Looking for gz-sensors-boundingbox_camera -- found version 10.0.1
+[1.494s] -- Searching for dependencies of gz-sensors-boundingbox_camera
+[1.494s] -- Searching for <gz-sensors> component [segmentation_camera]
+[1.497s] -- Looking for gz-sensors-segmentation_camera -- found version 10.0.1
+[1.497s] -- Searching for dependencies of gz-sensors-segmentation_camera
+[1.498s] -- Searching for <gz-sensors> component [depth_camera]
+[1.500s] -- Looking for gz-sensors-depth_camera -- found version 10.0.1
+[1.500s] -- Searching for dependencies of gz-sensors-depth_camera
+[1.500s] -- Looking for gz-sensors -- found version 10.0.1
+[1.501s] -- Searching for <gz-sensors> component [rgbd_camera]
+[1.504s] -- Looking for gz-sensors-rgbd_camera -- found version 10.0.1
+[1.504s] -- Searching for dependencies of gz-sensors-rgbd_camera
+[1.504s] -- Looking for gz-sensors -- found version 10.0.1
+[1.505s] -- Searching for <gz-sensors> component [thermal_camera]
+[1.507s] -- Looking for gz-sensors-thermal_camera -- found version 10.0.1
+[1.507s] -- Searching for dependencies of gz-sensors-thermal_camera
+[1.508s] -- Looking for gz-sensors -- found version 10.0.1
+[1.508s] -- Searching for <gz-sensors> component [wide_angle_camera]
+[1.511s] -- Looking for gz-sensors-wide_angle_camera -- found version 10.0.1
+[1.511s] -- Searching for dependencies of gz-sensors-wide_angle_camera
+[1.512s] -- Looking for gz-rendering -- found version 10.0.1
+[1.512s] -- Looking for gz-math -- found version 9.0.0
+[1.512s] -- Looking for gz-utils -- found version 4.0.0
+[1.528s] -- Looking for gz-msgs -- found version 12.0.1
+[1.529s] -- Looking for gz-transport -- found version 15.0.2
+[1.529s] -- Looking for gz-plugin -- found version 4.0.0
+[1.530s] -- Found ament_lint_auto: 0.17.4 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[1.586s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[1.587s] -- Configured cppcheck include dirs: 
+[1.587s] -- Configured cppcheck exclude dirs and/or files: 
+[1.587s] -- Added test 'lint_cmake' to check CMake code style
+[1.587s] -- Added test 'uncrustify' to check C / C++ code style
+[1.587s] -- Configured uncrustify additional arguments: 
+[1.587s] -- Added test 'xmllint' to check XML markup files
+[1.588s] -- Configuring done (1.6s)
+[1.601s] -- Generating done (0.0s)
+[1.605s] -- Build files have been written to: /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim
+[1.641s] [ 25%] Building CXX object CMakeFiles/livox_mid360_system.dir/src/livox_mid360_system.cpp.o
+[1.649s] [ 75%] Built target livox_pointcloud_shaper
+[3.097s] /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/src/livox_mid360_system.cpp: In member function ‘virtual void xxu_livox_sim::LivoxMid360System::PreUpdate(const gz::sim::v10::UpdateInfo&, gz::sim::v10::EntityComponentManager&)’:
+[3.097s] /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/src/livox_mid360_system.cpp:144:23: error: no matching function for call to ‘gz::sim::v10::components::Component<gz::sim::v10::components::RaycastDataInfo, gz::sim::v10::components::RaycastDataTag, gz::sim::v10::serializers::DefaultSerializer<gz::sim::v10::components::RaycastDataInfo> >::SetData(gz::sim::v10::components::RaycastDataInfo&)’
+[3.097s]   144 |     component->SetData(raycastData);
+[3.097s]       |     ~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+[3.097s] In file included from /usr/include/gz/sim10/gz/sim/EntityComponentManager.hh:41,
+[3.097s]                  from /home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/src/livox_mid360_system.cpp:16:
+[3.097s] /usr/include/gz/sim10/gz/sim/components/Component.hh:455:8: note: candidate: ‘bool gz::sim::v10::components::Component<DataType, Identifier, Serializer>::SetData(const DataType&, const std::function<bool(const DataType&, const DataType&)>&) [with DataType = gz::sim::v10::components::RaycastDataInfo; Identifier = gz::sim::v10::components::RaycastDataTag; Serializer = gz::sim::v10::serializers::DefaultSerializer<gz::sim::v10::components::RaycastDataInfo>]’
+[3.097s]   455 |   bool Component<DataType, Identifier, Serializer>::SetData(
+[3.097s]       |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[3.097s] /usr/include/gz/sim10/gz/sim/components/Component.hh:455:8: note:   candidate expects 2 arguments, 1 provided
+[3.437s] gmake[2]: *** [CMakeFiles/livox_mid360_system.dir/build.make:76: CMakeFiles/livox_mid360_system.dir/src/livox_mid360_system.cpp.o] Error 1
+[3.437s] gmake[1]: *** [CMakeFiles/Makefile2:165: CMakeFiles/livox_mid360_system.dir/all] Error 2
+[3.437s] gmake: *** [Makefile:146: all] Error 2
+[3.439s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim -- -j24 -l24

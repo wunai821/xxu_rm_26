@@ -225,5 +225,45 @@
     </gazebo>
   </xacro:macro>
 
+  <!-- ====================================================================== -->
+  <!--             Livox MID-360 风格 Gazebo System 插件（原生射线点云）          -->
+  <!-- ====================================================================== -->
+  <!--
+    该插件挂在 reference_link 上，通过 Gazebo Physics RaycastData 生成非重复
+    MID-360 风格点云。它发布 Gazebo Transport PointCloudPacked，可由
+    ros_gz_bridge 桥接为 ROS 2 PointCloud2 后送入 Small Point-LIO。
+  -->
+
+  <xacro:macro
+    name="gazebo_mid360_livox_system_plugin"
+    params="
+      reference_link
+      topic:='/mid360/livox_points_gz'
+      frame_id:='radar_link'
+      update_rate:='10'
+      samples:='12000'
+      range_min:='0.1'
+      range_max:='40.0'
+      min_vertical:='-0.1221730'
+      max_vertical:='0.9075712'
+      sensor_pose:='0 0 0 0 0 0'">
+
+    <gazebo>
+      <plugin
+        filename="liblivox_mid360_system.so"
+        name="xxu_livox_sim::LivoxMid360System">
+        <topic>${topic}</topic>
+        <frame_id>${frame_id}</frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <samples>${samples}</samples>
+        <range_min>${range_min}</range_min>
+        <range_max>${range_max}</range_max>
+        <min_vertical>${min_vertical}</min_vertical>
+        <max_vertical>${max_vertical}</max_vertical>
+        <sensor_pose>${sensor_pose}</sensor_pose>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
 
 </robot>

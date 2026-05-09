@@ -1,9 +1,9 @@
 small_point_lio:
     ros__parameters:
         use_sim_time: true
-        lidar_topic: /mid360/points_lio
+        lidar_topic: /mid360/livox_points
         imu_topic: /imu
-        lidar_type: generic_pointcloud2
+        lidar_type: livox_pointcloud2
         lidar_frame: radar_link
         odom_topic: /odom
         registered_cloud_topic: /cloud_registered
