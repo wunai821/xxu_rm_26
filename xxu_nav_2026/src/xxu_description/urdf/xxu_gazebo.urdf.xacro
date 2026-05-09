@@ -2,7 +2,8 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU Gazebo 仿真模型
-    TF 树：odom_link -> base_footprint -> base_link -> radar_link + 4 wheels (continuous joints)
+    静态 TF 树：base_link -> base_footprint, radar_link + 4 wheels (continuous joints)
+    动态 TF 树：odom -> base_link 由 Small Point-LIO 发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
@@ -109,10 +110,8 @@
     </link>
   </xacro:macro>
 
-  <!-- odom_link -->
-  <link name="odom_link"/>
+  <!-- base_footprint：base_link 在地面的投影。odom -> base_link 由 LIO 动态发布。 -->
   <link name="base_footprint"/>
-  <xacro:fixed_joint name="odom_joint" parent="odom_link" child="base_footprint"/>
 
   <!-- base_link -->
   <xacro:cylinder_link
@@ -125,7 +124,7 @@
     izz="${base_mass * base_radius * base_radius / 2}"
     material="chassis_blue"/>
 
-  <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
+  <xacro:fixed_joint name="base_footprint_joint" parent="base_link" child="base_footprint" xyz="0 0 ${-base_link_z}"/>
 
   <!-- radar_link: Mid-360 圆柱外形 -->
   <link name="radar_link">

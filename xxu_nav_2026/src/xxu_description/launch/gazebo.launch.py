@@ -9,6 +9,7 @@ from launch.actions import (
     SetEnvironmentVariable,
 )
 from launch.event_handlers import OnProcessExit
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.parameter_descriptions import ParameterValue
@@ -28,7 +29,11 @@ def generate_launch_description():
     nav2_tb3_models_path = PathJoinSubstitution(
         [FindPackageShare("nav2_minimal_tb3_sim"), "models"]
     )
+    small_point_lio_config = PathJoinSubstitution(
+        [FindPackageShare("small_point_lio"), "config", "xxu_gazebo_mid360.yaml"]
+    )
     use_sim_time = LaunchConfiguration("use_sim_time")
+    enable_lio = LaunchConfiguration("enable_lio")
 
     gz_resource_path = SetEnvironmentVariable(
         "GZ_SIM_RESOURCE_PATH",
@@ -39,6 +44,11 @@ def generate_launch_description():
         "use_sim_time",
         default_value="true",
         description="Use simulation clock",
+    )
+    declare_enable_lio = DeclareLaunchArgument(
+        "enable_lio",
+        default_value="true",
+        description="Start Small Point-LIO and publish /odom",
     )
 
     # robot_state_publisher
@@ -202,6 +212,15 @@ def generate_launch_description():
         ],
     )
 
+    small_point_lio = Node(
+        package="small_point_lio",
+        executable="small_point_lio_node",
+        name="small_point_lio",
+        output="screen",
+        condition=IfCondition(enable_lio),
+        parameters=[small_point_lio_config],
+    )
+
     # Clock bridge
     bridge_clock = Node(
         package="ros_gz_bridge",
@@ -244,6 +263,7 @@ def generate_launch_description():
     return LaunchDescription([
         gz_resource_path,
         declare_use_sim_time,
+        declare_enable_lio,
         robot_state_publisher,
         gz_sim,
         spawn_robot,
@@ -253,6 +273,7 @@ def generate_launch_description():
         bridge_lidar,
         scan_frame_republisher,
         pointcloud_processor,
+        small_point_lio,
         bridge_clock,
         cmd_vel_watchdog,
         keyboard_teleop,

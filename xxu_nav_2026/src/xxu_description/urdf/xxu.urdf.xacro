@@ -2,7 +2,8 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU 简化模型
-    TF 树：odom_link -> base_footprint -> base_link -> radar_link, wheel_fl, wheel_fr, wheel_rl, wheel_rr
+    静态 TF 树：base_link -> base_footprint, radar_link, wheel_fl, wheel_fr, wheel_rl, wheel_rr
+    动态 TF 树：odom -> base_link 由 Small Point-LIO 发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
@@ -99,12 +100,8 @@
     </link>
   </xacro:macro>
 
-  <!-- odom_link -->
-  <link name="odom_link"/>
-
   <!-- base_footprint：base_link 在地面的投影，轮子与地面保留 1 mm 缝隙 -->
   <link name="base_footprint"/>
-  <xacro:fixed_joint name="odom_joint" parent="odom_link" child="base_footprint"/>
 
   <!-- base_link -->
   <xacro:cylinder_link
@@ -117,7 +114,7 @@
     izz="${base_mass * base_radius * base_radius / 2}"
     material="chassis_blue"/>
 
-  <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
+  <xacro:fixed_joint name="base_footprint_joint" parent="base_link" child="base_footprint" xyz="0 0 ${-base_link_z}"/>
 
   <!-- radar_link -->
   <xacro:box_link

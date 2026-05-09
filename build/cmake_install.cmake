@@ -44,6 +44,7 @@ endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/xxu_description" TYPE DIRECTORY FILES
+    "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/config"
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/launch"
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/meshes"
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/rviz"
@@ -55,7 +56,6 @@ endif()
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/xxu_description" TYPE PROGRAM FILES
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/cmd_vel_watchdog.py"
-    "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/pointcloud_frame_republisher.py"
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/scan_frame_republisher.py"
     )
 endif()

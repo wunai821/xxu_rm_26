@@ -1,2 +1,1 @@
-source;share/xxu_chassis_controller/environment/ament_prefix_path.sh
-source;share/xxu_chassis_controller/environment/path.sh
+/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_chassis_controller/ament_cmake_environment_hooks/local_setup.dsv
