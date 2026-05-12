@@ -1,4 +1,1 @@
-# generated from rosidl_cmake/cmake/rosidl_cmake-extras.cmake.in
-
-set(explore_lite_msgs_IDL_FILES "msg/ExploreStatus.idl")
-set(explore_lite_msgs_INTERFACE_FILES "msg/ExploreStatus.msg")
+/home/naiwu/xxu_2026/xxu_nav_2026/build/explore_lite_msgs/rosidl_cmake/rosidl_cmake-extras.cmake

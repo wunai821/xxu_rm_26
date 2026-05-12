@@ -7,7 +7,7 @@ small_point_lio:
         odom_topic: /odom                          # 里程计话题名
         registered_cloud_topic: /cloud_registered  # 配准点云话题名
         odom_frame: odom                           # 里程计坐标系
-        base_frame: base_link                      # 车体坐标系
+        base_frame: base_footprint                      # 车体坐标系
         save_pcd: false                            # 是否保存点云
 
         # 点云过滤

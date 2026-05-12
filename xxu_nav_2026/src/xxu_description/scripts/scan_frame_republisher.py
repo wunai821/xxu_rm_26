@@ -8,7 +8,7 @@ from sensor_msgs.msg import LaserScan
 class ScanFrameRepublisher(Node):
     def __init__(self):
         super().__init__("scan_frame_republisher")
-        self.declare_parameter("target_frame", "radar_link")
+        self.declare_parameter("target_frame", "mid360_link")
         self.target_frame = self.get_parameter("target_frame").value
 
         self.sub = self.create_subscription(LaserScan, "scan_in", self.callback, 10)

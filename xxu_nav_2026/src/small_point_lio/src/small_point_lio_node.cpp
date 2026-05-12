@@ -77,7 +77,7 @@ namespace small_point_lio {
             tf_lidar_odom_to_lidar_frame.setRotation(tf2::Quaternion(odometry.orientation.x(), odometry.orientation.y(), odometry.orientation.z(), odometry.orientation.w()));
             tf2::Transform tf_base_link_to_lidar_frame;
             tf2::fromMsg(base_link_to_lidar_frame_transform.transform, tf_base_link_to_lidar_frame);
-            tf2::Transform tf_odom_to_base_link = tf_base_link_to_lidar_frame.inverse() * tf_lidar_odom_to_lidar_frame * tf_base_link_to_lidar_frame;
+            tf2::Transform tf_odom_to_base_link = tf_lidar_odom_to_lidar_frame * tf_base_link_to_lidar_frame;
             transform_stamped.transform = tf2::toMsg(tf_odom_to_base_link);
 
             nav_msgs::msg::Odometry odometry_msg;
@@ -92,7 +92,7 @@ namespace small_point_lio {
             odometry_msg.pose.pose.orientation.z = transform_stamped.transform.rotation.z;
             odometry_msg.pose.pose.orientation.w = transform_stamped.transform.rotation.w;
 
-            // TODO it is lidar_odom->lidar_frame, we need to transform it to odom->base_link
+            // The estimator pose is odom->lidar_frame. The published transform is odom->base_frame.
             // odometry_msg.twist.twist.linear.x = odometry.velocity.x();
             // odometry_msg.twist.twist.linear.y = odometry.velocity.y();
             // odometry_msg.twist.twist.linear.z = odometry.velocity.z();
@@ -103,30 +103,12 @@ namespace small_point_lio {
             tf_broadcaster->sendTransform(transform_stamped);
             odometry_publisher->publish(odometry_msg);
         });
-        small_point_lio->set_pointcloud_callback([this, save_pcd, lidar_frame, odom_frame, base_frame](const std::vector<Eigen::Vector3f> &pointcloud) {
+        small_point_lio->set_pointcloud_callback([this, save_pcd, odom_frame](const std::vector<Eigen::Vector3f> &pointcloud) {
             if (pointcloud_publisher->get_subscription_count() > 0) {
                 builtin_interfaces::msg::Time time_msg;
                 time_msg.sec = std::floor(last_odometry.timestamp);
                 time_msg.nanosec = static_cast<uint32_t>((last_odometry.timestamp - time_msg.sec) * 1e9);
 
-                geometry_msgs::msg::TransformStamped lidar_frame_to_base_link_transform;
-                try {
-                    lidar_frame_to_base_link_transform = tf_buffer->lookupTransform(base_frame, lidar_frame, time_msg);
-                } catch (tf2::TransformException &ex) {
-                    RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "Failed to lookup transform from %s to %s: %s", lidar_frame.c_str(), base_frame.c_str(), ex.what());
-                    return;
-                }
-                Eigen::Vector3f lidar_frame_to_base_link_T;
-                lidar_frame_to_base_link_T << static_cast<float>(lidar_frame_to_base_link_transform.transform.translation.x),
-                        static_cast<float>(lidar_frame_to_base_link_transform.transform.translation.y),
-                        static_cast<float>(lidar_frame_to_base_link_transform.transform.translation.z);
-                Eigen::Matrix3f lidar_frame_to_base_link_R =
-                        Eigen::Quaternionf(
-                                static_cast<float>(lidar_frame_to_base_link_transform.transform.rotation.w),
-                                static_cast<float>(lidar_frame_to_base_link_transform.transform.rotation.x),
-                                static_cast<float>(lidar_frame_to_base_link_transform.transform.rotation.y),
-                                static_cast<float>(lidar_frame_to_base_link_transform.transform.rotation.z))
-                                .toRotationMatrix();
                 sensor_msgs::msg::PointCloud2 msg;
                 msg.header.stamp = time_msg;
                 msg.header.frame_id = odom_frame;
@@ -158,15 +140,13 @@ namespace small_point_lio {
                 msg.point_step = 16;
                 msg.row_step = msg.width * msg.point_step;
                 msg.data.resize(msg.row_step * msg.height);
-                Eigen::Vector3f transformed_point;
                 auto pointer = reinterpret_cast<float *>(msg.data.data());
                 for (const auto &point: pointcloud) {
-                    transformed_point = lidar_frame_to_base_link_R * point + lidar_frame_to_base_link_T;
-                    *pointer = transformed_point.x();
+                    *pointer = point.x();
                     ++pointer;
-                    *pointer = transformed_point.y();
+                    *pointer = point.y();
                     ++pointer;
-                    *pointer = transformed_point.z();
+                    *pointer = point.z();
                     ++pointer;
                     *pointer = 0;
                     ++pointer;

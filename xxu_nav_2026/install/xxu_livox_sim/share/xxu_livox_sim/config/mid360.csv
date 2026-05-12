@@ -1,4 +1,1 @@
-# Placeholder scan mode hook for MID-360.
-# The Harmonic livox_pointcloud_shaper currently uses input point order and
-# scan_period to generate per-point timestamps. A native gz-sim raycast plugin
-# can replace this file with the official MID-360 scan pattern CSV later.
+/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_livox_sim/config/mid360.csv

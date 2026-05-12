@@ -2,9 +2,7 @@
 
 XXU 机器人 ROS 2 + Gazebo Harmonic 仿真项目。
 
-## 关键约定
 
-- 始终使用中文回复
 
 ## 构建与环境
 
@@ -19,7 +17,7 @@ source install/setup.zsh
 每次启动前必须先 kill 所有相关进程，否则残留进程会污染环境，导致状态异常。
 
 ```bash
-pkill -9 gz; pkill -9 rviz2; pkill -9 robot_state_publisher; pkill -9 joint_state_publisher; pkill -9 parameter_bridge
+src/xxu_description/scripts/kill_simulation.sh
 ```
 
 ## 启动 RViz（模型可视化）

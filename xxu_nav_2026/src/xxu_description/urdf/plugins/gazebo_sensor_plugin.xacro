@@ -61,8 +61,8 @@
       <!-- sensor type="imu"：Gazebo 内置 IMU 传感器，输出角速度和线加速度 -->
       <sensor name="${sensor_name}" type="imu">
 
-        <!-- 传感器始终开启（1 = true），不随仿真暂停而关闭 -->
-        <always_on>1</always_on>
+        <!-- 传感器仅在仿真运行时更新（0 = false），避免暂停/初始化时产生异常时间戳 -->
+        <always_on>0</always_on>
 
         <!-- 传感器数据更新频率，单位 Hz -->
         <update_rate>${update_rate}</update_rate>
@@ -241,7 +241,8 @@
       topic:='/mid360/livox_points_gz'
       frame_id:='radar_link'
       update_rate:='10'
-      samples:='12000'
+      samples:='2400'
+      rays_per_batch:='240'
       range_min:='0.1'
       range_max:='40.0'
       min_vertical:='-0.1221730'
@@ -252,10 +253,12 @@
       <plugin
         filename="liblivox_mid360_system.so"
         name="xxu_livox_sim::LivoxMid360System">
+        <reference_link>${reference_link}</reference_link>
         <topic>${topic}</topic>
         <frame_id>${frame_id}</frame_id>
         <update_rate>${update_rate}</update_rate>
         <samples>${samples}</samples>
+        <rays_per_batch>${rays_per_batch}</rays_per_batch>
         <range_min>${range_min}</range_min>
         <range_max>${range_max}</range_max>
         <min_vertical>${min_vertical}</min_vertical>

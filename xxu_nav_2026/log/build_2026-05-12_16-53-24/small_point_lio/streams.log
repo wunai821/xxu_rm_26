@@ -1,0 +1,42 @@
+[0.007s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio -- -j24 -l24
+[0.058s] [ 14%] Built target small_point_lio_node
+[0.059s] [ 35%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/preprocess.cpp.o
+[0.059s] [ 35%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/small_point_lio.cpp.o
+[0.059s] [ 35%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/parameters.cpp.o
+[0.060s] [ 42%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio_node.cpp.o
+[0.060s] [ 50%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/estimator.cpp.o
+[21.238s] [ 57%] Linking CXX shared library libsmall_point_lio.so
+[21.765s] [100%] Built target small_point_lio
+[21.774s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio -- -j24 -l24
+[21.783s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio
+[21.788s] -- Install configuration: "RelWithDebInfo"
+[21.789s] -- Execute custom install script
+[21.789s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/small_point_lio/small_point_lio_node
+[21.790s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/include/small_point_lio/param_deliver.h.in
+[21.790s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/include/small_point_lio/pch.h
+[21.790s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/library_path.sh
+[21.790s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/library_path.dsv
+[21.790s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/libsmall_point_lio.so
+[21.791s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/config/mid360.yaml
+[21.791s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/config/unilidar_l2.yaml
+[21.791s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/config/xxu_gazebo_mid360.yaml
+[21.791s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/launch/small_point_lio.launch.py
+[21.791s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/package_run_dependencies/small_point_lio
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/parent_prefix_path/small_point_lio
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/ament_prefix_path.sh
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/ament_prefix_path.dsv
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/path.sh
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/path.dsv
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.bash
+[21.792s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.sh
+[21.793s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.zsh
+[21.793s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.dsv
+[21.793s] -- Symlinking: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.dsv
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/packages/small_point_lio
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/rclcpp_components/small_point_lio
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/ament_cmake_export_include_directories-extras.cmake
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/ament_cmake_export_libraries-extras.cmake
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/small_point_lioConfig.cmake
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/small_point_lioConfig-version.cmake
+[21.799s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.xml
+[21.800s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio

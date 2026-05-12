@@ -43,6 +43,8 @@ namespace small_point_lio {
         void set_odometry_callback(const std::function<void(const common::Odometry &odometry)> &odometry_callback);
 
     private:
+        void apply_planar_constraint();
+
         void publish_odometry(double timestamp);
     };
 

@@ -1,0 +1,51 @@
+[0.009s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan -- -j24 -l24
+[0.074s] [ 20%] Built target pointcloud_to_laserscan_node
+[0.074s] [ 40%] Built target laserscan_to_pointcloud_node
+[0.076s] [ 60%] Built target laserscan_to_pointcloud
+[0.113s] [ 70%] Building CXX object CMakeFiles/pointcloud_to_laserscan.dir/src/pointcloud_to_laserscan_node.cpp.o
+[9.887s] [ 80%] Linking CXX shared library libpointcloud_to_laserscan.so
+[10.249s] [ 80%] Built target pointcloud_to_laserscan
+[10.282s] [ 90%] Linking CXX executable dummy_pointcloud_publisher
+[10.449s] [100%] Built target dummy_pointcloud_publisher
+[10.459s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan -- -j24 -l24
+[10.468s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan
+[10.476s] -- Install configuration: ""
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/pointcloud_to_laserscan/laserscan_to_pointcloud_node
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/pointcloud_to_laserscan/pointcloud_to_laserscan_node
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/include
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/include/pointcloud_to_laserscan
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/include/pointcloud_to_laserscan/laserscan_to_pointcloud_node.hpp
+[10.477s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/include/pointcloud_to_laserscan/pointcloud_to_laserscan_node.hpp
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/include/pointcloud_to_laserscan/visibility_control.h
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/environment/library_path.sh
+[10.477s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/environment/library_path.dsv
+[10.478s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/liblaserscan_to_pointcloud.so
+[10.478s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/libpointcloud_to_laserscan.so
+[10.482s] -- Set non-toolchain portion of runtime path of "/home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/libpointcloud_to_laserscan.so" to ""
+[10.482s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/pointcloud_to_laserscan/dummy_pointcloud_publisher
+[10.483s] -- Set non-toolchain portion of runtime path of "/home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/lib/pointcloud_to_laserscan/dummy_pointcloud_publisher" to ""
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/launch
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/launch/__pycache__
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/launch/__pycache__/sample_pointcloud_to_laserscan_launch.cpython-310.pyc
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/launch/sample_pointcloud_to_laserscan_launch.py
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/launch/sample_laserscan_to_pointcloud_launch.py
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/ament_index/resource_index/package_run_dependencies/pointcloud_to_laserscan
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/ament_index/resource_index/parent_prefix_path/pointcloud_to_laserscan
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/environment/ament_prefix_path.sh
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/environment/ament_prefix_path.dsv
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/environment/path.sh
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/environment/path.dsv
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.bash
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.sh
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.zsh
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.dsv
+[10.483s] -- Installing: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/package.dsv
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/ament_index/resource_index/packages/pointcloud_to_laserscan
+[10.483s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/ament_index/resource_index/rclcpp_components/pointcloud_to_laserscan
+[10.484s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/cmake/ament_cmake_export_dependencies-extras.cmake
+[10.484s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/cmake/ament_cmake_export_include_directories-extras.cmake
+[10.484s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/cmake/ament_cmake_export_libraries-extras.cmake
+[10.484s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/cmake/pointcloud_to_laserscanConfig.cmake
+[10.484s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/cmake/pointcloud_to_laserscanConfig-version.cmake
+[10.484s] -- Up-to-date: /home/naiwu/xxu_2026/xxu_nav_2026/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/package.xml
+[10.484s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/pointcloud_to_laserscan

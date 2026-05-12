@@ -56,6 +56,9 @@ endif()
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/xxu_description" TYPE PROGRAM FILES
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/cmd_vel_watchdog.py"
+    "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/cmd_vel_odometry.py"
+    "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/imu_frame_republisher.py"
+    "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/pointcloud_frame_republisher.py"
     "/home/naiwu/xxu_2026/xxu_nav_2026/src/xxu_description/scripts/scan_frame_republisher.py"
     )
 endif()

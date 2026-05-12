@@ -1,0 +1,41 @@
+[0.020s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/naiwu/xxu_2026/xxu_nav_2026/src/m-explore-ros2/map_merge -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/naiwu/xxu_2026/xxu_nav_2026/install/multirobot_map_merge
+[0.037s] -- Found ament_cmake: 2.5.5 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.167s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.171s] -- Found rclcpp: 28.1.16 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.191s] -- Found rosidl_generator_c: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.196s] -- Found rosidl_generator_cpp: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.202s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.210s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.255s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[0.256s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[0.317s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.366s] -- Found geometry_msgs: 5.3.6 (/opt/ros/jazzy/share/geometry_msgs/cmake)
+[0.389s] -- Found image_geometry: 4.1.0 (/opt/ros/jazzy/share/image_geometry/cmake)
+[0.415s] -- Found map_msgs: 2.4.1 (/opt/ros/jazzy/share/map_msgs/cmake)
+[0.463s] -- Found tf2_geometry_msgs: 0.36.19 (/opt/ros/jazzy/share/tf2_geometry_msgs/cmake)
+[0.467s] -- Found eigen3_cmake_module: 0.3.0 (/opt/ros/jazzy/share/eigen3_cmake_module/cmake)
+[0.468s] -- Ensuring Eigen3 include directory is part of orocos-kdl CMake target
+[0.556s] -- Found ament_lint_auto: 0.17.4 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+[0.616s] -- Found ament_cmake_gtest: 2.5.5 (/opt/ros/jazzy/share/ament_cmake_gtest/cmake)
+[0.618s] Checking MD5 sum of /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/map00.pgm
+[0.626s] /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/map00.pgm: 成功
+[0.628s] Checking MD5 sum of /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/map05.pgm
+[0.636s] /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/map05.pgm: 成功
+[0.638s] Checking MD5 sum of /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/2011-08-09-12-22-52.pgm
+[0.665s] /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/2011-08-09-12-22-52.pgm: 成功
+[0.667s] Checking MD5 sum of /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/2012-01-28-11-12-01.pgm
+[0.691s] /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/2012-01-28-11-12-01.pgm: 成功
+[0.692s] -- Found gtest sources under '/opt/ros/jazzy/src/gtest_vendor': C++ tests using 'Google Test' will be built
+[0.700s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[0.700s] -- Configured cppcheck include dirs: /home/naiwu/xxu_2026/xxu_nav_2026/src/m-explore-ros2/map_merge/include;$<BUILD_INTERFACE:/home/naiwu/xxu_2026/xxu_nav_2026/src/m-explore-ros2/map_merge/include>
+[0.700s] -- Configured cppcheck exclude dirs and/or files: 
+[0.700s] -- Added test 'flake8' to check Python code syntax and style conventions
+[0.700s] -- Configured 'flake8' exclude dirs and/or files: 
+[0.701s] -- Added test 'lint_cmake' to check CMake code style
+[0.701s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[0.702s] -- Added test 'uncrustify' to check C / C++ code style
+[0.702s] -- Configured uncrustify additional arguments: 
+[0.703s] -- Added test 'xmllint' to check XML markup files
+[0.705s] -- Configuring done (0.7s)
+[0.773s] -- Generating done (0.0s)
+[0.778s] -- Build files have been written to: /home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge

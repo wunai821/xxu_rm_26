@@ -1,7 +1,7 @@
 """Launch SLAM Toolbox, Nav2, and explore_lite for autonomous mapping."""
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -182,7 +182,12 @@ def generate_launch_description():
         declare_rviz,
         declare_rviz_config,
         slam_toolbox,
-        *nav2_nodes,
-        explore_lite,
+        TimerAction(
+            period=8.0,
+            actions=[
+                *nav2_nodes,
+                explore_lite,
+            ],
+        ),
         rviz_node,
     ])

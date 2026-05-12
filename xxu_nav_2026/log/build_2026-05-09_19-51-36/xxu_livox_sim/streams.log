@@ -1,0 +1,28 @@
+[0.009s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim -- -j24 -l24
+[0.088s] [ 50%] Built target livox_pointcloud_shaper
+[0.097s] [ 75%] Building CXX object CMakeFiles/livox_mid360_system.dir/src/livox_mid360_system.cpp.o
+[2.924s] [100%] Linking CXX shared library liblivox_mid360_system.so
+[3.073s] [100%] Built target livox_mid360_system
+[3.080s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim -- -j24 -l24
+[3.088s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim
+[3.094s] -- Install configuration: ""
+[3.095s] -- Execute custom install script
+[3.095s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/lib/xxu_livox_sim/livox_pointcloud_shaper
+[3.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/lib/xxu_livox_sim/liblivox_mid360_system.so
+[3.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/config/mid360.csv
+[3.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/ament_index/resource_index/package_run_dependencies/xxu_livox_sim
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/ament_index/resource_index/parent_prefix_path/xxu_livox_sim
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/environment/ament_prefix_path.sh
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/environment/ament_prefix_path.dsv
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/environment/path.sh
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/environment/path.dsv
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/local_setup.bash
+[3.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/local_setup.sh
+[3.098s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/local_setup.zsh
+[3.098s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/local_setup.dsv
+[3.098s] -- Symlinking: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/package.dsv
+[3.104s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/ament_index/resource_index/packages/xxu_livox_sim
+[3.104s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/cmake/xxu_livox_simConfig.cmake
+[3.104s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/cmake/xxu_livox_simConfig-version.cmake
+[3.104s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_livox_sim/share/xxu_livox_sim/package.xml
+[3.105s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim

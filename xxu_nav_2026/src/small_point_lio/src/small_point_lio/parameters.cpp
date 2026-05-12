@@ -30,6 +30,8 @@ namespace small_point_lio {
         // 地图
         map_resolution = node.declare_parameter<float>("map_resolution");
         init_map_size = static_cast<size_t>(node.declare_parameter<long>("init_map_size"));
+        planar_constraint_en = node.declare_parameter<bool>("planar_constraint_en", false);
+        planar_z = node.declare_parameter<double>("planar_z", 0.0);
 
         // 雷达与IMU相对位姿
         extrinsic_est_en = node.declare_parameter<bool>("extrinsic_est_en");

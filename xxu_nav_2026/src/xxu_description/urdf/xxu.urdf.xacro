@@ -2,8 +2,8 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU 简化模型
-    静态 TF 树：base_link -> base_footprint, radar_link, wheel_fl, wheel_fr, wheel_rl, wheel_rr
-    动态 TF 树：odom -> base_link 由 Small Point-LIO 发布。
+    静态 TF 树：base_footprint -> base_link -> mid360_link, wheel_fl, wheel_fr, wheel_rl, wheel_rr
+    动态 TF 树：odom -> base_footprint 由 Small Point-LIO 发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
@@ -18,8 +18,8 @@
   <xacro:property name="radar_width" value="0.065"/>
   <xacro:property name="radar_height" value="0.060"/>
   <xacro:property name="radar_size" value="${radar_length} ${radar_width} ${radar_height}"/>
-  <xacro:property name="radar_xyz" value="0.2 0 0.12"/>
-  <xacro:property name="radar_rpy" value="0 0.1745 0"/>
+  <xacro:property name="mid360_xyz" value="0.20565 0 0.1520"/>
+  <xacro:property name="mid360_rpy" value="0 0.1745 0"/>
   <xacro:property name="radar_mass" value="0.265"/>
 
   <!-- 全向轮参数 -->
@@ -100,7 +100,7 @@
     </link>
   </xacro:macro>
 
-  <!-- base_footprint：base_link 在地面的投影，轮子与地面保留 1 mm 缝隙 -->
+  <!-- base_footprint：地面投影原点，odom 直接连接到该帧。base_link 在其上方 -->
   <link name="base_footprint"/>
 
   <!-- base_link -->
@@ -114,11 +114,11 @@
     izz="${base_mass * base_radius * base_radius / 2}"
     material="chassis_blue"/>
 
-  <xacro:fixed_joint name="base_footprint_joint" parent="base_link" child="base_footprint" xyz="0 0 ${-base_link_z}"/>
+  <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
 
-  <!-- radar_link -->
+  <!-- mid360_link -->
   <xacro:box_link
-    name="radar_link"
+    name="mid360_link"
     size="${radar_size}"
     mass="${radar_mass}"
     ixx="${radar_mass * (radar_width * radar_width + radar_height * radar_height) / 12}"
@@ -126,7 +126,7 @@
     izz="${radar_mass * (radar_length * radar_length + radar_width * radar_width) / 12}"
     material="radar_red"/>
 
-  <xacro:fixed_joint name="radar_joint" parent="base_link" child="radar_link" xyz="${radar_xyz}" rpy="${radar_rpy}"/>
+  <xacro:fixed_joint name="mid360_joint" parent="base_link" child="mid360_link" xyz="${mid360_xyz}" rpy="${mid360_rpy}"/>
 
   <!-- 四轮全向轮底盘，轮轴朝向 base_link 中心 -->
   <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>

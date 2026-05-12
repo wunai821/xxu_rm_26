@@ -40,6 +40,7 @@ def generate_launch_description():
     )
     use_sim_time = LaunchConfiguration("use_sim_time")
     enable_lio = LaunchConfiguration("enable_lio")
+    enable_cmd_vel_odom = LaunchConfiguration("enable_cmd_vel_odom")
     use_livox_native = LaunchConfiguration("use_livox_native")
 
     gz_resource_path = SetEnvironmentVariable(
@@ -64,6 +65,11 @@ def generate_launch_description():
         "enable_lio",
         default_value="true",
         description="Start Small Point-LIO and publish /odom",
+    )
+    declare_enable_cmd_vel_odom = DeclareLaunchArgument(
+        "enable_cmd_vel_odom",
+        default_value="false",
+        description="Publish simulation planar /odom by integrating /cmd_vel",
     )
     declare_use_livox_native = DeclareLaunchArgument(
         "use_livox_native",
@@ -179,6 +185,21 @@ def generate_launch_description():
             "/imu@sensor_msgs/msg/Imu[gz.msgs.IMU",
         ],
         output="screen",
+        remappings=[
+            ("/imu", "/imu_raw"),
+        ],
+    )
+
+    imu_frame_republisher = Node(
+        package="xxu_description",
+        executable="imu_frame_republisher.py",
+        name="imu_frame_republisher",
+        output="screen",
+        parameters=[{"target_frame": "base_footprint"}],
+        remappings=[
+            ("imu_in", "/imu_raw"),
+            ("imu_out", "/imu"),
+        ],
     )
 
     # MID360 LiDAR bridge (GZ -> ROS 单向)
@@ -216,10 +237,10 @@ def generate_launch_description():
         executable="scan_frame_republisher.py",
         name="scan_frame_republisher",
         output="screen",
-        parameters=[{"target_frame": "radar_link"}],
+        parameters=[{"target_frame": "base_footprint"}],
         remappings=[
             ("scan_in", "/scan_raw"),
-            ("scan_out", "/scan"),
+            ("scan_out", "/scan_raw_fixed"),
         ],
     )
 
@@ -229,7 +250,7 @@ def generate_launch_description():
         name="pointcloud_frame_republisher",
         output="screen",
         condition=UnlessCondition(use_livox_native),
-        parameters=[{"target_frame": "radar_link"}],
+        parameters=[{"target_frame": "base_footprint"}],
         remappings=[
             ("points_in", "/mid360/points_raw"),
             ("points_out", "/mid360/points_lio"),
@@ -243,7 +264,7 @@ def generate_launch_description():
         output="screen",
         condition=UnlessCondition(use_livox_native),
         parameters=[{
-            "target_frame": "radar_link",
+            "target_frame": "base_footprint",
             "scan_period": 0.1,
             "max_points": 12000,
             "scan_mode_csv": mid360_scan_mode_csv,
@@ -260,35 +281,45 @@ def generate_launch_description():
         name="livox_native_frame_republisher",
         output="screen",
         condition=IfCondition(use_livox_native),
-        parameters=[{"target_frame": "radar_link"}],
+        parameters=[{"target_frame": "base_footprint"}],
         remappings=[
             ("points_in", "/mid360/livox_points_raw"),
             ("points_out", "/mid360/livox_points"),
         ],
     )
 
-    pointcloud_processor = Node(
-        package="xxu_pointcloud_processing",
-        executable="pointcloud_processor",
-        name="pointcloud_processor",
+    pointcloud_to_scan = Node(
+        package="pointcloud_to_laserscan",
+        executable="pointcloud_to_laserscan_node",
+        name="pointcloud_to_laserscan",
         output="screen",
         parameters=[{
-            "input_frame": "radar_link",
-            "output_frame": "base_footprint",
-            "project_to_2d": True,
-            "z_value": 0.0,
+            "target_frame": "base_footprint",
+            "transform_tolerance": 0.05,
             "min_height": 0.05,
-            "max_height": 0.5,
-            "min_range": 0.05,
-            "max_range": 40.0,
-            "min_x": -40.0,
-            "max_x": 40.0,
-            "min_y": -40.0,
-            "max_y": 40.0,
+            "max_height": 0.50,
+            "angle_min": -3.1415926,
+            "angle_max": 3.1415926,
+            "angle_increment": 0.0087266,
+            "scan_time": 0.1,
+            "range_min": 0.30,
+            "range_max": 40.0,
+            "use_inf": True,
+            "inf_epsilon": 1.0,
+            "scan_qos_reliability": "reliable",
+            "publish_processed_cloud": True,
+            "processed_cloud_frame": "base_footprint",
+            "processed_cloud_project_to_2d": True,
+            "processed_cloud_z_value": 0.0,
+            "crop_min_x": -40.0,
+            "crop_max_x": 40.0,
+            "crop_min_y": -40.0,
+            "crop_max_y": 40.0,
         }],
         remappings=[
-            ("points_in", "/mid360/points_raw"),
-            ("points_out", "/mid360/points"),
+            ("cloud_in", "/mid360/livox_points"),
+            ("scan", "/scan"),
+            ("processed_cloud", "/mid360/points"),
         ],
     )
 
@@ -325,19 +356,21 @@ def generate_launch_description():
         }],
     )
 
-    keyboard_teleop = ExecuteProcess(
-        cmd=[
-            "gnome-terminal",
-            "--",
-            "ros2",
-            "run",
-            "teleop_twist_keyboard",
-            "teleop_twist_keyboard",
-            "--ros-args",
-            "-r",
-            "cmd_vel:=/cmd_vel_keyboard",
-        ],
+    cmd_vel_odometry = Node(
+        package="xxu_description",
+        executable="cmd_vel_odometry.py",
+        name="cmd_vel_odometry",
         output="screen",
+        condition=IfCondition(enable_cmd_vel_odom),
+        parameters=[{
+            "use_sim_time": use_sim_time,
+            "cmd_vel_topic": "/cmd_vel",
+            "odom_topic": "/odom",
+            "odom_frame": "odom",
+            "base_frame": "base_footprint",
+            "publish_rate": 50.0,
+            "cmd_timeout": 0.3,
+        }],
     )
 
     return LaunchDescription([
@@ -345,6 +378,7 @@ def generate_launch_description():
         gz_system_plugin_path,
         declare_use_sim_time,
         declare_enable_lio,
+        declare_enable_cmd_vel_odom,
         declare_use_livox_native,
         robot_state_publisher,
         gz_sim,
@@ -352,15 +386,16 @@ def generate_launch_description():
         spawn_controllers,
         chassis_controller,
         bridge_imu,
+        imu_frame_republisher,
         bridge_lidar,
         bridge_livox_native,
         scan_frame_republisher,
         pointcloud_frame_republisher,
         livox_pointcloud_shaper,
         livox_native_frame_republisher,
-        pointcloud_processor,
+        pointcloud_to_scan,
         small_point_lio,
         bridge_clock,
         cmd_vel_watchdog,
-        keyboard_teleop,
+        cmd_vel_odometry,
     ])

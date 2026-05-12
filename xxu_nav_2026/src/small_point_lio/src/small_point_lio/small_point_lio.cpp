@@ -46,22 +46,38 @@ namespace small_point_lio {
             if ((!preprocess.point_deque.empty() || !preprocess.imu_deque.empty()) &&
                 preprocess.point_deque.size() >= parameters.init_map_size &&
                 (!parameters.fix_gravity_direction || preprocess.imu_deque.size() >= 200)) {
-                // init map
-                for (const auto &point: preprocess.point_deque) {
-                    estimator.ivox->add_point(point.position);
-                }
-                // fix gravity direction
+                // fix gravity direction: estimate IMU tilt and initialize rotation first
                 if (parameters.fix_gravity_direction) {
-                    estimator.kf.x.gravity = Eigen::Matrix<state::value_type, 3, 1>::Zero();
+                    Eigen::Matrix<state::value_type, 3, 1> avg_acc = Eigen::Matrix<state::value_type, 3, 1>::Zero();
                     for (const auto &imu_msg: preprocess.imu_deque) {
-                        estimator.kf.x.gravity += imu_msg.linear_acceleration.cast<state::value_type>();
+                        avg_acc += imu_msg.linear_acceleration.cast<state::value_type>();
                     }
-                    state::value_type scale = -static_cast<state::value_type>(parameters.gravity.norm()) / estimator.kf.x.gravity.norm();
-                    estimator.kf.x.gravity *= scale;
+                    Eigen::Matrix<state::value_type, 3, 1> body_up = avg_acc.normalized();
+                    Eigen::Matrix<state::value_type, 3, 1> world_up = -parameters.gravity.cast<state::value_type>().normalized();
+                    Eigen::Matrix<state::value_type, 3, 1> axis = body_up.cross(world_up);
+                    state::value_type axis_norm = axis.norm();
+                    if (axis_norm > 0) {
+                        axis /= axis_norm;
+                        state::value_type angle = std::acos(body_up.dot(world_up));
+                        estimator.kf.x.rotation = Eigen::AngleAxis<state::value_type>(angle, axis).toRotationMatrix();
+                    }
+                    estimator.kf.x.gravity = parameters.gravity.cast<state::value_type>();
                 } else {
                     estimator.kf.x.gravity = parameters.gravity.cast<state::value_type>();
                 }
-                estimator.kf.x.acceleration = -estimator.kf.x.gravity;
+                estimator.kf.x.acceleration = -estimator.kf.x.rotation.transpose() * estimator.kf.x.gravity;
+                apply_planar_constraint();
+
+                // init map: transform points to world frame so they match runtime pointcloud_odom_frame
+                for (const auto &point: preprocess.point_deque) {
+                    Eigen::Matrix<state::value_type, 3, 1> point_imu_frame;
+                    if (parameters.extrinsic_est_en) {
+                        point_imu_frame = estimator.kf.x.offset_R_L_I * point.position.cast<state::value_type>() + estimator.kf.x.offset_T_L_I;
+                    } else {
+                        point_imu_frame = estimator.Lidar_R_wrt_IMU * point.position.cast<state::value_type>() + estimator.Lidar_T_wrt_IMU;
+                    }
+                    estimator.ivox->add_point((estimator.kf.x.rotation * point_imu_frame + estimator.kf.x.position).cast<float>());
+                }
                 // init time
                 if (preprocess.point_deque.empty()) {
                     time_current = preprocess.imu_deque.back().timestamp;
@@ -112,6 +128,7 @@ namespace small_point_lio {
                 // update
                 estimator.point_lidar_frame = point_lidar_frame.position;
                 estimator.kf.update_point();
+                apply_planar_constraint();
 
                 // publish odometry
                 if (parameters.publish_odometry_without_downsample) {
@@ -138,6 +155,7 @@ namespace small_point_lio {
                 estimator.angular_velocity = imu_msg.angular_velocity.cast<state::value_type>();
                 estimator.linear_acceleration = imu_msg.linear_acceleration.cast<state::value_type>();
                 estimator.kf.update_imu();
+                apply_planar_constraint();
 
                 preprocess.imu_deque.pop_front();
             }
@@ -162,6 +180,43 @@ namespace small_point_lio {
 
     void SmallPointLio::set_odometry_callback(const std::function<void(const common::Odometry &odometry)> &odometry_callback) {
         this->odometry_callback = odometry_callback;
+    }
+
+    void SmallPointLio::apply_planar_constraint() {
+        if (!parameters.planar_constraint_en) {
+            return;
+        }
+
+        auto &x = estimator.kf.x;
+        const auto yaw = std::atan2(x.rotation(1, 0), x.rotation(0, 0));
+        const auto cos_yaw = std::cos(yaw);
+        const auto sin_yaw = std::sin(yaw);
+
+        x.position.z() = static_cast<state::value_type>(parameters.planar_z);
+        x.velocity.z() = 0.0;
+        x.omg.x() = 0.0;
+        x.omg.y() = 0.0;
+        x.rotation << cos_yaw, -sin_yaw, 0.0,
+                      sin_yaw,  cos_yaw, 0.0,
+                      0.0,      0.0,     1.0;
+
+        auto &P = estimator.kf.P;
+        constexpr state::value_type constrained_cov = 1e-6;
+        const std::array<int, 5> constrained_indices = {
+                state::position_index + 2,
+                state::rotation_index + 0,
+                state::rotation_index + 1,
+                state::velocity_index + 2,
+                state::omg_index + 0,
+        };
+        for (const auto index: constrained_indices) {
+            P.row(index).setZero();
+            P.col(index).setZero();
+            P(index, index) = constrained_cov;
+        }
+        P.row(state::omg_index + 1).setZero();
+        P.col(state::omg_index + 1).setZero();
+        P(state::omg_index + 1, state::omg_index + 1) = constrained_cov;
     }
 
     void SmallPointLio::publish_odometry(double timestamp) {

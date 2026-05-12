@@ -1,0 +1,276 @@
+[0.000000] (-) TimerEvent: {}
+[0.000169] (-) JobUnselected: {'identifier': 'explore_lite'}
+[0.000204] (-) JobUnselected: {'identifier': 'explore_lite_msgs'}
+[0.000224] (-) JobUnselected: {'identifier': 'multirobot_map_merge'}
+[0.000241] (-) JobUnselected: {'identifier': 'pointcloud_to_laserscan'}
+[0.000467] (-) JobUnselected: {'identifier': 'xxu_chassis_controller'}
+[0.000526] (-) JobUnselected: {'identifier': 'xxu_description'}
+[0.000573] (-) JobUnselected: {'identifier': 'xxu_livox_sim'}
+[0.000631] (-) JobUnselected: {'identifier': 'xxu_pointcloud_processing'}
+[0.000648] (-) JobUnselected: {'identifier': 'xxu_slam_toolbox'}
+[0.000673] (small_point_lio) JobQueued: {'identifier': 'small_point_lio', 'dependencies': OrderedDict()}
+[0.000741] (small_point_lio) JobStarted: {'identifier': 'small_point_lio'}
+[0.006017] (small_point_lio) JobProgress: {'identifier': 'small_point_lio', 'progress': 'cmake'}
+[0.006568] (small_point_lio) JobProgress: {'identifier': 'small_point_lio', 'progress': 'build'}
+[0.007211] (small_point_lio) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio', '--', '-j24', '-l24'], 'cwd': '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio', 'env': OrderedDict({'GJS_DEBUG_TOPICS': 'JS ERROR;JS LOG', 'PYTHON_BASIC_REPL': '1', 'VSCODE_CWD': '/home/naiwu/xxu_2026', 'CODEX_CI': '1', 'HTTPS_PROXY': 'http://127.0.0.1:7897', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'CODEX_INTERNAL_ORIGINATOR_OVERRIDE': 'codex_vscode', 'GZ_SIM_RESOURCE_PATH': '/opt/ros/jazzy/share', 'LANGUAGE': 'zh_CN:en', 'LC_TIME': 'zh_CN.UTF-8', 'USER': 'naiwu', 'VSCODE_NLS_CONFIG': '{"userLocale":"zh-cn","osLocale":"zh-cn","resolvedLanguage":"zh-cn","defaultMessagesFile":"/usr/share/code/resources/app/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/tcf.json","messagesFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/61b3d0ab13be7dda2389f1d3e60a119c7f660cc3/nls.messages.json","corruptMarkerFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/corrupted.info"},"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"260f1e75be0cfbabbd36f02f327e4f1d.zh-cn","_languagePackSupport":true,"_translationsConfigFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/tcf.json","_cacheRoot":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn","_resolvedLanguagePackCoreLocation":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/61b3d0ab13be7dda2389f1d3e60a119c7f660cc3","_corruptedFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/corrupted.info"}', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'DEBUG': 'release', 'GIT_ASKPASS': '/usr/share/code/resources/app/extensions/git/dist/askpass.sh', 'XDG_SESSION_TYPE': 'x11', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor/lib:/opt/ros/jazzy/opt/gz_sensors_vendor/lib:/opt/ros/jazzy/opt/gz_physics_vendor/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/x86_64-linux-gnu:/opt/ros/jazzy/opt/gz_gui_vendor/lib:/opt/ros/jazzy/opt/gz_transport_vendor/lib:/opt/ros/jazzy/opt/gz_rendering_vendor/lib:/opt/ros/jazzy/opt/gz_plugin_vendor/lib:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/lib:/opt/ros/jazzy/opt/gz_msgs_vendor/lib:/opt/ros/jazzy/opt/gz_common_vendor/lib:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_ogre_next_vendor/lib:/opt/ros/jazzy/opt/gz_dartsim_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'SHLVL': '1', 'CHROME_DESKTOP': 'code.desktop', 'HOME': '/home/naiwu', 'LESS': '-R', 'OLDPWD': '/home/naiwu/xxu_2026', 'DESKTOP_SESSION': 'ubuntu', 'TERM_PROGRAM_VERSION': '1.110.1', 'GIO_LAUNCHED_DESKTOP_FILE': '/usr/share/applications/code.desktop', 'LSCOLORS': 'Gxfxcxdxbxegedabagacad', 'VSCODE_IPC_HOOK': '/run/user/1000/vscode-d86b5384-1.11-main.sock', 'ZSH': '/home/naiwu/.oh-my-zsh', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'PAGER': 'less', 'ROS_PYTHON_VERSION': '3', 'SDL_IM_MODULE': 'fcitx', 'VSCODE_GIT_ASKPASS_MAIN': '/usr/share/code/resources/app/extensions/git/dist/askpass-main.js', 'LC_CTYPE': 'C.UTF-8', 'LC_MONETARY': 'zh_CN.UTF-8', 'MANAGERPID': '3055', 'VSCODE_GIT_ASKPASS_NODE': '/usr/share/code/code', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'NO_COLOR': '1', 'P9K_TTY': 'old', 'SYSTEMD_EXEC_PID': '3535', 'VSCODE_PYTHON_AUTOACTIVATE_GUARD': '1', 'COLORTERM': 'truecolor', 'GIO_LAUNCHED_DESKTOP_FILE_PID': '18221', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'VSCODE_CRASH_REPORTER_PROCESS_TYPE': 'extensionHost', 'ROS_DISTRO': 'jazzy', 'GTK_IM_MODULE': 'fcitx', 'LOGNAME': 'naiwu', 'JOURNAL_STREAM': '9:33772', '_': '/usr/bin/colcon', '_P9K_SSH_TTY': '', 'CLAUDE_CODE_SSE_PORT': '34102', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@x11.service/memory.pressure', 'ROS_VERSION': '2', 'RUST_LOG': 'warn', 'USER_ZDOTDIR': '/home/naiwu', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'USERNAME': 'naiwu', 'FC_FONTATIONS': '1', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'CODELLDB_LAUNCH_CONNECT_FILE': '/home/naiwu/.config/Code/User/workspaceStorage/13b7ea398ea28a7a19fadf5c881bdc62/vadimcn.vscode-lldb/rpcaddress.txt', 'WINDOWPATH': '2', 'PATH': '/home/naiwu/.codex/tmp/arg0/codex-arg0amu3lG:/home/naiwu/.npm-packages/bin:/home/naiwu/.vscode/extensions/vadimcn.vscode-lldb-1.12.1/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/home/naiwu/.npm-packages/bin:/home/naiwu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/naiwu/.vscode/extensions/openai.chatgpt-26.5422.21459-linux-x64/bin/linux-x86_64', 'GTK3_MODULES': 'xapp-gtk3-module', 'INVOCATION_ID': '38122cdf889143b7b92c3439a5aa6531', 'PAPERSIZE': 'a4', 'SESSION_MANAGER': 'local/naiwu-Redmi-G-Pro-2024:@/tmp/.ICE-unix/3481,unix/naiwu-Redmi-G-Pro-2024:/tmp/.ICE-unix/3481', 'GDK_BACKEND': 'x11', 'LC_ADDRESS': 'zh_CN.UTF-8', 'XDG_MENU_PREFIX': 'gnome-', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':1', 'LANG': 'zh_CN.UTF-8', 'LC_TELEPHONE': 'zh_CN.UTF-8', 'PYTHONSTARTUP': '/home/naiwu/.config/Code/User/workspaceStorage/13b7ea398ea28a7a19fadf5c881bdc62/ms-python.python/pythonrc.py', 'VSCODE_INJECTION': '1', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'GH_PAGER': 'cat', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'TERM_PROGRAM': 'vscode', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-4d53b4fb43.sock', 'XAUTHORITY': '/run/user/1000/gdm/Xauthority', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XMODIFIERS': '@im=fcitx', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'LC_NAME': 'zh_CN.UTF-8', 'SHELL': '/usr/bin/zsh', 'ELECTRON_RUN_AS_NODE': '1', 'GDMSESSION': 'ubuntu', 'NO_AT_BRIDGE': '1', 'QT_ACCESSIBILITY': '1', 'CODEX_THREAD_ID': '019e1b33-59b6-7850-b236-8a544989408f', 'LC_MEASUREMENT': 'zh_CN.UTF-8', 'GJS_DEBUG_OUTPUT': 'stderr', 'GPG_AGENT_INFO': '/run/user/1000/gnupg/S.gpg-agent:0:1', 'LC_IDENTIFICATION': 'zh_CN.UTF-8', 'P9K_SSH': '0', 'GIT_PAGER': 'cat', 'QT_IM_MODULE': 'fcitx', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'VSCODE_NONCE': 'a444ba39-b9b4-470c-acfe-90cfb7fdc278', 'LC_ALL': 'en_US.UTF-8', 'PWD': '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio', 'VSCODE_CLI': '1', 'CLUTTER_IM_MODULE': 'xim', 'VSCODE_CODE_CACHE_PATH': '/home/naiwu/.config/Code/CachedData/61b3d0ab13be7dda2389f1d3e60a119c7f660cc3', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'ZDOTDIR': '/home/naiwu', '_P9K_TTY': '/dev/pts/2', 'HTTP_PROXY': 'http://127.0.0.1:7897', 'LC_NUMERIC': 'zh_CN.UTF-8', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.12/site-packages', 'QTWEBENGINE_DICTIONARIES_PATH': '/usr/share/hunspell-bdic/', 'LC_PAPER': 'zh_CN.UTF-8', 'COLCON': '1', 'ELECTRON_NO_ATTACH_CONSOLE': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'CMAKE_PREFIX_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor:/opt/ros/jazzy/opt/gz_sensors_vendor:/opt/ros/jazzy/opt/gz_physics_vendor:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_gui_vendor:/opt/ros/jazzy/opt/gz_transport_vendor:/opt/ros/jazzy/opt/gz_rendering_vendor:/opt/ros/jazzy/opt/gz_plugin_vendor:/opt/ros/jazzy/opt/gz_fuel_tools_vendor:/opt/ros/jazzy/opt/gz_msgs_vendor:/opt/ros/jazzy/opt/gz_common_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_ogre_next_vendor:/opt/ros/jazzy/opt/gz_dartsim_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor:/opt/ros/jazzy', 'VSCODE_PID': '18221'}), 'shell': False}
+[0.058973] (small_point_lio) StdoutLine: {'line': b'[ 14%] Built target small_point_lio_node\n'}
+[0.059406] (small_point_lio) StdoutLine: {'line': b'[ 35%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/preprocess.cpp.o\n'}
+[0.059492] (small_point_lio) StdoutLine: {'line': b'[ 35%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/small_point_lio.cpp.o\n'}
+[0.059563] (small_point_lio) StdoutLine: {'line': b'[ 35%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/parameters.cpp.o\n'}
+[0.060810] (small_point_lio) StdoutLine: {'line': b'[ 42%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio_node.cpp.o\n'}
+[0.061007] (small_point_lio) StdoutLine: {'line': b'[ 50%] Building CXX object CMakeFiles/small_point_lio.dir/src/small_point_lio/estimator.cpp.o\n'}
+[0.099862] (-) TimerEvent: {}
+[0.200050] (-) TimerEvent: {}
+[0.300380] (-) TimerEvent: {}
+[0.400592] (-) TimerEvent: {}
+[0.500785] (-) TimerEvent: {}
+[0.600976] (-) TimerEvent: {}
+[0.701179] (-) TimerEvent: {}
+[0.801355] (-) TimerEvent: {}
+[0.901552] (-) TimerEvent: {}
+[1.001757] (-) TimerEvent: {}
+[1.101973] (-) TimerEvent: {}
+[1.202199] (-) TimerEvent: {}
+[1.302363] (-) TimerEvent: {}
+[1.402532] (-) TimerEvent: {}
+[1.502821] (-) TimerEvent: {}
+[1.603077] (-) TimerEvent: {}
+[1.703936] (-) TimerEvent: {}
+[1.804129] (-) TimerEvent: {}
+[1.904356] (-) TimerEvent: {}
+[2.004589] (-) TimerEvent: {}
+[2.104864] (-) TimerEvent: {}
+[2.205105] (-) TimerEvent: {}
+[2.305283] (-) TimerEvent: {}
+[2.405424] (-) TimerEvent: {}
+[2.505576] (-) TimerEvent: {}
+[2.605767] (-) TimerEvent: {}
+[2.705939] (-) TimerEvent: {}
+[2.806087] (-) TimerEvent: {}
+[2.906191] (-) TimerEvent: {}
+[3.006326] (-) TimerEvent: {}
+[3.106476] (-) TimerEvent: {}
+[3.206660] (-) TimerEvent: {}
+[3.306829] (-) TimerEvent: {}
+[3.407082] (-) TimerEvent: {}
+[3.507191] (-) TimerEvent: {}
+[3.607328] (-) TimerEvent: {}
+[3.707563] (-) TimerEvent: {}
+[3.807737] (-) TimerEvent: {}
+[3.907884] (-) TimerEvent: {}
+[4.008043] (-) TimerEvent: {}
+[4.108224] (-) TimerEvent: {}
+[4.208407] (-) TimerEvent: {}
+[4.308658] (-) TimerEvent: {}
+[4.408871] (-) TimerEvent: {}
+[4.509178] (-) TimerEvent: {}
+[4.609360] (-) TimerEvent: {}
+[4.709532] (-) TimerEvent: {}
+[4.809732] (-) TimerEvent: {}
+[4.909960] (-) TimerEvent: {}
+[5.010263] (-) TimerEvent: {}
+[5.110523] (-) TimerEvent: {}
+[5.210694] (-) TimerEvent: {}
+[5.311007] (-) TimerEvent: {}
+[5.411182] (-) TimerEvent: {}
+[5.511353] (-) TimerEvent: {}
+[5.611541] (-) TimerEvent: {}
+[5.711707] (-) TimerEvent: {}
+[5.811877] (-) TimerEvent: {}
+[5.912043] (-) TimerEvent: {}
+[6.012215] (-) TimerEvent: {}
+[6.112387] (-) TimerEvent: {}
+[6.212556] (-) TimerEvent: {}
+[6.312726] (-) TimerEvent: {}
+[6.412901] (-) TimerEvent: {}
+[6.513066] (-) TimerEvent: {}
+[6.613393] (-) TimerEvent: {}
+[6.713687] (-) TimerEvent: {}
+[6.813968] (-) TimerEvent: {}
+[6.914267] (-) TimerEvent: {}
+[7.014469] (-) TimerEvent: {}
+[7.114635] (-) TimerEvent: {}
+[7.214884] (-) TimerEvent: {}
+[7.315116] (-) TimerEvent: {}
+[7.415341] (-) TimerEvent: {}
+[7.515604] (-) TimerEvent: {}
+[7.615865] (-) TimerEvent: {}
+[7.716072] (-) TimerEvent: {}
+[7.816329] (-) TimerEvent: {}
+[7.916501] (-) TimerEvent: {}
+[8.016697] (-) TimerEvent: {}
+[8.116973] (-) TimerEvent: {}
+[8.217205] (-) TimerEvent: {}
+[8.317425] (-) TimerEvent: {}
+[8.417644] (-) TimerEvent: {}
+[8.517840] (-) TimerEvent: {}
+[8.618101] (-) TimerEvent: {}
+[8.718300] (-) TimerEvent: {}
+[8.818480] (-) TimerEvent: {}
+[8.918679] (-) TimerEvent: {}
+[9.018997] (-) TimerEvent: {}
+[9.119211] (-) TimerEvent: {}
+[9.219523] (-) TimerEvent: {}
+[9.319781] (-) TimerEvent: {}
+[9.420057] (-) TimerEvent: {}
+[9.520369] (-) TimerEvent: {}
+[9.620532] (-) TimerEvent: {}
+[9.720731] (-) TimerEvent: {}
+[9.820939] (-) TimerEvent: {}
+[9.921198] (-) TimerEvent: {}
+[10.021360] (-) TimerEvent: {}
+[10.121522] (-) TimerEvent: {}
+[10.221721] (-) TimerEvent: {}
+[10.322017] (-) TimerEvent: {}
+[10.422295] (-) TimerEvent: {}
+[10.522458] (-) TimerEvent: {}
+[10.622621] (-) TimerEvent: {}
+[10.722817] (-) TimerEvent: {}
+[10.823089] (-) TimerEvent: {}
+[10.923348] (-) TimerEvent: {}
+[11.023635] (-) TimerEvent: {}
+[11.123883] (-) TimerEvent: {}
+[11.224115] (-) TimerEvent: {}
+[11.324298] (-) TimerEvent: {}
+[11.424433] (-) TimerEvent: {}
+[11.524590] (-) TimerEvent: {}
+[11.624751] (-) TimerEvent: {}
+[11.724889] (-) TimerEvent: {}
+[11.825044] (-) TimerEvent: {}
+[11.925209] (-) TimerEvent: {}
+[12.025347] (-) TimerEvent: {}
+[12.125483] (-) TimerEvent: {}
+[12.225638] (-) TimerEvent: {}
+[12.325799] (-) TimerEvent: {}
+[12.425935] (-) TimerEvent: {}
+[12.526175] (-) TimerEvent: {}
+[12.626325] (-) TimerEvent: {}
+[12.726459] (-) TimerEvent: {}
+[12.826702] (-) TimerEvent: {}
+[12.926868] (-) TimerEvent: {}
+[13.027030] (-) TimerEvent: {}
+[13.127198] (-) TimerEvent: {}
+[13.227332] (-) TimerEvent: {}
+[13.327537] (-) TimerEvent: {}
+[13.427745] (-) TimerEvent: {}
+[13.527998] (-) TimerEvent: {}
+[13.628160] (-) TimerEvent: {}
+[13.728328] (-) TimerEvent: {}
+[13.828490] (-) TimerEvent: {}
+[13.928686] (-) TimerEvent: {}
+[14.028869] (-) TimerEvent: {}
+[14.129062] (-) TimerEvent: {}
+[14.229316] (-) TimerEvent: {}
+[14.329475] (-) TimerEvent: {}
+[14.429641] (-) TimerEvent: {}
+[14.529902] (-) TimerEvent: {}
+[14.630102] (-) TimerEvent: {}
+[14.730349] (-) TimerEvent: {}
+[14.830508] (-) TimerEvent: {}
+[14.930686] (-) TimerEvent: {}
+[15.030961] (-) TimerEvent: {}
+[15.131256] (-) TimerEvent: {}
+[15.231422] (-) TimerEvent: {}
+[15.331704] (-) TimerEvent: {}
+[15.431961] (-) TimerEvent: {}
+[15.532171] (-) TimerEvent: {}
+[15.632408] (-) TimerEvent: {}
+[15.732570] (-) TimerEvent: {}
+[15.832786] (-) TimerEvent: {}
+[15.933047] (-) TimerEvent: {}
+[16.033323] (-) TimerEvent: {}
+[16.133487] (-) TimerEvent: {}
+[16.233693] (-) TimerEvent: {}
+[16.333977] (-) TimerEvent: {}
+[16.434176] (-) TimerEvent: {}
+[16.534324] (-) TimerEvent: {}
+[16.634494] (-) TimerEvent: {}
+[16.734665] (-) TimerEvent: {}
+[16.834839] (-) TimerEvent: {}
+[16.935078] (-) TimerEvent: {}
+[17.035310] (-) TimerEvent: {}
+[17.135466] (-) TimerEvent: {}
+[17.235669] (-) TimerEvent: {}
+[17.335855] (-) TimerEvent: {}
+[17.436046] (-) TimerEvent: {}
+[17.536328] (-) TimerEvent: {}
+[17.636488] (-) TimerEvent: {}
+[17.736753] (-) TimerEvent: {}
+[17.836948] (-) TimerEvent: {}
+[17.937249] (-) TimerEvent: {}
+[18.037530] (-) TimerEvent: {}
+[18.137729] (-) TimerEvent: {}
+[18.238009] (-) TimerEvent: {}
+[18.338296] (-) TimerEvent: {}
+[18.438464] (-) TimerEvent: {}
+[18.538677] (-) TimerEvent: {}
+[18.638906] (-) TimerEvent: {}
+[18.739063] (-) TimerEvent: {}
+[18.839203] (-) TimerEvent: {}
+[18.939446] (-) TimerEvent: {}
+[19.039647] (-) TimerEvent: {}
+[19.139841] (-) TimerEvent: {}
+[19.240045] (-) TimerEvent: {}
+[19.340331] (-) TimerEvent: {}
+[19.440603] (-) TimerEvent: {}
+[19.540811] (-) TimerEvent: {}
+[19.641096] (-) TimerEvent: {}
+[19.742620] (-) TimerEvent: {}
+[19.842765] (-) TimerEvent: {}
+[19.942942] (-) TimerEvent: {}
+[20.043118] (-) TimerEvent: {}
+[20.143315] (-) TimerEvent: {}
+[20.243448] (-) TimerEvent: {}
+[20.343616] (-) TimerEvent: {}
+[20.443753] (-) TimerEvent: {}
+[20.543918] (-) TimerEvent: {}
+[20.644085] (-) TimerEvent: {}
+[20.744401] (-) TimerEvent: {}
+[20.844678] (-) TimerEvent: {}
+[20.944863] (-) TimerEvent: {}
+[21.045016] (-) TimerEvent: {}
+[21.145193] (-) TimerEvent: {}
+[21.238433] (small_point_lio) StdoutLine: {'line': b'[ 57%] Linking CXX shared library libsmall_point_lio.so\n'}
+[21.245281] (-) TimerEvent: {}
+[21.345435] (-) TimerEvent: {}
+[21.445603] (-) TimerEvent: {}
+[21.545825] (-) TimerEvent: {}
+[21.646092] (-) TimerEvent: {}
+[21.746333] (-) TimerEvent: {}
+[21.765971] (small_point_lio) StdoutLine: {'line': b'[100%] Built target small_point_lio\n'}
+[21.774807] (small_point_lio) CommandEnded: {'returncode': 0}
+[21.775622] (small_point_lio) JobProgress: {'identifier': 'small_point_lio', 'progress': 'install'}
+[21.783449] (small_point_lio) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio'], 'cwd': '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio', 'env': OrderedDict({'GJS_DEBUG_TOPICS': 'JS ERROR;JS LOG', 'PYTHON_BASIC_REPL': '1', 'VSCODE_CWD': '/home/naiwu/xxu_2026', 'CODEX_CI': '1', 'HTTPS_PROXY': 'http://127.0.0.1:7897', 'VSCODE_ESM_ENTRYPOINT': 'vs/workbench/api/node/extensionHostProcess', 'CODEX_INTERNAL_ORIGINATOR_OVERRIDE': 'codex_vscode', 'GZ_SIM_RESOURCE_PATH': '/opt/ros/jazzy/share', 'LANGUAGE': 'zh_CN:en', 'LC_TIME': 'zh_CN.UTF-8', 'USER': 'naiwu', 'VSCODE_NLS_CONFIG': '{"userLocale":"zh-cn","osLocale":"zh-cn","resolvedLanguage":"zh-cn","defaultMessagesFile":"/usr/share/code/resources/app/out/nls.messages.json","languagePack":{"translationsConfigFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/tcf.json","messagesFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/61b3d0ab13be7dda2389f1d3e60a119c7f660cc3/nls.messages.json","corruptMarkerFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/corrupted.info"},"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"260f1e75be0cfbabbd36f02f327e4f1d.zh-cn","_languagePackSupport":true,"_translationsConfigFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/tcf.json","_cacheRoot":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn","_resolvedLanguagePackCoreLocation":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/61b3d0ab13be7dda2389f1d3e60a119c7f660cc3","_corruptedFile":"/home/naiwu/.config/Code/clp/260f1e75be0cfbabbd36f02f327e4f1d.zh-cn/corrupted.info"}', 'GZ_CONFIG_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor/share/gz:/opt/ros/jazzy/opt/sdformat_vendor/share/gz:/opt/ros/jazzy/opt/gz_gui_vendor/share/gz:/opt/ros/jazzy/opt/gz_transport_vendor/share/gz:/opt/ros/jazzy/opt/gz_rendering_vendor/share/gz:/opt/ros/jazzy/opt/gz_plugin_vendor/share/gz:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/share/gz:/opt/ros/jazzy/opt/gz_msgs_vendor/share/gz:/opt/ros/jazzy/opt/gz_common_vendor/share/gz', 'VSCODE_HANDLES_UNCAUGHT_ERRORS': 'true', 'DEBUG': 'release', 'GIT_ASKPASS': '/usr/share/code/resources/app/extensions/git/dist/askpass.sh', 'XDG_SESSION_TYPE': 'x11', 'CLUTTER_DISABLE_MIPMAPPED_TEXT': '1', 'LD_LIBRARY_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor/lib:/opt/ros/jazzy/opt/gz_sensors_vendor/lib:/opt/ros/jazzy/opt/gz_physics_vendor/lib:/opt/ros/jazzy/opt/sdformat_vendor/lib:/opt/ros/jazzy/opt/rviz_ogre_vendor/lib:/opt/ros/jazzy/lib/x86_64-linux-gnu:/opt/ros/jazzy/opt/gz_gui_vendor/lib:/opt/ros/jazzy/opt/gz_transport_vendor/lib:/opt/ros/jazzy/opt/gz_rendering_vendor/lib:/opt/ros/jazzy/opt/gz_plugin_vendor/lib:/opt/ros/jazzy/opt/gz_fuel_tools_vendor/lib:/opt/ros/jazzy/opt/gz_msgs_vendor/lib:/opt/ros/jazzy/opt/gz_common_vendor/lib:/opt/ros/jazzy/opt/gz_math_vendor/lib:/opt/ros/jazzy/opt/gz_utils_vendor/lib:/opt/ros/jazzy/opt/gz_tools_vendor/lib:/opt/ros/jazzy/opt/gz_ogre_next_vendor/lib:/opt/ros/jazzy/opt/gz_dartsim_vendor/lib:/opt/ros/jazzy/opt/gz_cmake_vendor/lib:/opt/ros/jazzy/lib', 'SHLVL': '1', 'CHROME_DESKTOP': 'code.desktop', 'HOME': '/home/naiwu', 'LESS': '-R', 'OLDPWD': '/home/naiwu/xxu_2026', 'DESKTOP_SESSION': 'ubuntu', 'TERM_PROGRAM_VERSION': '1.110.1', 'GIO_LAUNCHED_DESKTOP_FILE': '/usr/share/applications/code.desktop', 'LSCOLORS': 'Gxfxcxdxbxegedabagacad', 'VSCODE_IPC_HOOK': '/run/user/1000/vscode-d86b5384-1.11-main.sock', 'ZSH': '/home/naiwu/.oh-my-zsh', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'PAGER': 'less', 'ROS_PYTHON_VERSION': '3', 'SDL_IM_MODULE': 'fcitx', 'VSCODE_GIT_ASKPASS_MAIN': '/usr/share/code/resources/app/extensions/git/dist/askpass-main.js', 'LC_CTYPE': 'C.UTF-8', 'LC_MONETARY': 'zh_CN.UTF-8', 'MANAGERPID': '3055', 'VSCODE_GIT_ASKPASS_NODE': '/usr/share/code/code', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'GSM_SKIP_SSH_AGENT_WORKAROUND': 'true', 'NO_COLOR': '1', 'P9K_TTY': 'old', 'SYSTEMD_EXEC_PID': '3535', 'VSCODE_PYTHON_AUTOACTIVATE_GUARD': '1', 'COLORTERM': 'truecolor', 'GIO_LAUNCHED_DESKTOP_FILE_PID': '18221', 'DEBUGINFOD_URLS': 'https://debuginfod.ubuntu.com', 'VSCODE_CRASH_REPORTER_PROCESS_TYPE': 'extensionHost', 'ROS_DISTRO': 'jazzy', 'GTK_IM_MODULE': 'fcitx', 'LOGNAME': 'naiwu', 'JOURNAL_STREAM': '9:33772', '_': '/usr/bin/colcon', '_P9K_SSH_TTY': '', 'CLAUDE_CODE_SSE_PORT': '34102', 'MEMORY_PRESSURE_WATCH': '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/session.slice/org.gnome.Shell@x11.service/memory.pressure', 'ROS_VERSION': '2', 'RUST_LOG': 'warn', 'USER_ZDOTDIR': '/home/naiwu', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'USERNAME': 'naiwu', 'FC_FONTATIONS': '1', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'CODELLDB_LAUNCH_CONNECT_FILE': '/home/naiwu/.config/Code/User/workspaceStorage/13b7ea398ea28a7a19fadf5c881bdc62/vadimcn.vscode-lldb/rpcaddress.txt', 'WINDOWPATH': '2', 'PATH': '/home/naiwu/.codex/tmp/arg0/codex-arg0amu3lG:/home/naiwu/.npm-packages/bin:/home/naiwu/.vscode/extensions/vadimcn.vscode-lldb-1.12.1/bin:/opt/ros/jazzy/opt/gz_msgs_vendor/bin:/opt/ros/jazzy/opt/gz_tools_vendor/bin:/opt/ros/jazzy/opt/gz_ogre_next_vendor/bin:/opt/ros/jazzy/bin:/home/naiwu/.npm-packages/bin:/home/naiwu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/home/naiwu/.vscode/extensions/openai.chatgpt-26.5422.21459-linux-x64/bin/linux-x86_64', 'GTK3_MODULES': 'xapp-gtk3-module', 'INVOCATION_ID': '38122cdf889143b7b92c3439a5aa6531', 'PAPERSIZE': 'a4', 'SESSION_MANAGER': 'local/naiwu-Redmi-G-Pro-2024:@/tmp/.ICE-unix/3481,unix/naiwu-Redmi-G-Pro-2024:/tmp/.ICE-unix/3481', 'GDK_BACKEND': 'x11', 'LC_ADDRESS': 'zh_CN.UTF-8', 'XDG_MENU_PREFIX': 'gnome-', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':1', 'LANG': 'zh_CN.UTF-8', 'LC_TELEPHONE': 'zh_CN.UTF-8', 'PYTHONSTARTUP': '/home/naiwu/.config/Code/User/workspaceStorage/13b7ea398ea28a7a19fadf5c881bdc62/ms-python.python/pythonrc.py', 'VSCODE_INJECTION': '1', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'GH_PAGER': 'cat', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:', 'TERM_PROGRAM': 'vscode', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-4d53b4fb43.sock', 'XAUTHORITY': '/run/user/1000/gdm/Xauthority', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XMODIFIERS': '@im=fcitx', 'AMENT_PREFIX_PATH': '/opt/ros/jazzy', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'LC_NAME': 'zh_CN.UTF-8', 'SHELL': '/usr/bin/zsh', 'ELECTRON_RUN_AS_NODE': '1', 'GDMSESSION': 'ubuntu', 'NO_AT_BRIDGE': '1', 'QT_ACCESSIBILITY': '1', 'CODEX_THREAD_ID': '019e1b33-59b6-7850-b236-8a544989408f', 'LC_MEASUREMENT': 'zh_CN.UTF-8', 'GJS_DEBUG_OUTPUT': 'stderr', 'GPG_AGENT_INFO': '/run/user/1000/gnupg/S.gpg-agent:0:1', 'LC_IDENTIFICATION': 'zh_CN.UTF-8', 'P9K_SSH': '0', 'GIT_PAGER': 'cat', 'QT_IM_MODULE': 'fcitx', 'ROS_AUTOMATIC_DISCOVERY_RANGE': 'SUBNET', 'VSCODE_NONCE': 'a444ba39-b9b4-470c-acfe-90cfb7fdc278', 'LC_ALL': 'en_US.UTF-8', 'PWD': '/home/naiwu/xxu_2026/xxu_nav_2026/build/small_point_lio', 'VSCODE_CLI': '1', 'CLUTTER_IM_MODULE': 'xim', 'VSCODE_CODE_CACHE_PATH': '/home/naiwu/.config/Code/CachedData/61b3d0ab13be7dda2389f1d3e60a119c7f660cc3', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'ZDOTDIR': '/home/naiwu', '_P9K_TTY': '/dev/pts/2', 'HTTP_PROXY': 'http://127.0.0.1:7897', 'LC_NUMERIC': 'zh_CN.UTF-8', 'PYTHONPATH': '/opt/ros/jazzy/lib/python3.12/site-packages', 'QTWEBENGINE_DICTIONARIES_PATH': '/usr/share/hunspell-bdic/', 'LC_PAPER': 'zh_CN.UTF-8', 'COLCON': '1', 'ELECTRON_NO_ATTACH_CONSOLE': '1', 'MEMORY_PRESSURE_WRITE': 'c29tZSAyMDAwMDAgMjAwMDAwMAA=', 'CMAKE_PREFIX_PATH': '/opt/ros/jazzy/opt/gz_sim_vendor:/opt/ros/jazzy/opt/gz_sensors_vendor:/opt/ros/jazzy/opt/gz_physics_vendor:/opt/ros/jazzy/opt/sdformat_vendor:/opt/ros/jazzy/opt/gz_gui_vendor:/opt/ros/jazzy/opt/gz_transport_vendor:/opt/ros/jazzy/opt/gz_rendering_vendor:/opt/ros/jazzy/opt/gz_plugin_vendor:/opt/ros/jazzy/opt/gz_fuel_tools_vendor:/opt/ros/jazzy/opt/gz_msgs_vendor:/opt/ros/jazzy/opt/gz_common_vendor:/opt/ros/jazzy/opt/gz_math_vendor:/opt/ros/jazzy/opt/gz_utils_vendor:/opt/ros/jazzy/opt/gz_tools_vendor:/opt/ros/jazzy/opt/gz_ogre_next_vendor:/opt/ros/jazzy/opt/gz_dartsim_vendor:/opt/ros/jazzy/opt/gz_cmake_vendor:/opt/ros/jazzy', 'VSCODE_PID': '18221'}), 'shell': False}
+[21.788979] (small_point_lio) StdoutLine: {'line': b'-- Install configuration: "RelWithDebInfo"\n'}
+[21.789792] (small_point_lio) StdoutLine: {'line': b'-- Execute custom install script\n'}
+[21.789979] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/small_point_lio/small_point_lio_node\n'}
+[21.790385] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/include/small_point_lio/param_deliver.h.in\n'}
+[21.790512] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/include/small_point_lio/pch.h\n'}
+[21.790705] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/library_path.sh\n'}
+[21.790841] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/library_path.dsv\n'}
+[21.791026] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/lib/libsmall_point_lio.so\n'}
+[21.791387] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/config/mid360.yaml\n'}
+[21.791498] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/config/unilidar_l2.yaml\n'}
+[21.791608] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/config/xxu_gazebo_mid360.yaml\n'}
+[21.791905] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/launch/small_point_lio.launch.py\n'}
+[21.792065] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/package_run_dependencies/small_point_lio\n'}
+[21.792209] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/parent_prefix_path/small_point_lio\n'}
+[21.792350] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/ament_prefix_path.sh\n'}
+[21.792484] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/ament_prefix_path.dsv\n'}
+[21.792616] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/path.sh\n'}
+[21.792747] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/environment/path.dsv\n'}
+[21.792922] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.bash\n'}
+[21.793047] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.sh\n'}
+[21.793227] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.zsh\n'}
+[21.793367] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/local_setup.dsv\n'}
+[21.793455] (small_point_lio) StdoutLine: {'line': b'-- Symlinking: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.dsv\n'}
+[21.799362] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/packages/small_point_lio\n'}
+[21.799495] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/ament_index/resource_index/rclcpp_components/small_point_lio\n'}
+[21.799581] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/ament_cmake_export_include_directories-extras.cmake\n'}
+[21.799697] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/ament_cmake_export_libraries-extras.cmake\n'}
+[21.799834] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/small_point_lioConfig.cmake\n'}
+[21.799943] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/cmake/small_point_lioConfig-version.cmake\n'}
+[21.800076] (small_point_lio) StdoutLine: {'line': b'-- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/small_point_lio/share/small_point_lio/package.xml\n'}
+[21.800860] (small_point_lio) CommandEnded: {'returncode': 0}
+[21.811862] (small_point_lio) JobEnded: {'identifier': 'small_point_lio', 'rc': 0}
+[21.812223] (-) EventReactorShutdown: {}

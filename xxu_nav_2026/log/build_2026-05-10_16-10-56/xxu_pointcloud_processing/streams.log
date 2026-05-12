@@ -1,0 +1,23 @@
+[0.021s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing -- -j24 -l24
+[0.064s] [100%] Built target pointcloud_processor
+[0.071s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing -- -j24 -l24
+[0.089s] Invoking command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing
+[0.095s] -- Install configuration: ""
+[0.095s] -- Execute custom install script
+[0.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/lib/xxu_pointcloud_processing/pointcloud_processor
+[0.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/package_run_dependencies/xxu_pointcloud_processing
+[0.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/parent_prefix_path/xxu_pointcloud_processing
+[0.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/ament_prefix_path.sh
+[0.096s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/ament_prefix_path.dsv
+[0.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/path.sh
+[0.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/environment/path.dsv
+[0.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.bash
+[0.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.sh
+[0.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.zsh
+[0.097s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/local_setup.dsv
+[0.098s] -- Symlinking: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/package.dsv
+[0.106s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/ament_index/resource_index/packages/xxu_pointcloud_processing
+[0.106s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/cmake/xxu_pointcloud_processingConfig.cmake
+[0.106s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/cmake/xxu_pointcloud_processingConfig-version.cmake
+[0.107s] -- Up-to-date symlink: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_pointcloud_processing/share/xxu_pointcloud_processing/package.xml
+[0.122s] Invoked command in '/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing

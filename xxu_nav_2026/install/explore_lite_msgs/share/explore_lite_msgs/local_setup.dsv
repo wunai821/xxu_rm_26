@@ -1,4 +1,1 @@
-source;share/explore_lite_msgs/environment/ament_prefix_path.sh
-source;share/explore_lite_msgs/environment/library_path.sh
-source;share/explore_lite_msgs/environment/path.sh
-source;share/explore_lite_msgs/environment/pythonpath.sh
+/home/naiwu/xxu_2026/xxu_nav_2026/build/explore_lite_msgs/ament_cmake_environment_hooks/local_setup.dsv

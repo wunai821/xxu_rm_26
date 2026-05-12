@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20260511-0627-Experimental"
+	Name="naiwu-Redmi-G-Pro-2024"
+	Generator="ctest-3.28.3"
+	CompilerName="/usr/bin/clang++"
+	CompilerVersion="18.1.3"
+	OSName="Linux"
+	Hostname="naiwu-Redmi-G-Pro-2024"
+	OSRelease="6.17.0-23-generic"
+	OSVersion="#23~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Tue Apr 14 16:11:48 UTC 2"
+	OSPlatform="x86_64"
+	Is64Bits="1"
+	VendorString="GenuineIntel"
+	VendorID="Intel Corporation"
+	FamilyID="6"
+	ModelID="183"
+	ProcessorCacheSize="30720"
+	NumberOfLogicalCPU="24"
+	NumberOfPhysicalCPU="16"
+	TotalVirtualMemory="4095"
+	TotalPhysicalMemory="15759"
+	LogicalProcessorsPerPhysical="1"
+	ProcessorClockFrequency="2906.98"
+	>
+	<Testing>
+		<StartDateTime>May 11 23:43 CST</StartDateTime>
+		<StartTestTime>1778514235</StartTestTime>
+		<TestList/>
+		<EndDateTime>May 11 23:43 CST</EndDateTime>
+		<EndTestTime>1778514235</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>
