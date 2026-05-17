@@ -1,0 +1,27 @@
+chassis_controller:
+  ros__parameters:
+    use_sim_time: true
+    wheel_radius: 0.07
+    wheel_command_sign: -1.0
+    wheel_x: [0.127278, 0.127278, -0.127278, -0.127278]
+    wheel_y: [0.127278, -0.127278, 0.127278, -0.127278]
+    drive_direction_angle: [-0.785398, -2.356194, 0.785398, 2.356194]
+    max_wheel_speed: 100.0
+    timeout: 0.3
+    publish_rate: 50.0
+
+nav2_motion_limits:
+  ros__parameters:
+    max_vel_x: 0.25
+    min_vel_x: -0.05
+    max_vel_y: 0.15
+    min_vel_y: -0.15
+    max_vel_theta: 0.8
+    acc_lim_x: 0.6
+    acc_lim_y: 0.4
+    acc_lim_theta: 1.2
+    decel_lim_x: -0.6
+    decel_lim_y: -0.4
+    decel_lim_theta: -1.2
+    goal_xy_tolerance: 0.25
+    goal_yaw_tolerance: 0.35

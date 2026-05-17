@@ -11,6 +11,9 @@ install(
 install(
   PROGRAMS
     scripts/cmd_vel_watchdog.py
+    scripts/cmd_vel_odometry.py
+    scripts/imu_frame_republisher.py
+    scripts/pointcloud_frame_republisher.py
     scripts/scan_frame_republisher.py
   DESTINATION lib/${PROJECT_NAME}
 )

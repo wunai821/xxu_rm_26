@@ -2,7 +2,8 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU Gazebo 仿真模型
-    TF 树：odom_link -> base_footprint -> base_link -> radar_link + 4 wheels (continuous joints)
+    静态 TF 树：base_footprint -> base_link -> mid360_link + 4 wheels (continuous joints)
+    动态 TF 树：odom -> base_footprint 由 Small Point-LIO 发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
@@ -10,6 +11,7 @@
   <xacro:include filename="plugins/gazebo_sensor_plugin.xacro"/>
 
   <xacro:arg name="controllers_file" default="src/xxu_description/config/xxu_ros2_control.yaml"/>
+  <xacro:arg name="use_livox_native" default="false"/>
 
   <!-- 尺寸和质量参数 -->
   <xacro:property name="base_radius" value="0.25"/>
@@ -18,8 +20,8 @@
 
   <xacro:property name="radar_radius" value="0.0325"/>
   <xacro:property name="radar_height" value="0.065"/>
-  <xacro:property name="radar_xyz" value="0.2 0 0.12"/>
-  <xacro:property name="radar_rpy" value="0 0.1745 0"/>
+  <xacro:property name="mid360_xyz" value="0.20565 0 0.1520"/>
+  <xacro:property name="mid360_rpy" value="0 0.1745 0"/>
   <xacro:property name="radar_mass" value="0.265"/>
   <xacro:property name="mid360_range_max" value="40.0"/>
 
@@ -109,10 +111,8 @@
     </link>
   </xacro:macro>
 
-  <!-- odom_link -->
-  <link name="odom_link"/>
+  <!-- base_footprint：地面投影原点。odom -> base_footprint 由 LIO 动态发布，base_link 在其上方。 -->
   <link name="base_footprint"/>
-  <xacro:fixed_joint name="odom_joint" parent="odom_link" child="base_footprint"/>
 
   <!-- base_link -->
   <xacro:cylinder_link
@@ -127,10 +127,10 @@
 
   <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
 
-  <!-- radar_link: Mid-360 圆柱外形 -->
-  <link name="radar_link">
+  <!-- mid360_link: LiDAR and IMU measurement frame. -->
+  <link name="mid360_link">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 ${-radar_height / 2}" rpy="0 0 0"/>
       <geometry>
         <cylinder radius="${radar_radius}" length="${radar_height}"/>
       </geometry>
@@ -138,14 +138,14 @@
     </visual>
     <!-- 顶部半球，模仿 Mid-360 外观 -->
     <visual>
-      <origin xyz="0 0 ${radar_height / 2}" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <sphere radius="${radar_radius}"/>
       </geometry>
       <material name="radar_red"/>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 ${-radar_height / 2}" rpy="0 0 0"/>
       <geometry>
         <cylinder radius="${radar_radius}" length="${radar_height}"/>
       </geometry>
@@ -161,7 +161,7 @@
         izz="${radar_mass * radar_radius * radar_radius / 2}"/>
     </inertial>
   </link>
-  <xacro:fixed_joint name="radar_joint" parent="base_link" child="radar_link" xyz="${radar_xyz}" rpy="${radar_rpy}"/>
+  <xacro:fixed_joint name="mid360_joint" parent="base_link" child="mid360_link" xyz="${mid360_xyz}" rpy="${mid360_rpy}"/>
 
   <!-- 四轮全向轮底盘（连续关节） -->
   <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
@@ -188,20 +188,32 @@
     wheel_radius="${wheel_radius}"
     controllers_file="$(arg controllers_file)"/>
 
-  <xacro:gazebo_imu_plugin reference_link="radar_link" frame_id="radar_link"/>
+  <xacro:gazebo_imu_plugin reference_link="base_footprint" frame_id="base_footprint"/>
 
-  <xacro:gazebo_mid360_lidar_plugin
-    reference_link="radar_link"
-    topic="/mid360"
-    frame_id="radar_link"
-    range_max="${mid360_range_max}"
-    pose="0 0 ${radar_height / 2} 0 0 0"/>
+  <xacro:unless value="$(arg use_livox_native)">
+    <xacro:gazebo_mid360_lidar_plugin
+      reference_link="base_footprint"
+      topic="/mid360"
+      frame_id="base_footprint"
+      range_max="${mid360_range_max}"
+      pose="0 0 0 0 0 0"/>
+  </xacro:unless>
+
+  <xacro:if value="$(arg use_livox_native)">
+    <xacro:gazebo_mid360_livox_system_plugin
+      reference_link="base_footprint"
+      topic="/mid360/livox_points_gz"
+      frame_id="base_footprint"
+      range_max="${mid360_range_max}"
+      sensor_pose="0 0 0 0 0 0"/>
+  </xacro:if>
 
 
   <!-- 轮子物理属性 -->
   <gazebo reference="wheel_fl">
     <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu2>0.05</mu2>
+    <fdir1>0.7071 -0.7071 0</fdir1>
     <kp>1000000.0</kp>
     <kd>100.0</kd>
     <minDepth>0.001</minDepth>
@@ -209,7 +221,8 @@
   </gazebo>
   <gazebo reference="wheel_fr">
     <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu2>0.05</mu2>
+    <fdir1>-0.7071 -0.7071 0</fdir1>
     <kp>1000000.0</kp>
     <kd>100.0</kd>
     <minDepth>0.001</minDepth>
@@ -217,7 +230,8 @@
   </gazebo>
   <gazebo reference="wheel_rl">
     <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu2>0.05</mu2>
+    <fdir1>0.7071 0.7071 0</fdir1>
     <kp>1000000.0</kp>
     <kd>100.0</kd>
     <minDepth>0.001</minDepth>
@@ -225,7 +239,8 @@
   </gazebo>
   <gazebo reference="wheel_rr">
     <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu2>0.05</mu2>
+    <fdir1>-0.7071 0.7071 0</fdir1>
     <kp>1000000.0</kp>
     <kd>100.0</kd>
     <minDepth>0.001</minDepth>

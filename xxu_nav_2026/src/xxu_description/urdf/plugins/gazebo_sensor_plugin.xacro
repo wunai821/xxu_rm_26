@@ -8,13 +8,13 @@
     - type="imu" / type="gpu_lidar" 是 Gazebo 内置传感器类型
     - <topic>      传感器数据通过 Gazebo Transport 发布到该 GZ 话题
     - <frame_id>   设置消息头中的坐标系（注意：Gazebo Harmonic 有一个 bug，
-                   会忽略 frame_id 标签，导致传感器始终附着在 odom_link 上）
+                   会忽略 frame_id 标签，导致传感器始终附着在模型根节点上）
     - <pose>       传感器相对于 reference_link 的位姿（x y z roll pitch yaw）
     - 需配合 ros_gz_bridge 的 parameter_bridge 将 GZ 话题桥接到 ROS 2 话题
 
   注意：
     由于 Gazebo Harmonic 的传感器放置 bug，即使指定了 reference_link，
-    传感器也会被放置到 TF 树的根节点（odom_link），且 frame_id 会被忽略。
+    传感器也会被放置到 TF 树的模型根节点，且 frame_id 会被忽略。
     因此在实际使用中，需要通过 frame_republisher（如 scan_frame_republisher.py）
     将 frame_id 修正为正确的坐标系（如 radar_link），并通过 ros_gz_bridge
     的 remap 规则将桥接后的话题映射到正确的命名空间。
@@ -55,14 +55,14 @@
 
     <!--
       Gazebo reference 标签：将传感器关联到指定的 link。
-      注意：Gazebo Harmonic 存在已知 bug，可能忽略此 reference，将传感器挂载到 odom_link。
+      注意：Gazebo Harmonic 存在已知 bug，可能忽略此 reference，将传感器挂载到模型根节点。
     -->
     <gazebo reference="${reference_link}">
       <!-- sensor type="imu"：Gazebo 内置 IMU 传感器，输出角速度和线加速度 -->
       <sensor name="${sensor_name}" type="imu">
 
-        <!-- 传感器始终开启（1 = true），不随仿真暂停而关闭 -->
-        <always_on>1</always_on>
+        <!-- 传感器仅在仿真运行时更新（0 = false），避免暂停/初始化时产生异常时间戳 -->
+        <always_on>0</always_on>
 
         <!-- 传感器数据更新频率，单位 Hz -->
         <update_rate>${update_rate}</update_rate>
@@ -222,6 +222,49 @@
           </noise>
         </lidar>
       </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- ====================================================================== -->
+  <!--             Livox MID-360 风格 Gazebo System 插件（原生射线点云）          -->
+  <!-- ====================================================================== -->
+  <!--
+    该插件挂在 reference_link 上，通过 Gazebo Physics RaycastData 生成非重复
+    MID-360 风格点云。它发布 Gazebo Transport PointCloudPacked，可由
+    ros_gz_bridge 桥接为 ROS 2 PointCloud2 后送入 Small Point-LIO。
+  -->
+
+  <xacro:macro
+    name="gazebo_mid360_livox_system_plugin"
+    params="
+      reference_link
+      topic:='/mid360/livox_points_gz'
+      frame_id:='radar_link'
+      update_rate:='10'
+      samples:='2400'
+      rays_per_batch:='240'
+      range_min:='0.1'
+      range_max:='40.0'
+      min_vertical:='-0.1221730'
+      max_vertical:='0.9075712'
+      sensor_pose:='0 0 0 0 0 0'">
+
+    <gazebo>
+      <plugin
+        filename="liblivox_mid360_system.so"
+        name="xxu_livox_sim::LivoxMid360System">
+        <reference_link>${reference_link}</reference_link>
+        <topic>${topic}</topic>
+        <frame_id>${frame_id}</frame_id>
+        <update_rate>${update_rate}</update_rate>
+        <samples>${samples}</samples>
+        <rays_per_batch>${rays_per_batch}</rays_per_batch>
+        <range_min>${range_min}</range_min>
+        <range_max>${range_max}</range_max>
+        <min_vertical>${min_vertical}</min_vertical>
+        <max_vertical>${max_vertical}</max_vertical>
+        <sensor_pose>${sensor_pose}</sensor_pose>
+      </plugin>
     </gazebo>
   </xacro:macro>
 

@@ -1,0 +1,56 @@
+small_point_lio:
+    ros__parameters:
+        use_sim_time: true
+        lidar_topic: /mid360/livox_points
+        imu_topic: /imu
+        lidar_type: livox_pointcloud2
+        lidar_frame: base_footprint
+        odom_topic: /odom
+        registered_cloud_topic: /cloud_registered
+        odom_frame: odom
+        base_frame: base_footprint
+        save_pcd: false
+        scan_period: 0.1
+
+        # 点云过滤
+        point_filter_num: 1
+        min_distance: 0.5
+        max_distance: 1000.0
+        space_downsample: true
+        space_downsample_leaf_size: 0.5
+
+        # IMU处理
+        gravity: [0.0, 0.0, -9.810]
+        fix_gravity_direction: true
+        check_satu: true
+        satu_acc: 100.0
+        satu_gyro: 35.0
+        acc_norm: 9.81
+
+        # 地图
+        map_resolution: 0.5
+        init_map_size: 20
+        planar_constraint_en: true
+        planar_z: 0.0
+
+        # 雷达与IMU相对位姿
+        extrinsic_est_en: false
+        extrinsic_T: [0.0, 0.0, 0.0]
+        extrinsic_R: [1.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0,
+                      0.0, 0.0, 1.0]
+
+        # 滤波器参数
+        laser_point_cov: 0.01
+        imu_meas_acc_cov: 0.01
+        imu_meas_omg_cov: 0.01
+        velocity_cov: 20.0
+        acceleration_cov: 500.0
+        omg_cov: 1000.0
+        ba_cov: 0.0001
+        bg_cov: 0.0001
+        plane_threshold: 0.1
+        match_sqaured: 81.0
+
+        # 数据发布
+        publish_odometry_without_downsample: false

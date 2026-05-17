@@ -1,0 +1,19 @@
+# ROS/colcon generated artifacts
+build/
+install/
+log/
+
+# Nested ROS/colcon workspaces
+**/build/
+**/install/
+**/log/
+
+# Editor / language-server caches
+.cache/
+**/.cache/
+.claude/
+**/.claude/
+
+# Python cache artifacts
+__pycache__/
+*.py[cod]
