@@ -1,0 +1,7 @@
+<class_libraries>
+  <library path="pb_intensity_voxel_layer">
+    <class type="pb_nav2_costmap_2d::IntensityVoxelLayer" base_class_type="nav2_costmap_2d::Layer">
+      <description>Voxel obstacle layer that filters PointCloud2 points by intensity.</description>
+    </class>
+  </library>
+</class_libraries>

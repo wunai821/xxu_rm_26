@@ -1,72 +1,28 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:macro name="omni_roller_geometry" params="x y yaw radius length material">
-    <visual>
-      <origin xyz="${x} ${y} 0" rpy="0 1.5708 ${yaw}"/>
-      <geometry>
-        <cylinder radius="${radius}" length="${length}"/>
-      </geometry>
-      <material name="${material}">
-        <color rgba="0.65 0.65 0.65 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="${x} ${y} 0" rpy="0 1.5708 ${yaw}"/>
-      <geometry>
-        <cylinder radius="${radius}" length="${length}"/>
-      </geometry>
-    </collision>
-  </xacro:macro>
-
-  <!-- 全向轮宏：滚子作为 wheel link 内部几何体，不再生成独立 TF。 -->
+  <!-- 全向轮宏：视觉模型来自 YePeOn7/ros2_omni_robot_sim，碰撞体保留为简化圆柱。 -->
   <xacro:macro name="wheel" params="name radius width mass material:='wheel_black'">
-    <xacro:property name="hub_radius" value="${radius * 0.72}"/>
-    <xacro:property name="hub_width" value="${width * 0.55}"/>
-    <xacro:property name="roller_radius" value="${width * 0.18}"/>
-    <xacro:property name="roller_length" value="${width * 0.75}"/>
-    <xacro:property name="roller_center_radius" value="${hub_radius + roller_radius * 0.75}"/>
-    <xacro:property name="roller_diag_offset" value="${roller_center_radius * 0.7071}"/>
+    <xacro:property name="mesh_radial_scale" value="${radius / 0.0285}"/>
+    <xacro:property name="mesh_axial_scale" value="${width / 0.0276}"/>
+    <xacro:property name="mesh_center_y" value="0.0012"/>
 
     <link name="${name}">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${-mesh_center_y * mesh_axial_scale}" rpy="1.5708 0 0"/>
         <geometry>
-          <cylinder radius="${hub_radius}" length="${hub_width}"/>
+          <mesh
+            filename="package://xxu_description/meshes/ros2_omni_robot_sim/generic/omni_wheel.stl"
+            scale="${mesh_radial_scale} ${mesh_axial_scale} ${mesh_radial_scale}"/>
         </geometry>
         <material name="${material}"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <cylinder radius="${hub_radius}" length="${hub_width}"/>
+          <cylinder radius="${radius}" length="${width}"/>
         </geometry>
       </collision>
-
-      <xacro:omni_roller_geometry
-        x="${roller_center_radius}" y="0" yaw="1.5708"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="${roller_diag_offset}" y="${roller_diag_offset}" yaw="2.3562"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="0" y="${roller_center_radius}" yaw="3.1416"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="${-roller_diag_offset}" y="${roller_diag_offset}" yaw="3.9270"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="${-roller_center_radius}" y="0" yaw="4.7124"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="${-roller_diag_offset}" y="${-roller_diag_offset}" yaw="5.4978"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="0" y="${-roller_center_radius}" yaw="0"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
-      <xacro:omni_roller_geometry
-        x="${roller_diag_offset}" y="${-roller_diag_offset}" yaw="0.7854"
-        radius="${roller_radius}" length="${roller_length}" material="${name}_roller_gray"/>
 
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>

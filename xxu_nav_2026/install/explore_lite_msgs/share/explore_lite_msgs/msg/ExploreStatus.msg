@@ -1,1 +1,0 @@
-/home/naiwu/xxu_2026/xxu_nav_2026/src/m-explore-ros2/explore_lite_msgs/msg/ExploreStatus.msg

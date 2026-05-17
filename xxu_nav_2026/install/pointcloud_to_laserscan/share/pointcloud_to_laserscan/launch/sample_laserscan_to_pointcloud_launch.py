@@ -1,1 +1,0 @@
-/home/naiwu/xxu_2026/xxu_nav_2026/src/pointcloud_to_laserscan/launch/sample_laserscan_to_pointcloud_launch.py

@@ -1,1 +1,0 @@
-/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_livox_sim/ament_cmake_core/xxu_livox_simConfig-version.cmake

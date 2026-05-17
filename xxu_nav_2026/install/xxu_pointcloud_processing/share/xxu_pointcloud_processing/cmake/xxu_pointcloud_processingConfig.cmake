@@ -1,1 +1,0 @@
-/home/naiwu/xxu_2026/xxu_nav_2026/build/xxu_pointcloud_processing/ament_cmake_core/xxu_pointcloud_processingConfig.cmake

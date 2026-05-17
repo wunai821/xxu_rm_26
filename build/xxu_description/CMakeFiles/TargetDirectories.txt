@@ -1,9 +1,0 @@
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/uninstall.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/xxu_description_uninstall.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/test.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/edit_cache.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/rebuild_cache.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/list_install_components.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/install.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/install/local.dir
-/home/naiwu/xxu_2026/build/xxu_description/CMakeFiles/install/strip.dir

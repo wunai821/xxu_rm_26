@@ -1,1 +1,0 @@
-/home/naiwu/xxu_2026/xxu_nav_2026/build/multirobot_map_merge/ament_cmake_core/multirobot_map_mergeConfig-version.cmake

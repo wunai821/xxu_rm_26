@@ -1,8 +1,0 @@
-source;share/xxu_slam_toolbox/hook/cmake_prefix_path.ps1
-source;share/xxu_slam_toolbox/hook/cmake_prefix_path.dsv
-source;share/xxu_slam_toolbox/hook/cmake_prefix_path.sh
-source;share/xxu_slam_toolbox/local_setup.bash
-source;share/xxu_slam_toolbox/local_setup.dsv
-source;share/xxu_slam_toolbox/local_setup.ps1
-source;share/xxu_slam_toolbox/local_setup.sh
-source;share/xxu_slam_toolbox/local_setup.zsh

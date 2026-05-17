@@ -1,1 +1,0 @@
-/home/naiwu/xxu_2026/xxu_nav_2026/build/explore_lite_msgs/rosidl_typesupport_introspection_c/explore_lite_msgs/msg/detail/explore_status__rosidl_typesupport_introspection_c.h

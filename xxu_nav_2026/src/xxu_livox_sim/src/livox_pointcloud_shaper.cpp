@@ -41,7 +41,7 @@ public:
 
     sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       "points_in",
-      rclcpp::SensorDataQoS(),
+      rclcpp::QoS(rclcpp::KeepLast(10)).reliable(),
       std::bind(&LivoxPointCloudShaper::callback, this, std::placeholders::_1));
 
     pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(

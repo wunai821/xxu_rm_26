@@ -14,6 +14,7 @@ pkill -9 -f "scan_frame_republisher"
 pkill -9 -f "pointcloud_frame_republisher"
 pkill -9 -f "livox_pointcloud_shaper"
 pkill -9 -f "pointcloud_to_laserscan"
+pkill -9 -f "fake_vel_transform"
 pkill -9 -f "cmd_vel_watchdog"
 pkill -9 -f "cmd_vel_odometry"
 pkill -9 -f "controller_manager"
@@ -33,7 +34,7 @@ pkill -9 -f "ros2 run"
 
 sleep 1
 
-remaining=$(ps aux | grep -E '(gz sim|rviz2|small_point|slam|nav2|explore|parameter_bridge|chassis|pointcloud|livox|cmd_vel|controller_manage|lifecycle|spawner|robot_state|joint_state_pub|scan_frame|imu_frame|velocity_smoother|collision|bt_navigator|planner_server|behavior|smoother|ros2 launch|ros2 run)' | grep -v grep | grep -v gvfsd | wc -l)
+remaining=$(ps aux | grep -E '(gz sim|rviz2|small_point|slam|nav2|explore|parameter_bridge|chassis|pointcloud|livox|fake_vel_transform|cmd_vel|controller_manage|lifecycle|spawner|robot_state|joint_state_pub|scan_frame|imu_frame|velocity_smoother|collision|bt_navigator|planner_server|behavior|smoother|ros2 launch|ros2 run)' | grep -v grep | grep -v gvfsd | wc -l)
 
 if [ "$remaining" -eq 0 ]; then
     echo "所有仿真进程已清理完毕"

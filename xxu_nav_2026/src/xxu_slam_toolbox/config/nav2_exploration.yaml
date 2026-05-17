@@ -177,7 +177,7 @@ behavior_server:
     spin:
       plugin: "nav2_behaviors::Spin"
     backup:
-      plugin: "nav2_behaviors::BackUp"
+      plugin: "pb_nav2_behaviors::BackUpFreeSpace"
     wait:
       plugin: "nav2_behaviors::Wait"
     local_frame: odom
@@ -188,6 +188,9 @@ behavior_server:
     max_rotational_vel: 0.8
     min_rotational_vel: 0.2
     rotational_acc_lim: 1.2
+    max_radius: 1.0
+    service_name: "local_costmap/get_costmap"
+    visualize: false
 
 velocity_smoother:
   ros__parameters:
@@ -207,7 +210,7 @@ velocity_smoother:
 collision_monitor:
   ros__parameters:
     use_sim_time: true
-    base_frame_id: base_footprint
+    base_frame_id: base_link
     odom_frame_id: odom
     cmd_vel_in_topic: cmd_vel_smoothed
     cmd_vel_out_topic: /cmd_vel_keyboard

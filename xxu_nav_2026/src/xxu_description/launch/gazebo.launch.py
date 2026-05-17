@@ -7,11 +7,12 @@ from launch.actions import (
     IncludeLaunchDescription,
     RegisterEventHandler,
     SetEnvironmentVariable,
+    TimerAction,
 )
 from launch.event_handlers import OnProcessExit
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackagePrefix, FindPackageShare
@@ -29,6 +30,9 @@ def generate_launch_description():
     nav2_tb3_models_path = PathJoinSubstitution(
         [FindPackageShare("nav2_minimal_tb3_sim"), "models"]
     )
+    xxu_description_share_parent = PathJoinSubstitution(
+        [FindPackagePrefix("xxu_description"), "share"]
+    )
     small_point_lio_config = PathJoinSubstitution(
         [FindPackageShare("small_point_lio"), "config", "xxu_gazebo_mid360.yaml"]
     )
@@ -42,10 +46,17 @@ def generate_launch_description():
     enable_lio = LaunchConfiguration("enable_lio")
     enable_cmd_vel_odom = LaunchConfiguration("enable_cmd_vel_odom")
     use_livox_native = LaunchConfiguration("use_livox_native")
+    use_fake_frame = LaunchConfiguration("use_fake_frame")
 
     gz_resource_path = SetEnvironmentVariable(
         "GZ_SIM_RESOURCE_PATH",
-        [nav2_tb3_models_path, ":", EnvironmentVariable("GZ_SIM_RESOURCE_PATH")],
+        [
+            xxu_description_share_parent,
+            ":",
+            nav2_tb3_models_path,
+            ":",
+            EnvironmentVariable("GZ_SIM_RESOURCE_PATH"),
+        ],
     )
     gz_system_plugin_path = SetEnvironmentVariable(
         "GZ_SIM_SYSTEM_PLUGIN_PATH",
@@ -54,6 +65,10 @@ def generate_launch_description():
             ":",
             EnvironmentVariable("GZ_SIM_SYSTEM_PLUGIN_PATH", default_value=""),
         ],
+    )
+    rmw_implementation = SetEnvironmentVariable(
+        "RMW_IMPLEMENTATION",
+        "rmw_cyclonedds_cpp",
     )
 
     declare_use_sim_time = DeclareLaunchArgument(
@@ -75,6 +90,11 @@ def generate_launch_description():
         "use_livox_native",
         default_value="false",
         description="Use xxu_livox_sim Gazebo System plugin for Small Point-LIO input",
+    )
+    declare_use_fake_frame = DeclareLaunchArgument(
+        "use_fake_frame",
+        default_value="false",
+        description="Use fake_vel_transform and base_link_fake for Nav2 velocity commands",
     )
 
     # robot_state_publisher
@@ -133,6 +153,8 @@ def generate_launch_description():
             "joint_state_broadcaster",
             "--controller-manager",
             "/controller_manager",
+            "--controller-manager-timeout",
+            "60",
         ],
         output="screen",
     )
@@ -144,6 +166,8 @@ def generate_launch_description():
             "wheel_velocity_controller",
             "--controller-manager",
             "/controller_manager",
+            "--controller-manager-timeout",
+            "60",
         ],
         output="screen",
     )
@@ -166,12 +190,30 @@ def generate_launch_description():
         parameters=[{
             "use_sim_time": use_sim_time,
             "wheel_radius": 0.07,
+            "wheel_command_sign": -1.0,
             "wheel_x": [0.127278, 0.127278, -0.127278, -0.127278],
             "wheel_y": [0.127278, -0.127278, 0.127278, -0.127278],
             "drive_direction_angle": [-0.785398, -2.356194, 0.785398, 2.356194],
             "max_wheel_speed": 100.0,
             "timeout": 0.3,
             "publish_rate": 50.0,
+        }],
+    )
+
+    fake_vel_transform = Node(
+        package="fake_vel_transform",
+        executable="fake_vel_transform_node",
+        name="fake_vel_transform",
+        output="screen",
+        condition=IfCondition(use_fake_frame),
+        parameters=[{
+            "use_sim_time": use_sim_time,
+            "robot_base_frame": "base_link",
+            "fake_robot_base_frame": "base_link_fake",
+            "odom_topic": "/odom",
+            "input_cmd_vel_topic": "/cmd_vel_keyboard",
+            "output_cmd_vel_topic": "/cmd_vel_transformed",
+            "spin_speed": 0.0,
         }],
     )
 
@@ -264,6 +306,7 @@ def generate_launch_description():
         output="screen",
         condition=UnlessCondition(use_livox_native),
         parameters=[{
+            "use_sim_time": use_sim_time,
             "target_frame": "base_footprint",
             "scan_period": 0.1,
             "max_points": 12000,
@@ -349,7 +392,11 @@ def generate_launch_description():
         name="cmd_vel_watchdog",
         output="screen",
         parameters=[{
-            "input_topic": "/cmd_vel_keyboard",
+            "input_topic": PythonExpression([
+                "'/cmd_vel_transformed' if '",
+                use_fake_frame,
+                "' == 'true' else '/cmd_vel_keyboard'",
+            ]),
             "output_topic": "/cmd_vel",
             "timeout": 0.3,
             "publish_rate": 20.0,
@@ -374,28 +421,31 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        rmw_implementation,
         gz_resource_path,
         gz_system_plugin_path,
         declare_use_sim_time,
         declare_enable_lio,
         declare_enable_cmd_vel_odom,
         declare_use_livox_native,
+        declare_use_fake_frame,
         robot_state_publisher,
         gz_sim,
+        bridge_clock,
         spawn_robot,
         spawn_controllers,
         chassis_controller,
+        fake_vel_transform,
         bridge_imu,
         imu_frame_republisher,
         bridge_lidar,
         bridge_livox_native,
         scan_frame_republisher,
         pointcloud_frame_republisher,
-        livox_pointcloud_shaper,
+        TimerAction(period=15.0, actions=[livox_pointcloud_shaper]),
         livox_native_frame_republisher,
         pointcloud_to_scan,
-        small_point_lio,
-        bridge_clock,
+        TimerAction(period=20.0, actions=[small_point_lio]),
         cmd_vel_watchdog,
         cmd_vel_odometry,
     ])

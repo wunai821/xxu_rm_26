@@ -20,6 +20,7 @@ public:
   : Node("chassis_controller")
   {
     wheel_radius_ = this->declare_parameter<double>("wheel_radius", 0.07);
+    wheel_command_sign_ = this->declare_parameter<double>("wheel_command_sign", 1.0);
     max_wheel_speed_ = this->declare_parameter<double>("max_wheel_speed", 100.0);
     timeout_ = this->declare_parameter<double>("timeout", 0.3);
     const double publish_rate = this->declare_parameter<double>("publish_rate", 50.0);
@@ -131,7 +132,7 @@ private:
       const double contact_vy = vy + wz * wheel_x_[i];
       const double tx = std::cos(drive_direction_angle_[i]);
       const double ty = std::sin(drive_direction_angle_[i]);
-      speeds[i] = (tx * contact_vx + ty * contact_vy) / wheel_radius_;
+      speeds[i] = wheel_command_sign_ * (tx * contact_vx + ty * contact_vy) / wheel_radius_;
     }
 
     return speeds;
@@ -166,6 +167,7 @@ private:
   WheelArray wheel_y_{};
   WheelArray drive_direction_angle_{};
   double wheel_radius_{0.07};
+  double wheel_command_sign_{1.0};
   double max_wheel_speed_{100.0};
   double timeout_{0.3};
 };

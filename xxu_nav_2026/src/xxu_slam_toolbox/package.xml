@@ -11,6 +11,9 @@
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>explore_lite</exec_depend>
   <exec_depend>explore_lite_msgs</exec_depend>
   <exec_depend>nav2_behaviors</exec_depend>
@@ -24,6 +27,8 @@
   <exec_depend>nav2_planner</exec_depend>
   <exec_depend>nav2_smoother</exec_depend>
   <exec_depend>nav2_velocity_smoother</exec_depend>
+  <exec_depend>pb_omni_pid_pursuit_controller</exec_depend>
+  <exec_depend>pb_nav2_plugins</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>slam_toolbox</exec_depend>
 
