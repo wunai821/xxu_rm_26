@@ -1,0 +1,135 @@
+ai_controller_tuner:
+  ros__parameters:
+    controller_node: /controller_server
+    plugin_name: FollowPath
+    record_duration_sec: 60.0
+    auto_apply: true
+    # Keep this in sync with ai_controller_goal_sender.debug_stage.
+    # translation, lookahead, rotation, curvature, approach, comprehensive, custom
+    debug_stage: translation
+
+    # Tuning objective. "fast_stable" means: move as fast as the controller safely allows,
+    # but only if tracking error, oscillation, and command saturation stay low.
+    objective_name: fast_stable
+    target_speed_utilization: 0.75
+    score_tracking_weight: 4.0
+    score_linear_error_weight: 2.0
+    score_angular_error_weight: 1.5
+    score_lateral_oscillation_weight: 0.8
+    score_angular_oscillation_weight: 0.5
+    score_saturation_weight: 0.5
+    score_sign_change_weight: 0.1
+    score_speed_shortfall_weight: 1.2
+
+    keep_best_observed: true
+    auto_restore_best: false
+    restore_after_non_improving_windows: 3
+    auto_stage_advance: true
+    stage_sequence: [translation, lookahead, rotation, curvature, approach, comprehensive]
+    stage_min_windows: 2
+    stage_advance_after_non_improving_windows: 2
+    apply_best_on_stage_advance: true
+    stop_after_final_stage_stable: true
+    stage_topic: /ai_controller_tuner/current_stage
+
+    # OpenAI-compatible API settings. Keep the real key in the environment.
+    api_base_url: https://api.deepseek.com
+    # Prefer leaving api_key empty and using: export OPENAI_API_KEY=...
+    api_key: "sk-b6a14924a2d74097934e264c0900f9c1"
+    api_key_env: OPENAI_API_KEY
+    model: deepseek-v4-pro
+    api_timeout_sec: 90.0
+    api_max_tokens: 10000
+    api_json_mode: true
+
+    odom_topic: /odom
+    cmd_vel_nav_topic: /cmd_vel_nav
+    cmd_vel_smoothed_topic: /cmd_vel_smoothed
+    local_plan_topic: /local_plan
+    lookahead_point_topic: /lookahead_point
+    log_dir: ~/.ros/ai_controller_tuner
+    ui_enabled: true
+    ui_host: 127.0.0.1
+    ui_port: 8765
+
+    # Optional offline test response. Leave empty for real API calls.
+    mock_ai_response: ""
+
+    tunable_parameters:
+      - translation_kp
+      - translation_ki
+      - translation_kd
+      - rotation_kp
+      - rotation_ki
+      - rotation_kd
+      - lookahead_dist
+      - min_lookahead_dist
+      - max_lookahead_dist
+      - lookahead_time
+      - curvature_min
+      - curvature_max
+      - reduction_ratio_at_high_curvature
+      - max_velocity_scaling_factor_rate
+      - min_approach_linear_velocity
+      - approach_velocity_scaling_dist
+
+ai_controller_goal_sender:
+  ros__parameters:
+    action_name: /navigate_to_pose
+    goal_frame: map
+    # Stages after chassis/base config validation:
+    # translation, lookahead, rotation, curvature, approach, comprehensive, custom
+    debug_stage: translation
+    goal_x: 1.0
+    goal_y: 0.0
+    goal_yaw: 0.0
+    custom_goal_xs: [1.0]
+    custom_goal_ys: [0.0]
+    custom_goal_yaws: [0.0]
+    loop_goals: false
+    loop_delay_sec: 2.0
+    follow_tuner_stage: true
+    stage_topic: /ai_controller_tuner/current_stage
+    keep_alive_for_stage_updates: true
+
+    # Stage routes in the selected map frame. Fill these with obstacle-free
+    # map coordinates for each tuning stage. The goal sender uses the route
+    # matching debug_stage and falls back to built-in defaults only if a route
+    # is empty or invalid.
+    use_stage_routes: true
+
+    # 2. Translation: use a clean straight line. Keep yaw constant to avoid
+    # mixing rotate-to-heading behavior into translation PID tuning.
+    route_translation_xs: [-1.0, 0.0]
+    route_translation_ys: [0.0, 0.0]
+    route_translation_yaws: [0.0, 0.0]
+
+    # 3. Lookahead: longer clean straight line.
+    route_lookahead_xs: [-3.0, 0.0]
+    route_lookahead_ys: [0.0, 0.0]
+    route_lookahead_yaws: [0.0, 0.0]
+
+    # 4. Rotation: small-position yaw changes.
+    route_rotation_xs: [0.0, 0.0, 0.0]
+    route_rotation_ys: [0.0, 0.0, 0.0]
+    route_rotation_yaws: [1.5708, -1.5708, 0.0]
+
+    # 5. Curvature: L-shaped route.
+    route_curvature_xs: [2.0, 1.0, 0.0]
+    route_curvature_ys: [0.0, 1.0, 1.0]
+    route_curvature_yaws: [0.0, 1.5708, 3.1416]
+
+    # 6. Approach: short goals for final slowdown.
+    route_approach_xs: [-0.45, 0.0]
+    route_approach_ys: [0.0, 0.0]
+    route_approach_yaws: [0.0, 0.0]
+
+    # 7. Comprehensive: full mixed route.
+    route_comprehensive_xs: [1.0, 1.0, 0.0, 0.0]
+    route_comprehensive_ys: [0.0, 1.0, 1.0, 0.0]
+    route_comprehensive_yaws: [0.0, 1.5708, 3.1416, -1.5708]
+
+    # Custom stage route.
+    route_custom_xs: [1.0]
+    route_custom_ys: [0.0]
+    route_custom_yaws: [0.0]

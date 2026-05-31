@@ -20,7 +20,7 @@ def generate_launch_description():
     autostart = LaunchConfiguration("autostart")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
 
-    default_map = PathJoinSubstitution([bringup_share, "maps", "auto_map.yaml"])
+    default_map = PathJoinSubstitution([bringup_share, "maps", "empty.yaml"])
     default_params = PathJoinSubstitution([bringup_share, "config", "nav2_navigation.yaml"])
     default_rviz_config = PathJoinSubstitution([bringup_share, "rviz", "navigation.rviz"])
 

@@ -3,33 +3,43 @@
 <package format="3">
   <name>pb_omni_pid_pursuit_controller</name>
   <version>1.0.3</version>
+
+  <!-- 包描述：全向轮 PID 纯追踪控制器，Nav2 的控制器插件。
+       与标准差速纯追踪的区别：线速度分解为 X/Y 分量，支持全向运动；
+       使用双 PID（平移+旋转）独立控制线速度和角速度；
+       支持曲率自适应降速、接近目标减速、碰撞检测等功能。 -->
   <description>Omni Pure Pursuit Controller</description>
+
   <maintainer email="lihanchen2004@163.com">Lihan Chen</maintainer>
   <license>Apache-2.0</license>
 
+  <!-- 构建工具依赖: ament_cmake (ROS2 CMake 构建系统) -->
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>nav2_common</depend>
-  <depend>nav2_core</depend>
-  <depend>nav2_util</depend>
-  <depend>nav2_costmap_2d</depend>
-  <depend>nav_msgs</depend>
-  <depend>rcl_interfaces</depend>
-  <depend>rclcpp</depend>
-  <depend>rclcpp_lifecycle</depend>
-  <depend>geometry_msgs</depend>
-  <depend>nav2_msgs</depend>
-  <depend>pluginlib</depend>
-  <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>tf2_ros</depend>
-  <depend>visualization_msgs</depend>
+  <!-- 运行时依赖: Nav2 核心接口、工具库、代价地图等 -->
+  <depend>nav2_common</depend>        <!-- Nav2 通用定义和工具 -->
+  <depend>nav2_core</depend>          <!-- Nav2 核心抽象接口（控制器的基类在这里） -->
+  <depend>nav2_util</depend>          <!-- Nav2 工具函数（几何计算、参数声明等） -->
+  <depend>nav2_costmap_2d</depend>    <!-- 2D 代价地图（碰撞检测、障碍物代价） -->
+  <depend>nav_msgs</depend>           <!-- 导航相关消息类型（Path） -->
+  <depend>rcl_interfaces</depend>     <!-- ROS2 客户端接口（参数类型定义） -->
+  <depend>rclcpp</depend>             <!-- ROS2 C++ 客户端库 -->
+  <depend>rclcpp_lifecycle</depend>   <!-- ROS2 生命周期节点支持 -->
+  <depend>geometry_msgs</depend>      <!-- 几何消息类型（Twist, Pose, Point 等） -->
+  <depend>nav2_msgs</depend>          <!-- Nav2 行为树消息 -->
+  <depend>pluginlib</depend>          <!-- 插件加载机制（动态加载控制器） -->
+  <depend>tf2</depend>                <!-- TF2 坐标变换核心库 -->
+  <depend>tf2_geometry_msgs</depend>  <!-- TF2 与 geometry_msgs 的互操作 -->
+  <depend>tf2_ros</depend>            <!-- TF2 的 ROS2 集成（Buffer, TransformListener） -->
+  <depend>visualization_msgs</depend> <!-- 可视化消息（MarkerArray 用于调试） -->
 
+  <!-- 测试依赖: 代码风格检查与格式化 -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_black</test_depend>
 
+  <!-- 导出: 声明构建类型为 ament_cmake，并注册 Nav2 控制器插件 -->
   <export>
     <build_type>ament_cmake</build_type>
     <nav2_core plugin="${prefix}/pb_omni_pid_pursuit_controller.xml" />

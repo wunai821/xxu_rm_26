@@ -47,6 +47,7 @@ def generate_launch_description():
     enable_cmd_vel_odom = LaunchConfiguration("enable_cmd_vel_odom")
     use_livox_native = LaunchConfiguration("use_livox_native")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
+    world = LaunchConfiguration("world")
 
     gz_resource_path = SetEnvironmentVariable(
         "GZ_SIM_RESOURCE_PATH",
@@ -96,6 +97,11 @@ def generate_launch_description():
         default_value="false",
         description="Use fake_vel_transform and base_link_fake for Nav2 velocity commands",
     )
+    declare_world = DeclareLaunchArgument(
+        "world",
+        default_value=PathJoinSubstitution([pkg_share, "worlds", "empty_with_sensors.sdf"]),
+        description="Gazebo world SDF path",
+    )
 
     # robot_state_publisher
     robot_state_publisher = Node(
@@ -127,7 +133,7 @@ def generate_launch_description():
             ])
         ]),
         launch_arguments={
-            "gz_args": ["-r ", PathJoinSubstitution([pkg_share, "worlds", "empty_with_sensors.sdf"])],
+            "gz_args": ["-r ", world],
             "on_exit_shutdown": "true",
         }.items(),
     )
@@ -429,6 +435,7 @@ def generate_launch_description():
         declare_enable_cmd_vel_odom,
         declare_use_livox_native,
         declare_use_fake_frame,
+        declare_world,
         robot_state_publisher,
         gz_sim,
         bridge_clock,

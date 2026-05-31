@@ -7,6 +7,9 @@
     visualize: true
     planner_frequency: 0.2
     progress_timeout: 45.0
+    lock_goal_until_reached: true
+    goal_update_min_distance: 0.75
+    goal_replan_min_period: 20.0
     potential_scale: 3.0
     orientation_scale: 0.0
     gain_scale: 1.0

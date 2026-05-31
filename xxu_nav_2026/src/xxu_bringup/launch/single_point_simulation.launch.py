@@ -17,6 +17,13 @@ def generate_launch_description():
     enable_lio = LaunchConfiguration("enable_lio")
     enable_cmd_vel_odom = LaunchConfiguration("enable_cmd_vel_odom")
     use_livox_native = LaunchConfiguration("use_livox_native")
+    use_fake_frame = LaunchConfiguration("use_fake_frame")
+    world = LaunchConfiguration("world")
+    auto_initial_pose = LaunchConfiguration("auto_initial_pose")
+    initial_pose_relocalize = LaunchConfiguration("initial_pose_relocalize")
+    initial_pose_x = LaunchConfiguration("initial_pose_x")
+    initial_pose_y = LaunchConfiguration("initial_pose_y")
+    initial_pose_yaw = LaunchConfiguration("initial_pose_yaw")
 
     default_map = PathJoinSubstitution([bringup_share, "maps", "auto_map.yaml"])
     default_nav2_params = PathJoinSubstitution(
@@ -36,6 +43,13 @@ def generate_launch_description():
             "enable_lio": enable_lio,
             "enable_cmd_vel_odom": enable_cmd_vel_odom,
             "use_livox_native": use_livox_native,
+            "use_fake_frame": use_fake_frame,
+            "world": world,
+            "auto_initial_pose": auto_initial_pose,
+            "initial_pose_relocalize": initial_pose_relocalize,
+            "initial_pose_x": initial_pose_x,
+            "initial_pose_y": initial_pose_y,
+            "initial_pose_yaw": initial_pose_yaw,
         }.items(),
     )
 
@@ -74,6 +88,45 @@ def generate_launch_description():
             "use_livox_native",
             default_value="false",
             description="Use the xxu_livox_sim Gazebo System plugin",
+        ),
+        DeclareLaunchArgument(
+            "use_fake_frame",
+            default_value="true",
+            description="Use base_link_fake and fake_vel_transform for Nav2",
+        ),
+        DeclareLaunchArgument(
+            "world",
+            default_value=PathJoinSubstitution([
+                FindPackageShare("xxu_description"),
+                "worlds",
+                "complex_mapping.sdf",
+            ]),
+            description="Gazebo world SDF path",
+        ),
+        DeclareLaunchArgument(
+            "auto_initial_pose",
+            default_value="true",
+            description="Automatically publish the simulation AMCL initial pose",
+        ),
+        DeclareLaunchArgument(
+            "initial_pose_relocalize",
+            default_value="true",
+            description="Estimate the initial pose by matching /scan against the map",
+        ),
+        DeclareLaunchArgument(
+            "initial_pose_x",
+            default_value="0.02",
+            description="Fixed simulation initial pose x in map",
+        ),
+        DeclareLaunchArgument(
+            "initial_pose_y",
+            default_value="0.03",
+            description="Fixed simulation initial pose y in map",
+        ),
+        DeclareLaunchArgument(
+            "initial_pose_yaw",
+            default_value="0.0",
+            description="Fixed simulation initial pose yaw in map",
         ),
         simulation,
     ])

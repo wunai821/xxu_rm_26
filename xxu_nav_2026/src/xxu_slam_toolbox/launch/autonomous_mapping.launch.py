@@ -14,12 +14,13 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
     pkg_share = FindPackageShare("xxu_slam_toolbox")
+    bringup_share = FindPackageShare("xxu_bringup")
 
     default_slam_params_file = PathJoinSubstitution(
         [pkg_share, "config", "slam_toolbox_mapping.yaml"]
     )
     default_nav2_params_file = PathJoinSubstitution(
-        [pkg_share, "config", "nav2_exploration.yaml"]
+        [bringup_share, "config", "nav2_exploration.yaml"]
     )
     default_explore_params_file = PathJoinSubstitution(
         [pkg_share, "config", "explore_lite.yaml"]

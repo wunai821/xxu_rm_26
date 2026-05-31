@@ -45,7 +45,7 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/Map
       Alpha: 0.35
-      Enabled: false
+      Enabled: true
       Name: Local Costmap
       Topic:
         Depth: 5
@@ -53,7 +53,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /local_costmap/costmap
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/RobotModel
       Description Topic:
         Depth: 5
@@ -99,6 +99,32 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /plan
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Color: 85; 255; 255
+      Enabled: true
+      Line Style: Lines
+      Line Width: 0.08
+      Name: Controller Local Plan
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /local_plan
+      Value: true
+    - Class: rviz_default_plugins/PointStamped
+      Color: 255; 85; 85
+      Enabled: true
+      History Length: 20
+      Name: Lookahead Point
+      Radius: 0.12
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /lookahead_point
       Value: true
   Enabled: true
   Global Options:
