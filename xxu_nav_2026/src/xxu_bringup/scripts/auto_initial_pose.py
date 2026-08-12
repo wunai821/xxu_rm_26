@@ -9,8 +9,12 @@ import numpy as np
 import rclpy
 import yaml
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from rclpy.duration import Duration
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
+from rclpy.time import Time
 from sensor_msgs.msg import LaserScan
+from tf2_ros import Buffer, TransformListener
 
 
 def normalize_angle(angle):
@@ -247,6 +251,8 @@ class AutoInitialPose(Node):
     def __init__(self):
         super().__init__("auto_initial_pose")
         self.declare_parameter("frame_id", "map")
+        self.declare_parameter("odom_frame", "odom")
+        self.declare_parameter("base_frame", "base_footprint")
         self.declare_parameter("x", 0.02)
         self.declare_parameter("y", 0.03)
         self.declare_parameter("yaw", 0.0)
@@ -283,20 +289,45 @@ class AutoInitialPose(Node):
         self.min_match_score = float(self.get_parameter("min_match_score").value)
 
         self.pub = self.create_publisher(PoseWithCovarianceStamped, "/initialpose", 10)
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
         self.sent = 0
         self.timer = None
         self.scan_sub = None
         self.timeout_timer = None
         self.matching_started = False
+        self.prerequisites_ready = False
+        self.ready_timer = self.create_timer(0.5, self.wait_for_prerequisites)
 
+    def wait_for_prerequisites(self):
+        """Do not publish an initial pose until AMCL and odometry are usable."""
+        if self.pub.get_subscription_count() == 0:
+            self.get_logger().info(
+                "Waiting for AMCL initial-pose subscription", throttle_duration_sec=5.0
+            )
+            return
+
+        odom_frame = self.get_parameter("odom_frame").value
+        base_frame = self.get_parameter("base_frame").value
+        if not self.tf_buffer.can_transform(
+            odom_frame, base_frame, Time(), timeout=Duration(seconds=0.0)
+        ):
+            self.get_logger().info(
+                f"Waiting for odometry transform {odom_frame} -> {base_frame}",
+                throttle_duration_sec=5.0,
+            )
+            return
+
+        self.prerequisites_ready = True
+        self.ready_timer.cancel()
         if self.relocalize and self.map_yaml:
             self.scan_sub = self.create_subscription(
-                LaserScan, self.scan_topic, self.scan_callback, 10
+                LaserScan, self.scan_topic, self.scan_callback, qos_profile_sensor_data
             )
             timeout = float(self.get_parameter("scan_timeout").value)
             self.timeout_timer = self.create_timer(timeout, self.scan_timeout)
             self.get_logger().info(
-                f"Waiting for {self.scan_topic} to relocalize against {self.map_yaml}"
+                f"Prerequisites ready; waiting for {self.scan_topic} to relocalize"
             )
         else:
             self.start_publishing(self.x, self.y, self.yaw, "fixed")
@@ -360,6 +391,9 @@ class AutoInitialPose(Node):
         )
 
     def publish_pose(self):
+        if self.pub.get_subscription_count() == 0:
+            self.get_logger().warn("AMCL subscription disappeared; delaying initial-pose publish")
+            return
         msg = PoseWithCovarianceStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = self.frame_id

@@ -134,6 +134,20 @@ void OmniPidPursuitController::configure(
     node, plugin_name_ + ".curvature_backward_dist", rclcpp::ParameterValue(0.3));
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".max_velocity_scaling_factor_rate", rclcpp::ParameterValue(0.9));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".use_path_smoothing", rclcpp::ParameterValue(true));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".path_smoothing_iterations", rclcpp::ParameterValue(1));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".path_smoothing_max_offset", rclcpp::ParameterValue(0.05));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".curvature_lookahead_dist", rclcpp::ParameterValue(2.0));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".curvature_sample_dist", rclcpp::ParameterValue(0.15));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".max_lateral_accel", rclcpp::ParameterValue(0.8));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".curvature_max_deceleration", rclcpp::ParameterValue(1.0));
 
   // 从参数服务器读取各项参数值到成员变量
   node->get_parameter(plugin_name_ + ".translation_kp", translation_kp_);
@@ -179,6 +193,14 @@ void OmniPidPursuitController::configure(
   node->get_parameter(plugin_name_ + ".curvature_backward_dist", curvature_backward_dist_);
   node->get_parameter(
     plugin_name_ + ".max_velocity_scaling_factor_rate", max_velocity_scaling_factor_rate_);
+  node->get_parameter(plugin_name_ + ".use_path_smoothing", use_path_smoothing_);
+  node->get_parameter(plugin_name_ + ".path_smoothing_iterations", path_smoothing_iterations_);
+  node->get_parameter(plugin_name_ + ".path_smoothing_max_offset", path_smoothing_max_offset_);
+  node->get_parameter(plugin_name_ + ".curvature_lookahead_dist", curvature_lookahead_dist_);
+  node->get_parameter(plugin_name_ + ".curvature_sample_dist", curvature_sample_dist_);
+  node->get_parameter(plugin_name_ + ".max_lateral_accel", max_lateral_accel_);
+  node->get_parameter(
+    plugin_name_ + ".curvature_max_deceleration", curvature_max_deceleration_);
 
   node->get_parameter("controller_frequency", control_frequency);
   last_velocity_scaling_factor_ = v_linear_max_;
@@ -200,9 +222,11 @@ void OmniPidPursuitController::configure(
   move_pid_ = std::make_shared<PID>(
     control_duration_, v_linear_max_, v_linear_min_, translation_kp_, translation_kd_,
     translation_ki_);
+  move_pid_->setIntegralLimit(min_max_sum_error_);
   // 创建旋转 PID 控制器：控制到目标朝向的角度差 -> Z 轴角速度
   heading_pid_ = std::make_shared<PID>(
     control_duration_, v_angular_max_, v_angular_min_, rotation_kp_, rotation_kd_, rotation_ki_);
+  heading_pid_->setIntegralLimit(min_max_sum_error_);
 }
 
 /**
@@ -299,7 +323,11 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
   // 步骤2：计算前视距离，在路径上找到前视点（胡萝卜点），并发布可视化
   double lookahead_dist = getLookAheadDistance(velocity);
 
-  auto carrot_pose = getLookAheadPoint(lookahead_dist, transformed_plan);
+  // Smooth only the geometric reference. Collision checking below deliberately
+  // continues to use the planner's original path, so smoothing cannot cut a
+  // corner through an obstacle.
+  const auto pursuit_plan = smoothPath(transformed_plan);
+  auto carrot_pose = getLookAheadPoint(lookahead_dist, pursuit_plan);
   carrot_pub_->publish(createCarrotMsg(carrot_pose));
 
   // 步骤3：计算到前视点的直线距离和方向角
@@ -327,7 +355,7 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
   auto angular_vel = enable_rotation_ ? heading_pid_->calculate(angle_to_goal, 0) : 0.0;
 
   // 步骤7：基于路径曲率限制速度（弯道自动减速）
-  applyCurvatureLimitation(transformed_plan, carrot_pose, lin_vel);
+  applyCurvatureLimitation(pursuit_plan, carrot_pose, lin_vel);
 
   // 步骤8：接近目标时减速（平滑停止）
   applyApproachVelocityScaling(transformed_plan, lin_vel);
@@ -794,8 +822,84 @@ void OmniPidPursuitController::applyCurvatureLimitation(
 
   // 综合约束：取所有限速中最小的那个
   linear_vel = std::min(linear_vel, scaled_linear_vel);
-  // 记录当前缩放因子，供下一轮平滑过渡使用
+  applyCurvatureLookaheadLimitation(path, linear_vel);
+  // 记录最终限速结果，供下一轮局部曲率限速平滑过渡使用。
   last_velocity_scaling_factor_ = linear_vel;
+}
+
+nav_msgs::msg::Path OmniPidPursuitController::smoothPath(const nav_msgs::msg::Path & path) const
+{
+  if (!use_path_smoothing_ || path.poses.size() < 3 || path_smoothing_iterations_ <= 0) {
+    return path;
+  }
+
+  nav_msgs::msg::Path smoothed = path;
+  // A conservative 1-2-1 filter reduces planner stair-steps. Endpoints stay
+  // fixed and every interior point is capped to a small offset from the raw
+  // path, preserving route topology for holonomic pursuit.
+  for (int iteration = 0; iteration < path_smoothing_iterations_; ++iteration) {
+    const auto previous = smoothed;
+    for (size_t index = 1; index + 1 < smoothed.poses.size(); ++index) {
+      const auto & raw = path.poses[index].pose.position;
+      const auto & before = previous.poses[index - 1].pose.position;
+      const auto & current = previous.poses[index].pose.position;
+      const auto & after = previous.poses[index + 1].pose.position;
+      const double candidate_x = 0.25 * before.x + 0.5 * current.x + 0.25 * after.x;
+      const double candidate_y = 0.25 * before.y + 0.5 * current.y + 0.25 * after.y;
+      const double offset_x = candidate_x - raw.x;
+      const double offset_y = candidate_y - raw.y;
+      const double offset = std::hypot(offset_x, offset_y);
+      const double scale = offset > path_smoothing_max_offset_ && offset > 1e-9 ?
+        path_smoothing_max_offset_ / offset : 1.0;
+      smoothed.poses[index].pose.position.x = raw.x + offset_x * scale;
+      smoothed.poses[index].pose.position.y = raw.y + offset_y * scale;
+    }
+  }
+  return smoothed;
+}
+
+void OmniPidPursuitController::applyCurvatureLookaheadLimitation(
+  const nav_msgs::msg::Path & path, double & linear_vel)
+{
+  if (path.poses.size() < 3 || curvature_lookahead_dist_ <= 0.0 ||
+    curvature_sample_dist_ <= 0.0 || max_lateral_accel_ <= 0.0 ||
+    curvature_max_deceleration_ <= 0.0)
+  {
+    return;
+  }
+
+  const auto cumulative = calculateCumulativeDistances(path);
+  const double total_distance = cumulative.back();
+  double peak_curvature = 0.0;
+  double distance_to_peak = total_distance;
+  const double sample_half_width = std::max(curvature_sample_dist_, 0.05);
+  const double horizon = std::min(curvature_lookahead_dist_, total_distance);
+
+  // Start one half-width from the robot so each curvature estimate has a
+  // meaningful point on both sides. Sampling by arc length makes this robust
+  // to planners with irregular waypoint spacing.
+  for (double distance = sample_half_width; distance < horizon; distance += curvature_sample_dist_) {
+    const auto near_pose = findPoseAtDistance(path, cumulative, distance - sample_half_width);
+    const auto center_pose = findPoseAtDistance(path, cumulative, distance);
+    const auto far_pose = findPoseAtDistance(path, cumulative, distance + sample_half_width);
+    const double radius = calculateCurvatureRadius(
+      near_pose.pose.position, center_pose.pose.position, far_pose.pose.position);
+    const double curvature = 1.0 / radius;
+    if (std::isfinite(curvature) && curvature > peak_curvature) {
+      peak_curvature = curvature;
+      distance_to_peak = distance;
+    }
+  }
+  if (peak_curvature <= curvature_min_) {
+    return;
+  }
+
+  // v^2 * curvature <= a_lateral gives a physics-based curve speed. The
+  // braking bound ensures that speed can be reduced before that curve begins.
+  const double curve_speed = std::sqrt(max_lateral_accel_ / peak_curvature);
+  const double braking_speed = std::sqrt(std::max(
+    0.0, curve_speed * curve_speed + 2.0 * curvature_max_deceleration_ * distance_to_peak));
+  linear_vel = std::min(linear_vel, braking_speed);
 }
 
 /**
@@ -1062,6 +1166,57 @@ rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParame
   rcl_interfaces::msg::SetParametersResult result;
   std::lock_guard<std::mutex> lock_reinit(mutex_);
 
+  double next_min_lookahead = min_lookahead_dist_;
+  double next_max_lookahead = max_lookahead_dist_;
+  double next_curvature_min = curvature_min_;
+  double next_curvature_max = curvature_max_;
+  double next_integral_limit = min_max_sum_error_;
+  double next_smoothing_offset = path_smoothing_max_offset_;
+  double next_lookahead_horizon = curvature_lookahead_dist_;
+  double next_sample_dist = curvature_sample_dist_;
+  double next_lateral_accel = max_lateral_accel_;
+  double next_deceleration = curvature_max_deceleration_;
+  int next_smoothing_iterations = path_smoothing_iterations_;
+  for (const auto & parameter : parameters) {
+    if (parameter.get_type() != ParameterType::PARAMETER_DOUBLE) {
+      continue;
+    }
+    const double value = parameter.as_double();
+    if (!std::isfinite(value)) {
+      result.successful = false;
+      result.reason = "Controller parameters must be finite";
+      return result;
+    }
+    const auto & name = parameter.get_name();
+    if (name == plugin_name_ + ".min_lookahead_dist") next_min_lookahead = value;
+    else if (name == plugin_name_ + ".max_lookahead_dist") next_max_lookahead = value;
+    else if (name == plugin_name_ + ".curvature_min") next_curvature_min = value;
+    else if (name == plugin_name_ + ".curvature_max") next_curvature_max = value;
+    else if (name == plugin_name_ + ".min_max_sum_error") next_integral_limit = value;
+    else if (name == plugin_name_ + ".path_smoothing_max_offset") next_smoothing_offset = value;
+    else if (name == plugin_name_ + ".curvature_lookahead_dist") next_lookahead_horizon = value;
+    else if (name == plugin_name_ + ".curvature_sample_dist") next_sample_dist = value;
+    else if (name == plugin_name_ + ".max_lateral_accel") next_lateral_accel = value;
+    else if (name == plugin_name_ + ".curvature_max_deceleration") next_deceleration = value;
+  }
+  for (const auto & parameter : parameters) {
+    if (parameter.get_type() == ParameterType::PARAMETER_INTEGER &&
+      parameter.get_name() == plugin_name_ + ".path_smoothing_iterations")
+    {
+      next_smoothing_iterations = static_cast<int>(parameter.as_int());
+    }
+  }
+  if (next_min_lookahead <= 0.0 || next_max_lookahead < next_min_lookahead ||
+    next_curvature_min < 0.0 || next_curvature_max <= next_curvature_min ||
+    next_integral_limit < 0.0 || next_smoothing_offset < 0.0 ||
+    next_lookahead_horizon < 0.0 || next_sample_dist <= 0.0 ||
+    next_lateral_accel <= 0.0 || next_deceleration <= 0.0 || next_smoothing_iterations < 0)
+  {
+    result.successful = false;
+    result.reason = "Invalid lookahead, curvature, or integral-limit parameter relation";
+    return result;
+  }
+
   for (const auto & parameter : parameters) {
     const auto & type = parameter.get_type();
     const auto & name = parameter.get_name();
@@ -1118,6 +1273,20 @@ rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParame
         curvature_backward_dist_ = parameter.as_double();
       } else if (name == plugin_name_ + ".max_velocity_scaling_factor_rate") {
         max_velocity_scaling_factor_rate_ = parameter.as_double();
+      } else if (name == plugin_name_ + ".path_smoothing_max_offset") {
+        path_smoothing_max_offset_ = parameter.as_double();
+      } else if (name == plugin_name_ + ".curvature_lookahead_dist") {
+        curvature_lookahead_dist_ = parameter.as_double();
+      } else if (name == plugin_name_ + ".curvature_sample_dist") {
+        curvature_sample_dist_ = parameter.as_double();
+      } else if (name == plugin_name_ + ".max_lateral_accel") {
+        max_lateral_accel_ = parameter.as_double();
+      } else if (name == plugin_name_ + ".curvature_max_deceleration") {
+        curvature_max_deceleration_ = parameter.as_double();
+      }
+    } else if (type == ParameterType::PARAMETER_INTEGER) {
+      if (name == plugin_name_ + ".path_smoothing_iterations") {
+        path_smoothing_iterations_ = static_cast<int>(parameter.as_int());
       }
     } else if (type == ParameterType::PARAMETER_BOOL) {
       if (name == plugin_name_ + ".use_velocity_scaled_lookahead_dist") {
@@ -1126,6 +1295,8 @@ rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParame
         use_interpolation_ = parameter.as_bool();
       } else if (name == plugin_name_ + ".use_rotate_to_heading") {
         use_rotate_to_heading_ = parameter.as_bool();
+      } else if (name == plugin_name_ + ".use_path_smoothing") {
+        use_path_smoothing_ = parameter.as_bool();
       }
     }
   }
@@ -1133,10 +1304,12 @@ rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParame
   if (move_pid_) {
     move_pid_->setGains(translation_kp_, translation_kd_, translation_ki_);
     move_pid_->setLimits(v_linear_max_, v_linear_min_);
+    move_pid_->setIntegralLimit(min_max_sum_error_);
   }
   if (heading_pid_) {
     heading_pid_->setGains(rotation_kp_, rotation_kd_, rotation_ki_);
     heading_pid_->setLimits(v_angular_max_, v_angular_min_);
+    heading_pid_->setIntegralLimit(min_max_sum_error_);
   }
 
   result.successful = true;

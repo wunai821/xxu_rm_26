@@ -85,37 +85,34 @@ controller_server:
       yaw_goal_tolerance: 0.2
       stateful: true
     FollowPath:
-      plugin: "pb_omni_pid_pursuit_controller::OmniPidPursuitController"
-      translation_kp: 4.0
-      translation_ki: 0.05
-      translation_kd: 0.25
-      enable_rotation: true
-      rotation_kp: 2.8
-      rotation_ki: 0.05
-      rotation_kd: 0.3
+      plugin: "pb_omni_mppi_controller::OmniMppiController"
       transform_tolerance: 1.0
-      min_max_sum_error: 1.0
-      lookahead_dist: 0.5
-      use_velocity_scaled_lookahead_dist: true
-      min_lookahead_dist: 0.5
-      max_lookahead_dist: 1.0
-      lookahead_time: 1.2
-      use_interpolation: true
-      use_rotate_to_heading: false
-      use_rotate_to_heading_treshold: 0.3
-      min_approach_linear_velocity: 0.13
-      approach_velocity_scaling_dist: 0.4
-      v_linear_min: -1.5
-      v_linear_max: 1.5
-      v_angular_min: -0.8
-      v_angular_max: 0.8
+      time_steps: 15
+      batch_size: 256
+      model_dt: 0.1
+      temperature: 0.35
+      noise_std_x: 0.35
+      noise_std_y: 0.35
+      noise_std_theta: 0.25
+      vx_min: -1.5
+      vx_max: 1.5
+      vy_min: -1.5
+      vy_max: 1.5
+      wz_min: -0.8
+      wz_max: 0.8
+      max_accel_x: 0.8
+      max_accel_y: 0.8
+      max_accel_theta: 1.5
+      path_weight: 8.0
+      heading_weight: 1.5
+      terminal_path_weight: 16.0
+      terminal_heading_weight: 3.0
+      control_weight: 0.04
+      smoothness_weight: 0.12
+      collision_weight: 120.0
+      collision_cost_threshold: 253
+      consider_unknown_as_collision: true
       max_robot_pose_search_dist: 2.0
-      curvature_min: 0.22
-      curvature_max: 0.5
-      reduction_ratio_at_high_curvature: 0.30
-      curvature_forward_dist: 0.7
-      curvature_backward_dist: 0.3
-      max_velocity_scaling_factor_rate: 1.4
 
 local_costmap:
   local_costmap:

@@ -310,6 +310,12 @@ private:
     const nav_msgs::msg::Path & path, const geometry_msgs::msg::PoseStamped & lookahead_pose,
     double & linear_vel);
 
+  /** Smooth the reference path used for pursuit without changing collision checking. */
+  nav_msgs::msg::Path smoothPath(const nav_msgs::msg::Path & path) const;
+
+  /** Limit speed early enough to reach the tightest upcoming curve safely. */
+  void applyCurvatureLookaheadLimitation(const nav_msgs::msg::Path & path, double & linear_vel);
+
   /**
    * @brief 用三点圆弧拟合法计算路径在前视点处的曲率
    *
@@ -430,6 +436,13 @@ private:
   double curvature_forward_dist_;                             ///< 曲率计算时向前搜索的距离
   double curvature_backward_dist_;                            ///< 曲率计算时向后搜索的距离
   double max_velocity_scaling_factor_rate_;                   ///< 速度缩放因子的最大变化率（防突变）
+  bool use_path_smoothing_;                                   ///< 是否平滑局部参考路径
+  int path_smoothing_iterations_;                             ///< 局部路径平滑迭代次数
+  double path_smoothing_max_offset_;                          ///< 单点最大平滑偏移量（米）
+  double curvature_lookahead_dist_;                           ///< 曲率前瞻距离（米）
+  double curvature_sample_dist_;                              ///< 前瞻曲率采样间距（米）
+  double max_lateral_accel_;                                  ///< 最大横向加速度（m/s^2）
+  double curvature_max_deceleration_;                         ///< 进入弯道的最大减速度（m/s^2）
   tf2::Duration transform_tolerance_;                         ///< TF 坐标变换的容忍时间
 
   // === 路径数据 ===

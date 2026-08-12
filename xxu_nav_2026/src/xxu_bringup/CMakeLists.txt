@@ -9,7 +9,9 @@ install(
 )
 
 install(
-  PROGRAMS scripts/auto_initial_pose.py
+  PROGRAMS
+    scripts/auto_initial_pose.py
+    scripts/nav2_navigation_startup.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

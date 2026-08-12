@@ -162,6 +162,9 @@ def generate_launch_description():
             description="Fixed simulation initial pose yaw in map",
         ),
         gazebo,
+        # Localization nodes are started after Gazebo has published /clock.
+        # The initial-pose node then waits for active AMCL and LIO odometry;
+        # navigation activation is gated separately on map -> odom.
         TimerAction(period=8.0, actions=[navigation]),
-        TimerAction(period=28.0, actions=[initial_pose]),
+        initial_pose,
     ])

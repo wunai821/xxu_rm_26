@@ -106,6 +106,15 @@ rclcpp_components_register_node(${PROJECT_NAME}
     EXECUTABLE ${PROJECT_NAME}_node
 )
 
+# The component executable loads this shared object through class_loader at
+# runtime. ament_auto installs the executable but does not install this target
+# in the current package layout, so install it explicitly.
+install(TARGETS ${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
 #############
 ## Testing ##
 #############

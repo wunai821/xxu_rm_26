@@ -20,13 +20,16 @@ def generate_launch_description():
     autostart = LaunchConfiguration("autostart")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
 
-    default_map = PathJoinSubstitution([bringup_share, "maps", "empty.yaml"])
+    # Keep standalone Nav2 consistent with the saved-map simulation and maps README.
+    default_map = PathJoinSubstitution([bringup_share, "maps", "auto_map.yaml"])
     default_params = PathJoinSubstitution([bringup_share, "config", "nav2_navigation.yaml"])
     default_rviz_config = PathJoinSubstitution([bringup_share, "rviz", "navigation.rviz"])
 
-    lifecycle_nodes = [
+    localization_lifecycle_nodes = [
         "map_server",
         "amcl",
+    ]
+    navigation_lifecycle_nodes = [
         "controller_server",
         "smoother_server",
         "planner_server",
@@ -173,13 +176,33 @@ def generate_launch_description():
         Node(
             package="nav2_lifecycle_manager",
             executable="lifecycle_manager",
-            name="lifecycle_manager_navigation",
+            name="lifecycle_manager_localization",
             output="screen",
             parameters=[{
                 "use_sim_time": use_sim_time,
                 "autostart": autostart,
-                "node_names": lifecycle_nodes,
+                "node_names": localization_lifecycle_nodes,
             }],
+        ),
+        Node(
+            package="nav2_lifecycle_manager",
+            executable="lifecycle_manager",
+            name="lifecycle_manager_navigation",
+            output="screen",
+            parameters=[{
+                "use_sim_time": use_sim_time,
+                # Planner activation needs AMCL's map -> odom transform.
+                # nav2_navigation_startup starts this manager once it exists.
+                "autostart": False,
+                "node_names": navigation_lifecycle_nodes,
+            }],
+        ),
+        Node(
+            package="xxu_bringup",
+            executable="nav2_navigation_startup.py",
+            name="nav2_navigation_startup",
+            output="screen",
+            parameters=[{"use_sim_time": use_sim_time}],
         ),
         Node(
             package="rviz2",

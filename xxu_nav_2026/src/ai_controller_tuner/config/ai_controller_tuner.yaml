@@ -1,5 +1,7 @@
 ai_controller_tuner:
   ros__parameters:
+    # Navigation is normally launched in Gazebo; the launch file may override this.
+    use_sim_time: true
     controller_node: /controller_server
     plugin_name: FollowPath
     record_duration_sec: 60.0
@@ -12,6 +14,10 @@ ai_controller_tuner:
     # but only if tracking error, oscillation, and command saturation stay low.
     objective_name: fast_stable
     target_speed_utilization: 0.75
+    # Hard safety limits for each AI tuning window.
+    max_parameter_step_ratio: 0.10
+    max_changed_parameters_per_window: 2
+    min_ai_confidence: 0.60
     score_tracking_weight: 4.0
     score_linear_error_weight: 2.0
     score_angular_error_weight: 1.5
@@ -35,7 +41,7 @@ ai_controller_tuner:
     # OpenAI-compatible API settings. Keep the real key in the environment.
     api_base_url: https://api.deepseek.com
     # Prefer leaving api_key empty and using: export OPENAI_API_KEY=...
-    api_key: "sk-b6a14924a2d74097934e264c0900f9c1"
+    api_key: ""
     api_key_env: OPENAI_API_KEY
     model: deepseek-v4-pro
     api_timeout_sec: 90.0
@@ -51,6 +57,9 @@ ai_controller_tuner:
     ui_enabled: true
     ui_host: 127.0.0.1
     ui_port: 8765
+    # If the configured port is occupied, use an OS-assigned free port and
+    # report the actual URL in the log and Web UI status.
+    ui_fallback_to_ephemeral_port: true
 
     # Optional offline test response. Leave empty for real API calls.
     mock_ai_response: ""
@@ -70,11 +79,18 @@ ai_controller_tuner:
       - curvature_max
       - reduction_ratio_at_high_curvature
       - max_velocity_scaling_factor_rate
+      - path_smoothing_max_offset
+      - curvature_lookahead_dist
+      - curvature_sample_dist
+      - max_lateral_accel
+      - curvature_max_deceleration
       - min_approach_linear_velocity
       - approach_velocity_scaling_dist
 
 ai_controller_goal_sender:
   ros__parameters:
+    # Must match Nav2's clock, otherwise NavigateToPose goals have invalid stamps.
+    use_sim_time: true
     action_name: /navigate_to_pose
     goal_frame: map
     # Stages after chassis/base config validation:
@@ -91,6 +107,7 @@ ai_controller_goal_sender:
     follow_tuner_stage: true
     stage_topic: /ai_controller_tuner/current_stage
     keep_alive_for_stage_updates: true
+    stop_on_tuning_complete: true
 
     # Stage routes in the selected map frame. Fill these with obstacle-free
     # map coordinates for each tuning stage. The goal sender uses the route

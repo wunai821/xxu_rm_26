@@ -45,6 +45,11 @@ DEFAULT_TUNABLE_PARAMETERS = [
     "curvature_max",
     "reduction_ratio_at_high_curvature",
     "max_velocity_scaling_factor_rate",
+    "path_smoothing_max_offset",
+    "curvature_lookahead_dist",
+    "curvature_sample_dist",
+    "max_lateral_accel",
+    "curvature_max_deceleration",
     "min_approach_linear_velocity",
     "approach_velocity_scaling_dist",
 ]
@@ -65,6 +70,11 @@ PARAMETER_LIMITS = {
     "curvature_max": (0.01, 10.0),
     "reduction_ratio_at_high_curvature": (0.05, 1.0),
     "max_velocity_scaling_factor_rate": (0.01, 1.0),
+    "path_smoothing_max_offset": (0.0, 0.15),
+    "curvature_lookahead_dist": (0.2, 5.0),
+    "curvature_sample_dist": (0.05, 0.5),
+    "max_lateral_accel": (0.1, 5.0),
+    "curvature_max_deceleration": (0.1, 5.0),
     "min_approach_linear_velocity": (0.01, 0.3),
     "approach_velocity_scaling_dist": (0.1, 2.0),
 }
@@ -90,6 +100,11 @@ STAGE_PROFILES = {
             "curvature_max",
             "reduction_ratio_at_high_curvature",
             "max_velocity_scaling_factor_rate",
+            "path_smoothing_max_offset",
+            "curvature_lookahead_dist",
+            "curvature_sample_dist",
+            "max_lateral_accel",
+            "curvature_max_deceleration",
         ],
     },
     "approach": {
@@ -207,10 +222,17 @@ UI_HTML = """<!doctype html>
     body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
     header { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: #151b21; border-bottom: 1px solid var(--line); }
     h1 { margin: 0; font-size: 19px; font-weight: 650; }
+    .header-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .pill { border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; color: var(--muted); font-size: 13px; }
     main { height: calc(100vh - 56px); display: grid; grid-template-columns: minmax(420px, 1fr) 360px; gap: 0; }
     #chat { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--line); }
-    #messages { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .live-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px 14px; background: #11181e; border-bottom: 1px solid var(--line); }
+    .summary-card { min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
+    .summary-card .label { color: var(--muted); font-size: 11px; }
+    .summary-card .number { display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .timeline-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 18px 0; color: var(--muted); font-size: 12px; }
+    .timeline-head strong { color: var(--accent); font-size: 13px; }
+    #messages { flex: 1; overflow-y: auto; padding: 12px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
     .msg { max-width: 860px; border: 1px solid var(--line); border-radius: 8px; padding: 12px 13px; background: var(--panel); }
     .msg.ai { border-color: #31506a; background: #14212b; margin-left: 42px; }
     .msg.system { border-color: #3d4550; background: #171a1f; }
@@ -231,17 +253,27 @@ UI_HTML = """<!doctype html>
     .key { color: var(--muted); }
     .value { text-align: right; font-variant-numeric: tabular-nums; }
     pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #dbe7ef; font-size: 12px; }
-    @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } #chat { height: 62vh; border-right: 0; border-bottom: 1px solid var(--line); } aside { height: auto; } }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } #chat { height: 70vh; border-right: 0; border-bottom: 1px solid var(--line); } aside { height: auto; } .live-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   </style>
 </head>
 <body>
   <header>
     <h1>AI Controller Tuner</h1>
-    <div class="pill" id="headline">connecting</div>
+    <div class="header-status">
+      <div class="pill" id="ui-address">UI: connecting</div>
+      <div class="pill" id="headline">connecting</div>
+    </div>
   </header>
   <main>
     <div id="chat">
       <div class="bar"><div id="progress"></div></div>
+      <div class="live-summary">
+        <div class="summary-card"><span class="label">阶段</span><strong class="number" id="stage-progress">-</strong></div>
+        <div class="summary-card"><span class="label">当前轮次</span><strong class="number" id="round-progress">-</strong></div>
+        <div class="summary-card"><span class="label">总完成步数</span><strong class="number" id="total-progress">-</strong></div>
+        <div class="summary-card"><span class="label">本阶段最佳</span><strong class="number" id="best-score">-</strong></div>
+      </div>
+      <div class="timeline-head"><strong>实时窗口记录</strong><span id="timeline-status">跟随最新</span></div>
       <div id="messages"></div>
     </div>
     <aside>
@@ -253,7 +285,8 @@ UI_HTML = """<!doctype html>
     </aside>
   </main>
   <script>
-    let lastEventCount = 0;
+    let lastEventSignature = "";
+    let firstEventRender = true;
     const fmt = (v) => {
       if (v === null || v === undefined) return "-";
       if (typeof v === "number") return Number.isInteger(v) ? String(v) : v.toFixed(4);
@@ -287,22 +320,45 @@ UI_HTML = """<!doctype html>
         return;
       }
       const age = ((Date.now() / 1000) - data.updated_at).toFixed(1);
+      const uiAddress = data.ui_url || (data.ui_host && data.ui_port ? `http://${data.ui_host}:${data.ui_port}` : "-");
+      const progress = data.progress || {};
+      const stageIndex = progress.stage_index || "-";
+      const stageTotal = progress.stage_total || "-";
+      const stageRound = progress.current_stage_round || 1;
+      const completedTotal = progress.completed_windows_total ?? 0;
+      const bestScore = data.best_score;
+      document.getElementById("stage-progress").textContent = `${stageIndex} / ${stageTotal} · ${data.stage || "-"}`;
+      document.getElementById("round-progress").textContent = `第 ${stageRound} 轮`;
+      document.getElementById("total-progress").textContent = `第 ${completedTotal} 步`;
+      document.getElementById("best-score").textContent = bestScore === null || bestScore === undefined ? "-" : fmt(bestScore);
+      document.getElementById("ui-address").textContent = data.ui_listening
+        ? `UI: ${uiAddress}`
+        : `UI unavailable${data.ui_error ? `: ${data.ui_error}` : ""}`;
       document.getElementById("headline").textContent = `${data.stage} / ${data.ai_status}`;
       const elapsed = data.current_window?.elapsed_sec || 0;
       const duration = data.record_duration_sec || 60;
       document.getElementById("progress").style.width = `${Math.min(100, 100 * elapsed / duration)}%`;
       document.getElementById("status").innerHTML = rows({
         stage: data.stage,
+        stage_progress: `${stageIndex} / ${stageTotal}`,
+        current_round: stageRound,
+        completed_total: completedTotal,
         objective: data.objective_name,
         ai_status: data.ai_status,
         auto_apply: data.auto_apply,
         auto_stage_advance: data.auto_stage_advance,
+        ui_address: uiAddress,
+        ui_port_configured: data.ui_configured_port,
+        ui_listening: data.ui_listening,
         stage_windows: data.stage_window_count,
+        last_error: data.last_error || "-",
         next_stage_rule: `${data.stage_min_windows || "-"} min / ${data.stage_advance_after_non_improving_windows || "-"} flat`,
         updated_age_sec: age
       });
       document.getElementById("window").innerHTML = rows({
         window_id: data.current_window?.window_id,
+        stage_round: data.current_window?.stage_round,
+        stage_windows_completed: data.current_window?.stage_windows_completed,
         stage: data.current_window?.stage,
         elapsed_sec: elapsed,
         duration_sec: duration,
@@ -322,20 +378,33 @@ UI_HTML = """<!doctype html>
       document.getElementById("best").textContent = JSON.stringify({
         best_score: data.best_score,
         best_params: data.best_params,
+        best_metrics: data.best_metrics,
         non_improving_windows: data.non_improving_windows,
         stage_window_count: data.stage_window_count,
+        stage_progress: `${stageIndex} / ${stageTotal}`,
         log_path: data.log_path
       }, null, 2);
       const events = data.dialog_events || [];
       const box = document.getElementById("messages");
-      box.innerHTML = events.map(ev =>
-        `<div class="msg ${esc(ev.kind || "system")}"><div class="meta"><span class="role">${esc(ev.title || ev.kind || "event")}</span><span>${esc(eventLabel(ev))}</span><span>${esc(timeText(ev.time))}</span></div><div class="content">${esc(eventText(ev))}</div></div>`
-      ).join("");
-      if (events.length !== lastEventCount) {
-        box.scrollTop = box.scrollHeight;
-        lastEventCount = events.length;
+      const eventSignature = events.map(ev => `${ev.time}|${ev.title}|${ev.window_id}|${ev.message}`).join("\\n");
+      if (eventSignature !== lastEventSignature) {
+        const followLatest = firstEventRender || (box.scrollHeight - box.scrollTop - box.clientHeight < 48);
+        box.innerHTML = events.map(ev =>
+          `<div class="msg ${esc(ev.kind || "system")}"><div class="meta"><span class="role">${esc(ev.title || ev.kind || "event")}</span><span>${esc(eventLabel(ev))}</span><span>${esc(timeText(ev.time))}</span></div><div class="content">${esc(eventText(ev))}</div></div>`
+        ).join("");
+        if (followLatest) box.scrollTop = box.scrollHeight;
+        document.getElementById("timeline-status").textContent = followLatest ? "跟随最新" : "已暂停跟随（滚到底部恢复）";
+        lastEventSignature = eventSignature;
+        firstEventRender = false;
       }
     }
+    document.getElementById("messages").addEventListener("scroll", (event) => {
+      const box = event.currentTarget;
+      const atLatest = box.scrollHeight - box.scrollTop - box.clientHeight < 48;
+      document.getElementById("timeline-status").textContent = atLatest
+        ? "跟随最新"
+        : "已暂停跟随（滚到底部恢复）";
+    });
     refresh();
     setInterval(refresh, 1000);
   </script>
@@ -373,6 +442,9 @@ class AiControllerTuner(Node):
         self.declare_parameter("debug_stage", "translation")
         self.declare_parameter("objective_name", "fast_stable")
         self.declare_parameter("target_speed_utilization", 0.75)
+        self.declare_parameter("max_parameter_step_ratio", 0.10)
+        self.declare_parameter("max_changed_parameters_per_window", 2)
+        self.declare_parameter("min_ai_confidence", 0.60)
         self.declare_parameter("score_tracking_weight", 4.0)
         self.declare_parameter("score_linear_error_weight", 2.0)
         self.declare_parameter("score_angular_error_weight", 1.5)
@@ -402,6 +474,7 @@ class AiControllerTuner(Node):
         self.declare_parameter("ui_enabled", True)
         self.declare_parameter("ui_host", "127.0.0.1")
         self.declare_parameter("ui_port", 8765)
+        self.declare_parameter("ui_fallback_to_ephemeral_port", True)
 
         # ======== 读取并缓存参数 ========
         self.controller_node = self.get_parameter("controller_node").value
@@ -418,6 +491,13 @@ class AiControllerTuner(Node):
         self.debug_stage = self.get_parameter("debug_stage").value
         self.objective_name = self.get_parameter("objective_name").value
         self.target_speed_utilization = float(self.get_parameter("target_speed_utilization").value)
+        self.max_parameter_step_ratio = float(
+            self.get_parameter("max_parameter_step_ratio").value
+        )
+        self.max_changed_parameters_per_window = max(
+            1, int(self.get_parameter("max_changed_parameters_per_window").value)
+        )
+        self.min_ai_confidence = float(self.get_parameter("min_ai_confidence").value)
         self.score_weights = {
             "tracking": float(self.get_parameter("score_tracking_weight").value),
             "linear_error": float(self.get_parameter("score_linear_error_weight").value),
@@ -455,8 +535,11 @@ class AiControllerTuner(Node):
         self.stage_topic = self.get_parameter("stage_topic").value
         self.mock_ai_response = self.get_parameter("mock_ai_response").value
         self.ui_enabled = bool(self.get_parameter("ui_enabled").value)
-        self.ui_host = self.get_parameter("ui_host").value
+        self.ui_host = str(self.get_parameter("ui_host").value)
         self.ui_port = int(self.get_parameter("ui_port").value)
+        self.ui_fallback_to_ephemeral_port = bool(
+            self.get_parameter("ui_fallback_to_ephemeral_port").value
+        )
 
         # ======== 日志目录 ========
         log_dir = Path(os.path.expanduser(self.get_parameter("log_dir").value))
@@ -489,6 +572,9 @@ class AiControllerTuner(Node):
             objective_name=self.objective_name,
             record_duration_sec=self.record_duration_sec,
             target_speed_utilization=self.target_speed_utilization,
+            max_parameter_step_ratio=self.max_parameter_step_ratio,
+            max_changed_parameters_per_window=self.max_changed_parameters_per_window,
+            min_ai_confidence=self.min_ai_confidence,
             score_weights=self.score_weights,
             active_parameters=self._active_tunable_parameters(),
             auto_apply=self.auto_apply,
@@ -506,12 +592,21 @@ class AiControllerTuner(Node):
             current_active_params={},
             best_score=None,
             best_params={},
+            best_metrics={},
             non_improving_windows=0,
             stage_window_count=0,
             last_raw_suggestions={},
             last_safe_suggestions={},
             last_apply_result={},
             last_error=None,
+            ui_enabled=self.ui_enabled,
+            ui_configured_host=self.ui_host,
+            ui_configured_port=self.ui_port,
+            ui_host=self.ui_host,
+            ui_port=self.ui_port,
+            ui_url=None,
+            ui_listening=False,
+            ui_error=None,
         )
         self._add_dialog_event(
             "system",
@@ -592,13 +687,11 @@ class AiControllerTuner(Node):
     def _reset_window(self) -> None:
         """重置当前窗口的所有数据缓冲区。"""
         self._window_started_at = time.time()
-        self._tracking_errors: List[float] = []        # 路径追踪误差序列
+        self._tracking_errors: List[Tuple[float, float]] = []  # (timestamp, cross-track error)
         self._lookahead_distances: List[float] = []     # 前视距离序列
-        self._cmd_nav: List[Tuple[float, float, float]] = []       # 导航速度命令序列 (x, y, w)
-        self._cmd_smoothed: List[Tuple[float, float, float]] = []  # 平滑后速度命令序列
-        self._actual_velocities: List[Tuple[float, float, float]] = []  # 实际速度序列
-        self._velocity_errors_linear: List[float] = []   # 线速度误差
-        self._velocity_errors_angular: List[float] = []  # 角速度误差
+        self._cmd_nav: List[Tuple[float, float, float, float]] = []       # (timestamp, x, y, w)
+        self._cmd_smoothed: List[Tuple[float, float, float, float]] = []  # (timestamp, x, y, w)
+        self._actual_velocities: List[Tuple[float, float, float, float]] = []  # (timestamp, x, y, w)
 
     def _on_odom(self, msg: Odometry) -> None:
         """里程计回调：记录实际速度和位姿。
@@ -623,9 +716,7 @@ class AiControllerTuner(Node):
                     angular_speed = angle_diff(yaw, last_yaw) / dt
             self._latest_odom_sample = (stamp, pose.x, pose.y, yaw)
             self._latest_odom = msg
-            self._actual_velocities.append(
-                (linear_speed, 0.0, angular_speed)
-            )
+            self._actual_velocities.append((stamp, linear_speed, 0.0, angular_speed))
 
     def _on_cmd_vel_nav(self, msg) -> None:
         """导航速度命令回调（兼容 Twist 和 TwistStamped 两种消息类型）。
@@ -633,25 +724,18 @@ class AiControllerTuner(Node):
         同时计算命令速度与实际速度之间的误差。
         """
         twist = msg.twist if hasattr(msg, "twist") else msg
-        cmd = (twist.linear.x, twist.linear.y, twist.angular.z)
+        stamp = self._message_timestamp(msg)
+        cmd = (stamp, twist.linear.x, twist.linear.y, twist.angular.z)
         with self._lock:
             self._cmd_nav.append(cmd)
-            if self._latest_odom is not None:
-                cmd_linear = math.hypot(twist.linear.x, twist.linear.y)
-                actual_linear = (
-                    self._actual_velocities[-1][0] if self._actual_velocities else 0.0
-                )
-                self._velocity_errors_linear.append(cmd_linear - actual_linear)
-                actual_angular = (
-                    self._actual_velocities[-1][2] if self._actual_velocities else 0.0
-                )
-                self._velocity_errors_angular.append(twist.angular.z - actual_angular)
 
     def _on_cmd_vel_smoothed(self, msg) -> None:
         """平滑后速度命令回调（用于观测速度平滑效果）。"""
         twist = msg.twist if hasattr(msg, "twist") else msg
         with self._lock:
-            self._cmd_smoothed.append((twist.linear.x, twist.linear.y, twist.angular.z))
+            self._cmd_smoothed.append(
+                (self._message_timestamp(msg), twist.linear.x, twist.linear.y, twist.angular.z)
+            )
 
     def _on_local_plan(self, msg: PathMsg) -> None:
         """局部路径回调：计算最近路径点到机器人的距离作为追踪误差。"""
@@ -661,7 +745,15 @@ class AiControllerTuner(Node):
             math.hypot(pose.pose.position.x, pose.pose.position.y) for pose in msg.poses
         )
         with self._lock:
-            self._tracking_errors.append(closest)
+            self._tracking_errors.append((self._message_timestamp(msg), closest))
+
+    def _message_timestamp(self, msg: Any) -> float:
+        """Use the message stamp when present; otherwise use the local ROS clock."""
+        if hasattr(msg, "header"):
+            stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1.0e-9
+            if stamp > 0.0:
+                return stamp
+        return self.get_clock().now().nanoseconds * 1.0e-9
 
     def _on_lookahead_point(self, msg: PointStamped) -> None:
         """前视点回调：记录前视距离。"""
@@ -690,8 +782,6 @@ class AiControllerTuner(Node):
                 "cmd_nav": list(self._cmd_nav),
                 "cmd_smoothed": list(self._cmd_smoothed),
                 "actual_velocities": list(self._actual_velocities),
-                "velocity_errors_linear": list(self._velocity_errors_linear),
-                "velocity_errors_angular": list(self._velocity_errors_angular),
             }
             self._window_id += 1
             self._reset_window()
@@ -782,7 +872,15 @@ class AiControllerTuner(Node):
             if self._should_restore_best(best_update):
                 result["apply_result"] = self._apply_parameters(self._best_params)
                 result["apply_result"]["reason"] = "restored best observed parameters"
+                result["stage_advance"] = self._maybe_advance_stage(
+                    current_params=current_params,
+                    safe_suggestions={},
+                )
                 self._non_improving_windows = 0
+                self._update_ui_state(
+                    ai_status="recording",
+                    last_apply_result=result["apply_result"],
+                )
                 self._write_log(result)
                 return
 
@@ -797,10 +895,16 @@ class AiControllerTuner(Node):
             ai_response = self._request_ai_suggestion(current_params, metrics)
             self._update_ui_state(ai_status="ai_received")
             suggestions = self._extract_suggestions(ai_response)
-            safe_suggestions = self._sanitize_suggestions(suggestions, current_params)
+            ai_guard_reason = self._ai_change_guard(ai_response)
+            safe_suggestions = (
+                {}
+                if ai_guard_reason
+                else self._sanitize_suggestions(suggestions, current_params)
+            )
 
             result["ai_response"] = ai_response
             result["safe_suggestions"] = safe_suggestions
+            result["ai_guard_reason"] = ai_guard_reason
             self._update_ui_state(
                 last_raw_suggestions=suggestions,
                 last_safe_suggestions=safe_suggestions,
@@ -812,6 +916,9 @@ class AiControllerTuner(Node):
                 str(ai_response.get("reasoning", "AI returned a tuning suggestion.")),
                 {
                     "risk_level": ai_response.get("risk_level"),
+                    "action": ai_response.get("action"),
+                    "confidence": ai_response.get("confidence"),
+                    "guard_reason": ai_guard_reason,
                     "raw": suggestions,
                     "safe": safe_suggestions,
                 },
@@ -831,7 +938,10 @@ class AiControllerTuner(Node):
                     window_id=snapshot.get("window_id"),
                 )
             else:
-                result["apply_result"] = {"applied": False, "reason": "auto_apply disabled or empty suggestions"}
+                result["apply_result"] = {
+                    "applied": False,
+                    "reason": ai_guard_reason or "auto_apply disabled or empty suggestions",
+                }
                 self._add_dialog_event(
                     "system",
                     "No Apply",
@@ -878,10 +988,39 @@ class AiControllerTuner(Node):
 
         包括追踪误差、速度误差、速度利用率、命令饱和率、振荡指标等。
         """
-        cmd_linear = [math.hypot(x, y) for x, y, _ in snapshot["cmd_nav"]]
-        cmd_y = [y for _, y, _ in snapshot["cmd_nav"]]
-        cmd_angular = [w for _, _, w in snapshot["cmd_nav"]]
-        actual_linear = [math.hypot(x, y) for x, y, _ in snapshot["actual_velocities"]]
+        # The robot executes the velocity-smoother output when available.  Measuring
+        # against the upstream Nav2 command would reward changes that the smoother
+        # subsequently removes.  Pair samples by timestamp rather than list index.
+        effective_cmd = snapshot["cmd_smoothed"] or snapshot["cmd_nav"]
+        actual = snapshot["actual_velocities"]
+        max_pair_age_sec = 0.20
+        active_command_speed = 0.03
+        matched = []
+        actual_index = 0
+        for cmd_stamp, cmd_x, cmd_y, cmd_w in effective_cmd:
+            while actual_index + 1 < len(actual) and actual[actual_index + 1][0] <= cmd_stamp:
+                actual_index += 1
+            candidates = actual[max(0, actual_index - 1):actual_index + 2]
+            if not candidates:
+                continue
+            odom = min(candidates, key=lambda sample: abs(sample[0] - cmd_stamp))
+            if abs(odom[0] - cmd_stamp) > max_pair_age_sec:
+                continue
+            if math.hypot(cmd_x, cmd_y) < active_command_speed and abs(cmd_w) < active_command_speed:
+                continue
+            matched.append(((cmd_stamp, cmd_x, cmd_y, cmd_w), odom))
+
+        cmd_linear = [math.hypot(cmd[1], cmd[2]) for cmd, _ in matched]
+        cmd_y = [cmd[2] for cmd, _ in matched]
+        cmd_angular = [cmd[3] for cmd, _ in matched]
+        actual_linear = [math.hypot(odom[1], odom[2]) for _, odom in matched]
+        linear_errors = [command - measured for command, measured in zip(cmd_linear, actual_linear)]
+        angular_errors = [cmd[3] - odom[3] for cmd, odom in matched]
+        active_stamps = [cmd[0] for cmd, _ in matched]
+        tracking_errors = [
+            error for stamp, error in snapshot["tracking_errors"]
+            if any(abs(stamp - command_stamp) <= max_pair_age_sec for command_stamp in active_stamps)
+        ]
 
         max_linear = max(abs(float(current_params.get("v_linear_max", 0.0))), 1.0e-6)
         max_angular = max(abs(float(current_params.get("v_angular_max", 0.0))), 1.0e-6)
@@ -902,17 +1041,17 @@ class AiControllerTuner(Node):
             if linear >= 0.95 * max_linear or abs(angular) >= 0.95 * max_angular
         ]
 
-        sample_count = min(len(snapshot["cmd_nav"]), len(snapshot["actual_velocities"]))
+        sample_count = len(matched)
         return {
             "duration_sec": snapshot["finished_at"] - snapshot["started_at"],
             "sample_count": sample_count,
-            "tracking_error_mean": mean(snapshot["tracking_errors"]),
-            "tracking_error_max": max(snapshot["tracking_errors"], default=None),
-            "tracking_error_rmse": rmse(snapshot["tracking_errors"]),
-            "velocity_linear_error_mean": mean(snapshot["velocity_errors_linear"]),
-            "velocity_linear_error_rmse": rmse(snapshot["velocity_errors_linear"]),
-            "velocity_angular_error_mean": mean(snapshot["velocity_errors_angular"]),
-            "velocity_angular_error_rmse": rmse(snapshot["velocity_errors_angular"]),
+            "tracking_error_mean": mean(tracking_errors),
+            "tracking_error_max": max(tracking_errors, default=None),
+            "tracking_error_rmse": rmse(tracking_errors),
+            "velocity_linear_error_mean": mean(linear_errors),
+            "velocity_linear_error_rmse": rmse(linear_errors),
+            "velocity_angular_error_mean": mean(angular_errors),
+            "velocity_angular_error_rmse": rmse(angular_errors),
             "cmd_linear_mean": mean(cmd_linear),
             "actual_linear_mean": actual_linear_mean,
             "target_speed_utilization": self.target_speed_utilization,
@@ -924,7 +1063,8 @@ class AiControllerTuner(Node):
             "angular_sign_changes": sign_changes(cmd_angular),
             "mean_lookahead_distance": mean(snapshot["lookahead_distances"]),
             "command_saturation_ratio": len(saturated) / len(cmd_linear) if cmd_linear else None,
-            "data_insufficient": sample_count < 10 or len(snapshot["tracking_errors"]) < 3,
+            "command_source": "cmd_vel_smoothed" if snapshot["cmd_smoothed"] else "cmd_vel_nav",
+            "data_insufficient": sample_count < 10 or len(tracking_errors) < 3,
         }
 
     def _get_controller_parameters(self) -> Dict[str, float]:
@@ -972,11 +1112,22 @@ class AiControllerTuner(Node):
                 {
                     "role": "system",
                     "content": (
-                        "You tune a ROS2 Nav2 holonomic PID pure pursuit controller. "
-                        "Return only compact JSON with keys suggested_params, reasoning, risk_level. "
-                        "Do not write chain-of-thought or long analysis; decide briefly and output JSON immediately. "
-                        "Only suggest parameters listed by the user. Keep changes conservative. "
-                        "If the current stage data does not justify a change, return an empty suggested_params object."
+                        "You are a conservative ROS2 Nav2 holonomic PID pure-pursuit tuning agent. "
+                        "Tune only the current stage and only parameters in active_parameters. "
+                        "Never change parameters belonging to another stage. "
+                        "If data_insufficient is true, action must be hold and suggested_params must be empty. "
+                        "If current_score is not better than best_score, prefer hold unless a small change is clearly justified. "
+                        "Change at most max_changed_parameters_per_window parameters, and never exceed "
+                        "max_parameter_step_ratio per parameter in one window. "
+                        "Keep tracking error, velocity error, oscillation, saturation, overshoot, and final-pose stability low. "
+                        "Do not trade a small speed gain for worse stability. "
+                        "If confidence is below min_ai_confidence or risk is high, hold. "
+                        "Do not undo parameters that were already tuned in earlier stages. "
+                        "Return JSON only, with no markdown and no chain-of-thought. "
+                        "Use this schema: {action: 'adjust'|'hold', suggested_params: {}, reasoning: 'short factual reason', "
+                        "risk_level: 'low'|'medium'|'high', confidence: 0.0, expected_effect: 'short description', "
+                        "rollback_condition: 'short condition'}. "
+                        "When evidence is weak, return hold with an empty suggested_params object."
                     ),
                 },
                 {
@@ -986,6 +1137,15 @@ class AiControllerTuner(Node):
                             "debug_stage": self.debug_stage,
                             "objective_name": self.objective_name,
                             "stage_objective": self._stage_objective(),
+                            "stage_index": (
+                                self.stage_sequence.index(self.debug_stage) + 1
+                                if self.debug_stage in self.stage_sequence
+                                else 0
+                            ),
+                            "stage_total": len(self.stage_sequence),
+                            "stage_round": self._stage_window_count,
+                            "completed_windows_total": max(0, self._window_id - 1),
+                            "active_parameters": self._active_tunable_parameters(),
                             "goal": (
                                 "Tune for fast_stable behavior: maximize useful speed up to the target speed "
                                 "utilization while keeping path RMSE, velocity error, oscillation, and command "
@@ -994,9 +1154,19 @@ class AiControllerTuner(Node):
                             ),
                             "current_params": current_params,
                             "metrics": metrics,
-                            "score_lower_is_better": self._score_metrics(metrics),
+                            "current_score": self._score_metrics(metrics),
+                            "best_score": self._best_score,
+                            "score_delta_from_best": (
+                                None
+                                if self._best_score is None
+                                else self._score_metrics(metrics) - self._best_score
+                            ),
+                            "data_insufficient": bool(metrics.get("data_insufficient")),
                             "score_weights": self.score_weights,
                             "target_speed_utilization": self.target_speed_utilization,
+                            "max_parameter_step_ratio": self.max_parameter_step_ratio,
+                            "max_changed_parameters_per_window": self.max_changed_parameters_per_window,
+                            "min_ai_confidence": self.min_ai_confidence,
                             "best_observed": {
                                 "score": self._best_score,
                                 "params": self._best_params,
@@ -1083,13 +1253,34 @@ class AiControllerTuner(Node):
             if name not in active_parameters or name not in PARAMETER_LIMITS:
                 self.get_logger().warn(f"Ignoring non-tunable suggested parameter: {name}")
                 continue
+            if name not in current_params or not isinstance(current_params[name], (int, float)):
+                self.get_logger().warn(f"Ignoring suggestion without a readable current value: {name}")
+                continue
             try:
                 numeric_value = float(value)
             except (TypeError, ValueError):
                 self.get_logger().warn(f"Ignoring non-numeric suggested value for {name}: {value}")
                 continue
             low, high = PARAMETER_LIMITS[name]
-            safe[name] = min(max(numeric_value, low), high)
+            target_value = min(max(numeric_value, low), high)
+            current_value = float(current_params[name])
+            step_limit = max(
+                abs(current_value) * self.max_parameter_step_ratio,
+                (high - low) * 0.01,
+            )
+            bounded_delta = min(
+                max(target_value - current_value, -step_limit), step_limit
+            )
+            bounded_value = min(max(current_value + bounded_delta, low), high)
+            if abs(bounded_value - current_value) <= 1.0e-12:
+                continue
+            safe[name] = bounded_value
+            if len(safe) >= self.max_changed_parameters_per_window:
+                self.get_logger().info(
+                    "Limiting AI suggestions to "
+                    f"{self.max_changed_parameters_per_window} parameter(s) per window."
+                )
+                break
 
         merged = dict(current_params)
         merged.update(safe)
@@ -1110,6 +1301,25 @@ class AiControllerTuner(Node):
             safe.pop("curvature_min", None)
             safe.pop("curvature_max", None)
         return safe
+
+    def _ai_change_guard(self, ai_response: Dict[str, Any]) -> Optional[str]:
+        """判断 AI 响应是否允许进入参数安全裁剪和应用流程。"""
+        action = str(ai_response.get("action", "adjust")).strip().lower()
+        if action in {"hold", "no_change", "no-change", "stop"}:
+            return f"AI action={action}; holding current parameters"
+        if str(ai_response.get("risk_level", "low")).strip().lower() == "high":
+            return "AI risk_level=high; holding current parameters"
+        confidence = ai_response.get("confidence")
+        if confidence is not None:
+            try:
+                if float(confidence) < self.min_ai_confidence:
+                    return (
+                        f"AI confidence={float(confidence):.2f} below "
+                        f"minimum={self.min_ai_confidence:.2f}"
+                    )
+            except (TypeError, ValueError):
+                return "AI confidence is invalid; holding current parameters"
+        return None
 
     def _log_window_summary(
         self, metrics: Dict[str, Any], score: float, current_params: Dict[str, float]
@@ -1206,7 +1416,12 @@ class AiControllerTuner(Node):
         """
         self._stage_window_count += 1
         if not self.keep_best_observed:
-            self._update_ui_state(stage_window_count=self._stage_window_count)
+            self._update_ui_state(
+                best_score=None,
+                best_params={},
+                best_metrics={},
+                stage_window_count=self._stage_window_count,
+            )
             return {"enabled": False, "stage_window_count": self._stage_window_count}
 
         active_params = self._active_tunable_parameters()
@@ -1227,6 +1442,7 @@ class AiControllerTuner(Node):
         self._update_ui_state(
             best_score=self._best_score,
             best_params=self._best_params,
+            best_metrics=self._best_metrics,
             non_improving_windows=self._non_improving_windows,
             stage_window_count=self._stage_window_count,
         )
@@ -1260,10 +1476,11 @@ class AiControllerTuner(Node):
 
         推进条件：
         - auto_stage_advance 启用
-        - 当前 AI 未提出新建议（即当前阶段参数已稳定）
         - 已完成足够的窗口数（>= stage_min_windows）
         - 连续未改进窗口数达到阈值
-        - 如果是最后阶段，触发调参完成
+
+        AI 在稳定阶段仍可能重复返回建议，不能用“建议非空”阻止阶段推进。
+        阶段切换前会恢复该阶段观测到的最佳参数，避免最后一次建议覆盖最佳结果。
         """
         if not self.auto_stage_advance:
             return {"advanced": False, "reason": "auto_stage_advance disabled"}
@@ -1271,7 +1488,7 @@ class AiControllerTuner(Node):
             return {"advanced": False, "reason": f"stage {self.debug_stage} is not in stage_sequence"}
         current_index = self.stage_sequence.index(self.debug_stage)
         if current_index >= len(self.stage_sequence) - 1:
-            if self._should_complete_final_stage(safe_suggestions):
+            if self._should_complete_final_stage():
                 restore_result = self._restore_best_before_completion(current_params)
                 self._complete_tuning(restore_result)
                 return {
@@ -1281,8 +1498,6 @@ class AiControllerTuner(Node):
                     "restore_result": restore_result,
                 }
             return {"advanced": False, "reason": "already at final stage"}
-        if safe_suggestions:
-            return {"advanced": False, "reason": "waiting to observe newly applied suggestions"}
         if self._stage_window_count < self.stage_min_windows:
             return {
                 "advanced": False,
@@ -1340,11 +1555,9 @@ class AiControllerTuner(Node):
         )
         return result
 
-    def _should_complete_final_stage(self, safe_suggestions: Dict[str, float]) -> bool:
+    def _should_complete_final_stage(self) -> bool:
         """判断最后阶段是否已达到稳定（可以结束调参）。"""
         if not self.stop_after_final_stage_stable:
-            return False
-        if safe_suggestions:
             return False
         if self._stage_window_count < self.stage_min_windows:
             return False
@@ -1384,9 +1597,13 @@ class AiControllerTuner(Node):
         details = {
             "best_score": self._best_score,
             "best_params": self._best_params,
+            "best_metrics": self._best_metrics,
             "restore_result": restore_result,
         }
         self._update_ui_state(ai_status="complete", tuning_complete=True)
+        # Publish a latched completion marker so goal_sender cancels its active
+        # goal and exits instead of waiting forever for another stage update.
+        self._publish_current_stage()
         self._add_dialog_event(
             "apply",
             "Tuning Complete",
@@ -1414,6 +1631,7 @@ class AiControllerTuner(Node):
             current_active_params={},
             best_score=None,
             best_params={},
+            best_metrics={},
             non_improving_windows=0,
             stage_window_count=0,
             last_raw_suggestions={},
@@ -1427,7 +1645,7 @@ class AiControllerTuner(Node):
         if not hasattr(self, "_stage_publisher"):
             return
         msg = String()
-        msg.data = self.debug_stage
+        msg.data = "complete" if self._tuning_complete else self.debug_stage
         self._stage_publisher.publish(msg)
 
     def _apply_parameters(self, suggestions: Dict[str, float]) -> Dict[str, Any]:
@@ -1499,6 +1717,7 @@ class AiControllerTuner(Node):
 
         处理常见的格式问题：markdown 代码块包裹、多余的文本前缀/后缀。
         """
+        stripped = str(content).strip()
         if not stripped:
             raise RuntimeError("AI response message content was empty.")
         if stripped.startswith("```"):
@@ -1539,7 +1758,7 @@ class AiControllerTuner(Node):
         stage: Optional[str] = None,
         window_id: Optional[int] = None,
     ) -> None:
-        """向 Web UI 事件流中添加一条事件（保留最近 80 条）。"""
+        """向 Web UI 事件流中添加一条事件（保留最近 400 条）。"""
         event = {
             "time": time.time(),
             "kind": kind,
@@ -1551,16 +1770,25 @@ class AiControllerTuner(Node):
         }
         with self._ui_state_lock:
             self._dialog_events.append(event)
-            self._dialog_events = self._dialog_events[-80:]
+            self._dialog_events = self._dialog_events[-400:]
             self._ui_state["dialog_events"] = list(self._dialog_events)
             self._ui_state["updated_at"] = time.time()
 
     def _get_ui_state(self) -> Dict[str, Any]:
         """构建发送给 Web UI 的完整状态快照（包含当前窗口的实时数据）。"""
         with self._lock:
+            try:
+                stage_index = self.stage_sequence.index(self.debug_stage) + 1
+            except ValueError:
+                stage_index = 0
+            stage_total = len(self.stage_sequence)
+            completed_windows_total = max(0, self._window_id - 1)
+            current_stage_round = self._stage_window_count + 1
             current_window = {
                 "window_id": self._window_id,
                 "stage": self.debug_stage,
+                "stage_round": current_stage_round,
+                "stage_windows_completed": self._stage_window_count,
                 "elapsed_sec": time.time() - self._window_started_at,
                 "tracking_errors": len(self._tracking_errors),
                 "lookahead_distances": len(self._lookahead_distances),
@@ -1570,7 +1798,22 @@ class AiControllerTuner(Node):
             }
         with self._ui_state_lock:
             state = self._compact_for_ui(self._ui_state)
-            state["dialog_events"] = self._compact_for_ui(self._dialog_events[-50:])
+            state["dialog_events"] = [
+                self._compact_for_ui(event) for event in self._dialog_events[-200:]
+            ]
+        # current_window is sampled on every request; updated_at must follow it
+        # instead of remaining frozen at the last event/analysis update.
+        state["updated_at"] = time.time()
+        state["progress"] = {
+            "stage_index": stage_index,
+            "stage_total": stage_total,
+            "current_stage_round": current_stage_round,
+            "stage_windows_completed": self._stage_window_count,
+            "completed_windows_total": completed_windows_total,
+            "current_window_id": self._window_id,
+            "non_improving_windows": self._non_improving_windows,
+            "tuning_complete": self._tuning_complete,
+        }
         state["current_window"] = current_window
         return state
 
@@ -1647,16 +1890,61 @@ class AiControllerTuner(Node):
 
     def _start_ui_server(self) -> None:
         """启动 Web UI HTTP 服务器（后台守护线程）。"""
+        self._update_ui_state(
+            ui_listening=False,
+            ui_url=None,
+            ui_error=None,
+            ui_host=self.ui_host,
+            ui_port=self.ui_port,
+        )
         try:
             self._ui_server = ThreadingHTTPServer(
                 (self.ui_host, self.ui_port), self._make_ui_handler()
             )
         except OSError as exc:
-            self.get_logger().error(f"Failed to start tuner UI on {self.ui_host}:{self.ui_port}: {exc}")
-            return
+            if not self.ui_fallback_to_ephemeral_port or self.ui_port == 0:
+                self._update_ui_state(ui_error=str(exc))
+                self.get_logger().error(
+                    f"Failed to start tuner UI on {self.ui_host}:{self.ui_port}: {exc}"
+                )
+                return
+            self.get_logger().warning(
+                f"Tuner UI port {self.ui_host}:{self.ui_port} is unavailable ({exc}); "
+                "falling back to an ephemeral port."
+            )
+            try:
+                self._ui_server = ThreadingHTTPServer(
+                    (self.ui_host, 0), self._make_ui_handler()
+                )
+            except OSError as fallback_exc:
+                self._update_ui_state(ui_error=str(fallback_exc))
+                self.get_logger().error(
+                    f"Failed to start tuner UI on fallback port: {fallback_exc}"
+                )
+                return
+
+        bound_host, bound_port = self._ui_server.server_address[:2]
+        bound_host = str(bound_host)
+        bound_port = int(bound_port)
+        display_host = bound_host
+        if display_host in {"", "0.0.0.0", "::"}:
+            display_host = "127.0.0.1"
+        if ":" in display_host and not display_host.startswith("["):
+            display_host = f"[{display_host}]"
+        ui_url = f"http://{display_host}:{bound_port}"
+        self._update_ui_state(
+            ui_host=bound_host,
+            ui_port=bound_port,
+            ui_url=ui_url,
+            ui_listening=True,
+            ui_error=None,
+        )
         self._ui_thread = threading.Thread(target=self._ui_server.serve_forever, daemon=True)
         self._ui_thread.start()
-        self.get_logger().info(f"Tuner UI: http://{self.ui_host}:{self.ui_port}")
+        self.get_logger().info(
+            f"Tuner UI: {ui_url} (bound {bound_host}:{bound_port}, "
+            f"configured {self.ui_host}:{self.ui_port})"
+        )
 
     def destroy_node(self) -> bool:
         """清理资源：关闭 UI 服务器后调用父类销毁。"""
@@ -1674,5 +1962,6 @@ def main(args: Optional[List[str]] = None) -> None:
     try:
         rclpy.spin(node)
     finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            node.destroy_node()
+            rclpy.shutdown()

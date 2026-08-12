@@ -438,7 +438,10 @@ def generate_launch_description():
         declare_world,
         robot_state_publisher,
         gz_sim,
-        bridge_clock,
+        # Gazebo advertises /clock only after the world is running. Starting
+        # the bridge immediately can leave it connected but receiving no clock
+        # samples, so defer it briefly until the world transport is ready.
+        TimerAction(period=2.0, actions=[bridge_clock]),
         spawn_robot,
         spawn_controllers,
         chassis_controller,

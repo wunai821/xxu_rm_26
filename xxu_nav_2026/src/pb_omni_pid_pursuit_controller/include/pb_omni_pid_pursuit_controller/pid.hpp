@@ -28,7 +28,7 @@
  *   - Kd：微分系数，根据误差变化率进行预测，抑制超调和振荡
  *   - dt：控制周期（采样间隔），用于积分项和微分项的计算
  *
- * 输出值会被钳位在 [min, max] 范围内，防止积分饱和（积分项也会被限制在 [-1, 1]）。
+ * 输出值会被钳位在 [min, max] 范围内，积分项限幅可由调用者配置。
  */
 class PID
 {
@@ -61,6 +61,8 @@ public:
 
   void setLimits(double max, double min);
 
+  void setIntegralLimit(double limit);
+
   void reset();
 
   /**
@@ -83,6 +85,7 @@ private:
   double ki_;        ///< 积分增益系数（Integral Gain）
   double pre_error_; ///< 上一次的误差值，用于计算微分项
   double integral_;  ///< 累积积分误差，用于计算积分项
+  double integral_limit_{1.0};  ///< 积分累积误差的绝对值上限
 };
 
 #endif  // PB_OMNI_PID_PURSUIT_CONTROLLER__PID_HPP_

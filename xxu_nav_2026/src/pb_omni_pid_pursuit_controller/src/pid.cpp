@@ -14,6 +14,8 @@
 
 #include "pb_omni_pid_pursuit_controller/pid.hpp"
 
+#include <algorithm>
+
 /**
  * @brief PID 构造函数，通过初始化列表设置所有控制参数并清零误差状态
  *
@@ -53,15 +55,13 @@ double PID::calculate(double set_point, double pv)
   // 积分项 (Integral)：将当前误差乘以时间步长累加到积分器中
   // 以消除长期存在的稳态误差
   integral_ += error * dt_;
-  double i_out = ki_ * integral_;
-
   // 积分限幅：防止积分饱和 (Integral Windup)
-  // 当累积误差过大时，积分项失去调节意义，将积分值限制在 [-1, 1]
-  if (integral_ > 1) {
-    integral_ = 1;
-  } else if (integral_ < -1) {
-    integral_ = -1;
+  if (integral_ > integral_limit_) {
+    integral_ = integral_limit_;
+  } else if (integral_ < -integral_limit_) {
+    integral_ = -integral_limit_;
   }
+  double i_out = ki_ * integral_;
 
   // 微分项 (Derivative)：基于误差变化率进行预测
   // 除以 dt 将误差差量转换为变化率（单位：误差/秒）
@@ -94,6 +94,12 @@ void PID::setLimits(double max, double min)
 {
   max_ = max;
   min_ = min;
+}
+
+void PID::setIntegralLimit(double limit)
+{
+  integral_limit_ = std::max(0.0, limit);
+  integral_ = std::clamp(integral_, -integral_limit_, integral_limit_);
 }
 
 void PID::reset()

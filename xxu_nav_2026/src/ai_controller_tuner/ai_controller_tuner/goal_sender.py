@@ -50,6 +50,7 @@ ROUTE_STAGES = [
     "comprehensive",
     "custom",
 ]
+TUNING_COMPLETE_STAGE = "complete"
 
 # 各阶段未配置路由参数时的默认兜底目标点
 DEFAULT_ROUTE_FALLBACK = {
@@ -95,6 +96,7 @@ class AiControllerGoalSender(Node):
         self.declare_parameter("follow_tuner_stage", True)
         self.declare_parameter("stage_topic", "/ai_controller_tuner/current_stage")
         self.declare_parameter("keep_alive_for_stage_updates", True)
+        self.declare_parameter("stop_on_tuning_complete", True)
 
         # 为每个阶段声明可配置的路由参数（route_<stage>_xs/ys/yaws）
         for stage in ROUTE_STAGES:
@@ -121,6 +123,9 @@ class AiControllerGoalSender(Node):
         self.keep_alive_for_stage_updates = bool(
             self.get_parameter("keep_alive_for_stage_updates").value
         )
+        self.stop_on_tuning_complete = bool(
+            self.get_parameter("stop_on_tuning_complete").value
+        )
 
         # ---- 内部状态 ----
         self.goals = self._load_goals()          # 当前阶段的目标点列表
@@ -130,6 +135,8 @@ class AiControllerGoalSender(Node):
         self._ignore_next_goal_result = False    # 是否忽略下一个目标结果（阶段切换取消时使用）
         self._sequence_done = False              # 当前阶段序列是否已完成
         self._loop_timer = None                  # 循环重发定时器
+        self._shutdown_timer = None              # 调参完成后的退出定时器
+        self._stopped_for_tuning = False         # 调参完成后不再发送新目标
 
         # ---- Action 客户端 ----
         self._client = ActionClient(self, NavigateToPose, self.action_name)
@@ -153,8 +160,12 @@ class AiControllerGoalSender(Node):
         如果当前有正在执行的目标，会取消它并切换到新阶段的目标序列。
         """
         stage = msg.data.strip()
+        if stage == TUNING_COMPLETE_STAGE:
+            if self.stop_on_tuning_complete:
+                self._stop_for_tuning_complete()
+            return
         # 空消息或阶段未变化则忽略
-        if not stage or stage == self.debug_stage:
+        if not stage or self._stopped_for_tuning or stage == self.debug_stage:
             return
         if stage not in ROUTE_STAGES:
             self.get_logger().warn(f"Ignoring unknown tuner stage update: {stage}")
@@ -267,7 +278,7 @@ class AiControllerGoalSender(Node):
 
     def _maybe_send_goal(self) -> None:
         """定时轮询：如果空闲且 Action 服务器就绪，发送下一个目标点。"""
-        if self._goal_active or self._sequence_done:
+        if self._stopped_for_tuning or self._goal_active or self._sequence_done:
             return
         if not self._client.server_is_ready():
             self._client.wait_for_server(timeout_sec=0.1)
@@ -300,6 +311,10 @@ class AiControllerGoalSender(Node):
     def _goal_response_callback(self, future) -> None:
         """Action 目标发送后的响应回调：检查是否被 Nav2 接受。"""
         goal_handle = future.result()
+        if self._stopped_for_tuning:
+            if goal_handle.accepted:
+                goal_handle.cancel_goal_async().add_done_callback(lambda _: None)
+            return
         if not goal_handle.accepted:
             self.get_logger().error("Goal was rejected by Nav2.")
             self._finish_current_goal()
@@ -315,6 +330,8 @@ class AiControllerGoalSender(Node):
         """目标执行完成回调：记录状态并推进到下一个目标点。"""
         result = future.result()
         self.get_logger().info(f"Goal finished with status: {result.status}")
+        if self._stopped_for_tuning:
+            return
         # 如果当前结果属于被取消的目标（阶段切换时），跳过处理
         if self._ignore_next_goal_result:
             self._ignore_next_goal_result = False
@@ -359,6 +376,32 @@ class AiControllerGoalSender(Node):
             f"Stage sequence complete; loop enabled, restarting in {self.loop_delay_sec:.1f}s."
         )
         self._loop_timer = self.create_timer(self.loop_delay_sec, self._reset_for_loop)
+
+    def _stop_for_tuning_complete(self) -> None:
+        """调参完成后取消目标并退出 goal sender。"""
+        if self._stopped_for_tuning:
+            return
+        self._stopped_for_tuning = True
+        self._sequence_done = True
+        if self._loop_timer is not None:
+            self._loop_timer.cancel()
+            self._loop_timer = None
+        if self._goal_active and self._goal_handle is not None:
+            self.get_logger().info("Tuning complete; canceling active navigation goal.")
+            self._ignore_next_goal_result = True
+            self._goal_handle.cancel_goal_async().add_done_callback(lambda _: None)
+        self._goal_active = False
+        self._goal_handle = None
+        self.get_logger().info("Tuning complete; shutting down goal sender.")
+        self._shutdown_timer = self.create_timer(0.1, self._shutdown_after_tuning)
+
+    def _shutdown_after_tuning(self) -> None:
+        """让取消请求先提交，再退出 ROS spin。"""
+        if self._shutdown_timer is not None:
+            self._shutdown_timer.cancel()
+            self._shutdown_timer = None
+        if rclpy.ok():
+            rclpy.shutdown()
 
     def _reset_for_loop(self) -> None:
         """循环模式：重置索引和状态，重新开始当前阶段的目标序列。"""
