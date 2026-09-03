@@ -107,9 +107,10 @@ std::vector<PatternRay> LoadOfficialScanPattern(
     }
 
     // Livox's official convention is zenith measured from +Z. Gazebo's
-    // ray direction uses elevation from the XY plane, hence the -pi/2.
+    // ray direction uses elevation from the XY plane, so elevation is
+    // pi/2 - zenith (not zenith - pi/2, which mirrors the scan vertically).
     const double azimuth = azimuthDeg * kPi / 180.0;
-    const double elevation = zenithDeg * kPi / 180.0 - kPi / 2.0;
+    const double elevation = kPi / 2.0 - zenithDeg * kPi / 180.0;
     const double cosElevation = std::cos(elevation);
     PatternRay ray;
     ray.direction = gz::math::Vector3d(
@@ -380,8 +381,16 @@ public:
     {
       const auto &ray = this->lastWorldRays[i];
       const auto &result = results[i];
+      if (!std::isfinite(result.point.X()) ||
+          !std::isfinite(result.point.Y()) ||
+          !std::isfinite(result.point.Z()) ||
+          !std::isfinite(result.fraction))
+      {
+        continue;
+      }
       const double range = ray.start.Distance(result.point);
-      if (range < this->rangeMin || range > this->rangeMax ||
+      if (!std::isfinite(range) ||
+          range < this->rangeMin || range > this->rangeMax ||
           result.fraction <= 0.0 || result.fraction >= 1.0)
       {
         continue;
