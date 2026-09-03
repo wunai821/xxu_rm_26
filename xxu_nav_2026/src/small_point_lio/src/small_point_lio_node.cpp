@@ -26,6 +26,7 @@ namespace small_point_lio {
         std::string registered_cloud_topic = declare_parameter<std::string>("registered_cloud_topic", "/cloud_registered");
         std::string odom_frame = declare_parameter<std::string>("odom_frame", "odom");
         std::string base_frame = declare_parameter<std::string>("base_frame", "base_link");
+        double tf_lookup_timeout = declare_parameter<double>("tf_lookup_timeout", 0.1);
         bool save_pcd = declare_parameter<bool>("save_pcd");
         small_point_lio = std::make_unique<small_point_lio::SmallPointLio>(*this);
         odometry_publisher = create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1000);
@@ -54,7 +55,7 @@ namespace small_point_lio {
                         RCLCPP_INFO(rclcpp::get_logger("small_point_lio"), "save pcd success");
                     }).detach();
                 });
-        small_point_lio->set_odometry_callback([this, lidar_frame, odom_frame, base_frame](const common::Odometry &odometry) {
+        small_point_lio->set_odometry_callback([this, lidar_frame, odom_frame, base_frame, tf_lookup_timeout](const common::Odometry &odometry) {
             last_odometry = odometry;
 
             builtin_interfaces::msg::Time time_msg;
@@ -67,9 +68,20 @@ namespace small_point_lio {
             transform_stamped.child_frame_id = base_frame;
             geometry_msgs::msg::TransformStamped base_link_to_lidar_frame_transform;
             try {
-                base_link_to_lidar_frame_transform = tf_buffer->lookupTransform(lidar_frame, base_frame, time_msg);
+                base_link_to_lidar_frame_transform = tf_buffer->lookupTransform(
+                        lidar_frame,
+                        base_frame,
+                        rclcpp::Time(time_msg),
+                        rclcpp::Duration::from_seconds(tf_lookup_timeout));
             } catch (tf2::TransformException &ex) {
-                RCLCPP_ERROR(rclcpp::get_logger("small_point_lio"), "Failed to lookup transform from %s to %s: %s", base_frame.c_str(), lidar_frame.c_str(), ex.what());
+                RCLCPP_ERROR_THROTTLE(
+                        get_logger(),
+                        *get_clock(),
+                        1000,
+                        "Failed to lookup transform from %s to %s: %s",
+                        base_frame.c_str(),
+                        lidar_frame.c_str(),
+                        ex.what());
                 return;
             }
             tf2::Transform tf_lidar_odom_to_lidar_frame;

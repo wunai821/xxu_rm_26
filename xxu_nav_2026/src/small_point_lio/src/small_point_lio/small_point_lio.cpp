@@ -30,6 +30,10 @@ namespace small_point_lio {
         preprocess.reset();
         estimator.reset();
         is_init = false;
+        active_map_scan_id = 0;
+        pending_scan_map_points.clear();
+        planar_reference_initialized = false;
+        planar_tilt_rotation.setIdentity();
     }
 
     void SmallPointLio::on_point_cloud_callback(const std::vector<common::Point> &pointcloud) {
@@ -46,12 +50,36 @@ namespace small_point_lio {
             if ((!preprocess.point_deque.empty() || !preprocess.imu_deque.empty()) &&
                 preprocess.point_deque.size() >= parameters.init_map_size &&
                 (!parameters.fix_gravity_direction || preprocess.imu_deque.size() >= 200)) {
-                // fix gravity direction: estimate IMU tilt and initialize rotation first
+                // Fix gravity direction only from a recent stationary window.
+                // The robot can bounce while being spawned in Gazebo, and a
+                // gimbal-mounted IMU can later contain large angular/centripetal
+                // motion. Neither is a valid gravity calibration interval.
                 if (parameters.fix_gravity_direction) {
+                    constexpr std::size_t init_imu_samples = 200;
+                    const auto imu_begin = preprocess.imu_deque.end() - init_imu_samples;
                     Eigen::Matrix<state::value_type, 3, 1> avg_acc = Eigen::Matrix<state::value_type, 3, 1>::Zero();
-                    for (const auto &imu_msg: preprocess.imu_deque) {
+                    for (auto it = imu_begin; it != preprocess.imu_deque.end(); ++it) {
+                        const auto &imu_msg = *it;
                         avg_acc += imu_msg.linear_acceleration.cast<state::value_type>();
                     }
+                    avg_acc /= static_cast<state::value_type>(init_imu_samples);
+
+                    state::value_type max_gyro_norm = 0.0;
+                    state::value_type acc_squared_error = 0.0;
+                    for (auto it = imu_begin; it != preprocess.imu_deque.end(); ++it) {
+                        const auto &imu_msg = *it;
+                        max_gyro_norm = std::max(
+                                max_gyro_norm,
+                                imu_msg.angular_velocity.cast<state::value_type>().norm());
+                        acc_squared_error +=
+                                (imu_msg.linear_acceleration.cast<state::value_type>() - avg_acc).squaredNorm();
+                    }
+                    const auto acc_rms = std::sqrt(
+                            acc_squared_error / static_cast<state::value_type>(init_imu_samples));
+                    if (max_gyro_norm > 0.05 || acc_rms > 0.15) {
+                        return;
+                    }
+
                     Eigen::Matrix<state::value_type, 3, 1> body_up = avg_acc.normalized();
                     Eigen::Matrix<state::value_type, 3, 1> world_up = -parameters.gravity.cast<state::value_type>().normalized();
                     Eigen::Matrix<state::value_type, 3, 1> axis = body_up.cross(world_up);
@@ -96,15 +124,18 @@ namespace small_point_lio {
             return;
         }
 
-        // judge we should do point update or imu update
+        // Dense points are only used for the registered-cloud visualization.
+        // Never advance the primary filter for them: doing so changes the
+        // state integration according to display-point density without a
+        // matching covariance prediction or sensor update.
         bool is_publish_odometry = !preprocess.imu_deque.empty() && !preprocess.dense_point_deque.empty() && !preprocess.point_deque.empty() &&
                                    preprocess.imu_deque.front().timestamp < preprocess.point_deque.back().timestamp;
         while (!preprocess.imu_deque.empty() && !preprocess.dense_point_deque.empty() && !preprocess.point_deque.empty()) {
             const common::Point &point_lidar_frame = preprocess.point_deque.front();
             const common::Point &dense_point_lidar_frame = preprocess.dense_point_deque.front();
             const common::ImuMsg &imu_msg = preprocess.imu_deque.front();
-            if (dense_point_lidar_frame.timestamp < point_lidar_frame.timestamp && dense_point_lidar_frame.timestamp < imu_msg.timestamp) {
-                // collect odom frame pointcloud
+            if (dense_point_lidar_frame.timestamp < point_lidar_frame.timestamp &&
+                dense_point_lidar_frame.timestamp < imu_msg.timestamp) {
                 Eigen::Matrix<state::value_type, 3, 1> dense_point_imu_frame;
                 if (parameters.extrinsic_est_en) {
                     dense_point_imu_frame = estimator.kf.x.offset_R_L_I * dense_point_lidar_frame.position.cast<state::value_type>() + estimator.kf.x.offset_T_L_I;
@@ -122,6 +153,10 @@ namespace small_point_lio {
                 }
                 time_current = point_lidar_frame.timestamp;
 
+                if (parameters.defer_map_insertion_by_scan) {
+                    begin_map_scan(point_lidar_frame.scan_id);
+                }
+
                 // predict
                 estimator.kf.predict_state(time_current);
 
@@ -136,7 +171,11 @@ namespace small_point_lio {
                 }
 
                 // map incremental
-                estimator.ivox->add_point(estimator.point_odom_frame);
+                if (parameters.defer_map_insertion_by_scan) {
+                    pending_scan_map_points.push_back(estimator.point_odom_frame);
+                } else {
+                    estimator.ivox->add_point(estimator.point_odom_frame);
+                }
 
                 preprocess.point_deque.pop_front();
             } else {
@@ -182,6 +221,24 @@ namespace small_point_lio {
         this->odometry_callback = odometry_callback;
     }
 
+    void SmallPointLio::begin_map_scan(std::uint64_t scan_id) {
+        if (active_map_scan_id == 0) {
+            active_map_scan_id = scan_id;
+            return;
+        }
+        if (scan_id != active_map_scan_id) {
+            flush_pending_map_points();
+            active_map_scan_id = scan_id;
+        }
+    }
+
+    void SmallPointLio::flush_pending_map_points() {
+        for (const auto &point: pending_scan_map_points) {
+            estimator.ivox->add_point(point);
+        }
+        pending_scan_map_points.clear();
+    }
+
     void SmallPointLio::apply_planar_constraint() {
         if (!parameters.planar_constraint_en) {
             return;
@@ -191,32 +248,49 @@ namespace small_point_lio {
         const auto yaw = std::atan2(x.rotation(1, 0), x.rotation(0, 0));
         const auto cos_yaw = std::cos(yaw);
         const auto sin_yaw = std::sin(yaw);
+        Eigen::Matrix<state::value_type, 3, 3> yaw_rotation;
+        yaw_rotation << cos_yaw, -sin_yaw, 0.0,
+                        sin_yaw,  cos_yaw, 0.0,
+                        0.0,      0.0,     1.0;
 
         x.position.z() = static_cast<state::value_type>(parameters.planar_z);
         x.velocity.z() = 0.0;
-        x.omg.x() = 0.0;
-        x.omg.y() = 0.0;
-        x.rotation << cos_yaw, -sin_yaw, 0.0,
-                      sin_yaw,  cos_yaw, 0.0,
-                      0.0,      0.0,     1.0;
+        if (parameters.planar_preserve_initial_tilt) {
+            // Legacy raw-sensor mode keeps the fixed mounting tilt.
+            if (!planar_reference_initialized) {
+                planar_tilt_rotation = yaw_rotation.transpose() * x.rotation;
+                planar_reference_initialized = true;
+            }
+            x.rotation = yaw_rotation * planar_tilt_rotation;
+        } else {
+            // The compensated virtual body frame is level and planar.
+            x.rotation = yaw_rotation;
+            x.omg.x() = 0.0;
+            x.omg.y() = 0.0;
+        }
 
         auto &P = estimator.kf.P;
         constexpr state::value_type constrained_cov = 1e-6;
-        const std::array<int, 5> constrained_indices = {
+        const std::array<int, 4> constrained_indices = {
                 state::position_index + 2,
                 state::rotation_index + 0,
                 state::rotation_index + 1,
                 state::velocity_index + 2,
-                state::omg_index + 0,
         };
         for (const auto index: constrained_indices) {
             P.row(index).setZero();
             P.col(index).setZero();
             P(index, index) = constrained_cov;
         }
-        P.row(state::omg_index + 1).setZero();
-        P.col(state::omg_index + 1).setZero();
-        P(state::omg_index + 1, state::omg_index + 1) = constrained_cov;
+        if (!parameters.planar_preserve_initial_tilt) {
+            for (const auto index: {
+                    state::omg_index + 0,
+                    state::omg_index + 1}) {
+                P.row(index).setZero();
+                P.col(index).setZero();
+                P(index, index) = constrained_cov;
+            }
+        }
     }
 
     void SmallPointLio::publish_odometry(double timestamp) {

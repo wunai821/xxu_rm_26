@@ -15,9 +15,9 @@
   注意：
     由于 Gazebo Harmonic 的传感器放置 bug，即使指定了 reference_link，
     传感器也会被放置到 TF 树的模型根节点，且 frame_id 会被忽略。
-    因此在实际使用中，需要通过 frame_republisher（如 scan_frame_republisher.py）
-    将 frame_id 修正为正确的坐标系（如 radar_link），并通过 ros_gz_bridge
-    的 remap 规则将桥接后的话题映射到正确的命名空间。
+    因此在实际使用中，桥接后的消息必须保留 Gazebo 原始 frame_id，并由
+    TF2 按消息时间将点坐标变换到正确的坐标系（如 mid360_link）；不能只修改
+    frame_id 字符串。传感器的 canonical frame 通过其真实安装外参挂回 TF 树。
 -->
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -30,7 +30,7 @@
       reference_link  - 传感器挂载的 link 名称
       sensor_name     - Gazebo 内部传感器名称（需唯一），默认 'imu_sensor'
       topic           - Gazebo Transport 发布话题，默认 '/imu'
-      frame_id        - 传感器数据消息中的 frame_id，默认 'radar_link'
+      frame_id        - 传感器数据消息中的 frame_id，默认 'mid360_link'
       update_rate     - 数据发布频率 (Hz)，IMU 通常 100-200 Hz，默认 100
       pose            - 传感器相对于 reference_link 的位姿，格式: 'x y z roll pitch yaw'
       visualize       - Gazebo 可视化模式，IMU 通常不需要显示，默认 false
@@ -46,7 +46,7 @@
       reference_link
       sensor_name:='imu_sensor'
       topic:='/imu'
-      frame_id:='radar_link'
+      frame_id:='mid360_link'
       update_rate:='100'
       pose:='0 0 0 0 0 0'
       angular_velocity_noise_stddev:='0.0001'
@@ -119,12 +119,12 @@
       噪声：高斯噪声，标准差 2 cm（模拟固态 LiDAR 的测距误差，一般在 1~3 cm）
 
     参数说明：
-      reference_link      - 传感器挂载的 link 名称（通常为 radar_link）
+      reference_link      - 传感器挂载的 link 名称（当前 MID-360 使用 gimbal_link）
       pose                - 传感器相对于 reference_link 的位姿，格式: 'x y z roll pitch yaw'
       sensor_name         - Gazebo 内部传感器名称（需唯一），默认 'mid360_lidar'
       topic               - Gazebo Transport 发布话题根名称，默认 '/mid360'
                             gpu_lidar 会自动派生: /mid360 → LaserScan, /mid360/points → PointCloud2
-      frame_id            - 传感器数据消息中的 frame_id，默认 'radar_link'
+      frame_id            - 传感器数据消息中的 frame_id，默认 'mid360_link'
       update_rate         - 数据发布频率 (Hz)，MID-360 约 10 Hz，默认 10
       horizontal_samples  - 水平方向采样点数（360°/1024 ≈ 0.35°/点），默认 1024
       vertical_samples    - 垂直方向采样层数（仿 MID-360 的 64 线），默认 64
@@ -142,7 +142,7 @@
       pose
       sensor_name:='mid360_lidar'
       topic:='/mid360'
-      frame_id:='radar_link'
+      frame_id:='mid360_link'
       update_rate:='10'
       horizontal_samples:='1024'
       vertical_samples:='64'
@@ -239,7 +239,7 @@
     params="
       reference_link
       topic:='/mid360/livox_points_gz'
-      frame_id:='radar_link'
+      frame_id:='mid360_link'
       update_rate:='10'
       samples:='2400'
       rays_per_batch:='240'
@@ -247,6 +247,9 @@
       range_max:='40.0'
       min_vertical:='-0.1221730'
       max_vertical:='0.9075712'
+      scan_mode_csv:=''
+      range_noise_stddev:='0.02'
+      noise_seed:='2026'
       sensor_pose:='0 0 0 0 0 0'">
 
     <gazebo>
@@ -263,6 +266,9 @@
         <range_max>${range_max}</range_max>
         <min_vertical>${min_vertical}</min_vertical>
         <max_vertical>${max_vertical}</max_vertical>
+        <scan_mode_csv>${scan_mode_csv}</scan_mode_csv>
+        <range_noise_stddev>${range_noise_stddev}</range_noise_stddev>
+        <noise_seed>${noise_seed}</noise_seed>
         <sensor_pose>${sensor_pose}</sensor_pose>
       </plugin>
     </gazebo>

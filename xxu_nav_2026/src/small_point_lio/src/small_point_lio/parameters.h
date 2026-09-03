@@ -27,8 +27,10 @@ namespace small_point_lio {
 
         double map_resolution;
         size_t init_map_size;
+        bool defer_map_insertion_by_scan;
         bool planar_constraint_en;
         double planar_z;
+        bool planar_preserve_initial_tilt;
 
         bool extrinsic_est_en;
         Eigen::Vector3d extrinsic_T;

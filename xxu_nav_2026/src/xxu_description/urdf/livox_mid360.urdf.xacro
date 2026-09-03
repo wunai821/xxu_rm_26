@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    Livox MID-360 的轻量 URDF 外形。
+
+    官方标称尺寸为 65 x 65 x 60 mm、质量 265 g。这里参考官方 STEP
+    模型保留测量坐标原点：外壳大致位于 z=-13.3~46.7 mm，而不是以
+    mid360_link 为几何中心。视觉模型用少量基础几何体近似，以免 Gazebo
+    加载高面数 CAD 网格；碰撞体保持为单一盒体。
+  -->
+  <xacro:macro name="livox_mid360_link" params="name">
+    <link name="${name}">
+      <!-- 65 mm 方形下壳，坐标原点位于壳体内部偏下位置。 -->
+      <visual name="body">
+        <origin xyz="-0.003 0 0.0007" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.065 0.065 0.028"/>
+        </geometry>
+        <material name="${name}_body_dark_gray">
+          <color rgba="0.075 0.085 0.095 1.0"/>
+        </material>
+      </visual>
+
+      <!-- 上部扫描窗：官方 CAD 外形向 +Z 逐渐收窄。 -->
+      <visual name="optical_window">
+        <origin xyz="-0.011 0 0.021" rpy="0 0 0"/>
+        <geometry>
+          <sphere radius="0.026"/>
+        </geometry>
+        <material name="${name}_optical_window">
+          <color rgba="0.025 0.105 0.135 1.0"/>
+        </material>
+      </visual>
+
+      <!-- 后侧 M12/航空接口的简化外形。 -->
+      <visual name="connector">
+        <origin xyz="-0.038 0 -0.003" rpy="0 1.5707963268 0"/>
+        <geometry>
+          <cylinder radius="0.008" length="0.012"/>
+        </geometry>
+        <material name="${name}_connector_black">
+          <color rgba="0.025 0.025 0.025 1.0"/>
+        </material>
+      </visual>
+
+      <!-- 保守而低开销的碰撞体，不让扫描窗复杂外形参与物理计算。 -->
+      <collision>
+        <origin xyz="0 0 0.0167" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.065 0.065 0.060"/>
+        </geometry>
+      </collision>
+
+      <!-- 以 65 x 65 x 60 mm 均匀盒体近似 265 g 雷达的惯量。 -->
+      <inertial>
+        <origin xyz="0 0 0.0167" rpy="0 0 0"/>
+        <mass value="0.265"/>
+        <inertia
+          ixx="0.000172796"
+          ixy="0" ixz="0"
+          iyy="0.000172796"
+          iyz="0"
+          izz="0.000186604"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+</robot>

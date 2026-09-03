@@ -2,34 +2,46 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU 简化模型
-    静态 TF 树：base_footprint -> base_link -> mid360_link, wheel_fl, wheel_fr, wheel_rl, wheel_rr
+    静态 TF 树：base_footprint -> base_link -> gimbal_link -> mid360_link，另含四个车轮帧。
     动态 TF 树：odom -> base_footprint 由 Small Point-LIO 发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
+  <xacro:include filename="livox_mid360.urdf.xacro"/>
 
-  <!-- 尺寸和质量参数 -->
-  <xacro:property name="base_radius" value="0.25"/>
-  <xacro:property name="base_height" value="0.18"/>
+  <!--
+    尺寸参数（由毫米换算为米）。base_link 位于底盘底面上方 95.19 mm，
+    因此底盘实体从 base_link 平面向上延伸到离地 269.49 mm。
+  -->
+  <xacro:property name="base_radius" value="0.265"/>
+  <xacro:property name="base_link_z" value="0.09519"/>
+  <xacro:property name="base_top_z" value="0.26949"/>
+  <xacro:property name="base_height" value="${base_top_z - base_link_z}"/>
   <xacro:property name="base_mass" value="4.935"/>
 
-  <!-- 雷达传感器参数（同时作为 IMU 的 TF 帧） -->
-  <xacro:property name="radar_length" value="0.065"/>
-  <xacro:property name="radar_width" value="0.065"/>
-  <xacro:property name="radar_height" value="0.060"/>
-  <xacro:property name="radar_size" value="${radar_length} ${radar_width} ${radar_height}"/>
-  <xacro:property name="mid360_xyz" value="0.20565 0 0.1520"/>
-  <xacro:property name="mid360_rpy" value="0 0.1745 0"/>
-  <xacro:property name="radar_mass" value="0.265"/>
+  <!-- 云台上的雷达安装位姿，相对于 base_link：(0, 86.37, 193.8) mm。 -->
+  <xacro:property name="mid360_x" value="0"/>
+  <xacro:property name="mid360_y" value="0.08637"/>
+  <xacro:property name="mid360_z" value="0.1938"/>
+  <xacro:property name="mid360_xyz" value="${mid360_x} ${mid360_y} ${mid360_z}"/>
+  <!--
+    标称姿态：雷达位于 +Y 侧并绕 X 轴向车体外侧倾斜约 17°。
+    按 ROS 右手坐标系取负 roll；云台自稳/自瞄时应由实时云台姿态发布动态 TF。
+  -->
+  <xacro:property name="mid360_roll" value="-0.2967059728"/>
+  <xacro:property name="mid360_pitch" value="0"/>
+  <xacro:property name="mid360_yaw" value="0"/>
+  <xacro:property name="mid360_rpy" value="${mid360_roll} ${mid360_pitch} ${mid360_yaw}"/>
 
   <!-- 全向轮参数 -->
-  <xacro:property name="wheel_radius" value="0.07"/>
+  <xacro:property name="wheel_radius" value="0.0762"/>
   <xacro:property name="wheel_width" value="0.04"/>
   <xacro:property name="wheel_mass" value="0.45"/>
-  <!-- 轮子连接位置（四角对称，连接点在 base_link 中心） -->
-  <xacro:property name="wheel_spacing" value="${(base_radius - wheel_radius) * 0.7071}"/>
-  <xacro:property name="wheel_z" value="${-base_height / 2}"/>
-  <xacro:property name="base_link_z" value="${-wheel_z + wheel_radius + 0.001}"/>
+  <!-- 446.55 mm 按相对两轮中心距解释，因此四轮坐标为 ±223.275 mm。 -->
+  <xacro:property name="wheel_center_distance" value="0.44655"/>
+  <xacro:property name="wheel_spacing" value="${wheel_center_distance / 2}"/>
+  <!-- 轮子底部与地面相切：轮心相对 base_link 为 76.2-95.19=-18.99 mm。 -->
+  <xacro:property name="wheel_z" value="${wheel_radius - base_link_z}"/>
 
   <!-- 颜色定义 -->
   <xacro:macro name="solid_material" params="name rgba">
@@ -39,7 +51,6 @@
   </xacro:macro>
 
   <xacro:solid_material name="chassis_blue" rgba="0.10 0.25 0.80 1.0"/>
-  <xacro:solid_material name="radar_red" rgba="0.85 0.15 0.15 1.0"/>
   <xacro:solid_material name="wheel_black" rgba="0.15 0.15 0.15 1.0"/>
 
   <!-- 固定关节宏 -->
@@ -53,23 +64,23 @@
 
 
   <!-- 圆柱 link 宏，用于底盘主体 -->
-  <xacro:macro name="cylinder_link" params="name radius length mass ixx iyy izz material">
+  <xacro:macro name="cylinder_link" params="name radius length mass ixx iyy izz material origin_z:=0">
     <link name="${name}">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${origin_z}" rpy="0 0 0"/>
         <geometry>
           <cylinder radius="${radius}" length="${length}"/>
         </geometry>
         <material name="${material}"/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${origin_z}" rpy="0 0 0"/>
         <geometry>
           <cylinder radius="${radius}" length="${length}"/>
         </geometry>
       </collision>
       <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${origin_z}" rpy="0 0 0"/>
         <mass value="${mass}"/>
         <inertia ixx="${ixx}" ixy="0" ixz="0" iyy="${iyy}" iyz="0" izz="${izz}"/>
       </inertial>
@@ -112,21 +123,39 @@
     ixx="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
     iyy="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
     izz="${base_mass * base_radius * base_radius / 2}"
-    material="chassis_blue"/>
+    material="chassis_blue"
+    origin_z="${base_height / 2}"/>
 
   <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
 
-  <!-- mid360_link -->
-  <xacro:box_link
-    name="mid360_link"
-    size="${radar_size}"
-    mass="${radar_mass}"
-    ixx="${radar_mass * (radar_width * radar_width + radar_height * radar_height) / 12}"
-    iyy="${radar_mass * (radar_length * radar_length + radar_height * radar_height) / 12}"
-    izz="${radar_mass * (radar_length * radar_length + radar_width * radar_width) / 12}"
-    material="radar_red"/>
+  <!--
+    gimbal_link 位于车体中心的云台转轴；简化模型暂以固定 TF 表示云台零位。
+    雷达在云台 +Y 86.37 mm 处，17° 外倾角放在 gimbal_link -> mid360_link。
+  -->
+  <link name="gimbal_link"/>
+  <xacro:fixed_joint
+    name="gimbal_joint"
+    parent="base_link"
+    child="gimbal_link"
+    xyz="0 0 ${mid360_z}"/>
 
-  <xacro:fixed_joint name="mid360_joint" parent="base_link" child="mid360_link" xyz="${mid360_xyz}" rpy="${mid360_rpy}"/>
+  <!-- Rigid, level virtual body used by gimbal-motion-compensated LIO. -->
+  <link name="lio_base_sensor"/>
+  <xacro:fixed_joint
+    name="lio_base_sensor_joint"
+    parent="base_link"
+    child="lio_base_sensor"
+    xyz="0 0 ${mid360_z}"/>
+
+  <!-- 与 Gazebo 模型共用同一套 MID-360 外形、碰撞和惯量。 -->
+  <xacro:livox_mid360_link name="mid360_link"/>
+
+  <xacro:fixed_joint
+    name="mid360_joint"
+    parent="gimbal_link"
+    child="mid360_link"
+    xyz="${mid360_x} ${mid360_y} 0"
+    rpy="${mid360_rpy}"/>
 
   <!-- 四轮全向轮底盘，轮轴朝向 base_link 中心 -->
   <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>

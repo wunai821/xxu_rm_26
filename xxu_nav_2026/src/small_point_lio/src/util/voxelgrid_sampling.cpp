@@ -70,7 +70,7 @@ namespace util {
 #endif
     }
 
-    /// @brief Voxelgrid downsampling. This function computes exact average of points in each voxel, and each voxel can contain arbitrary number of points.
+    /// @brief Voxelgrid downsampling for position-only points.
     /// @note  Discretized voxel coords must be in 21bit range [-1048576, 1048575].
     ///        For example, if the downsampling resolution is 0.01 m, point coordinates must be in [-10485.76, 10485.75] m.
     ///        Points outside the valid range will be ignored.
@@ -141,7 +141,10 @@ namespace util {
     /// @param points      Input points
     /// @param downsampled Downsampled points
     /// @param leaf_size   Downsampling resolution
-    void VoxelgridSampling::voxelgrid_sampling(const std::vector<common::Point> &points, std::vector<common::Point> &downsampled, double leaf_size) {
+    void VoxelgridSampling::voxelgrid_sampling(
+            const std::vector<common::Point> &points,
+            std::vector<common::Point> &downsampled,
+            double leaf_size) {
         if (points.empty()) {
             downsampled = points;
             return;
@@ -170,37 +173,39 @@ namespace util {
             coord_pt[i] = {bits, i};
         }
 
-        // Sort by voxel coord
-        const auto compare = [](const auto &lhs, const auto &rhs) { return lhs.first < rhs.first; };
+        // Average position and acquisition time over each spatial voxel.
+        // Preprocess guarantees that one call contains exactly one scan id.
+        const auto compare = [](const auto &lhs, const auto &rhs) {
+            return lhs.first < rhs.first;
+        };
         std::sort(coord_pt.begin(), coord_pt.end(), compare);
 
         downsampled.resize(points.size());
 
         size_t num_points = 0;
-        auto sum_pt = points[coord_pt.front().second];
-        size_t sum_pt_size = 1;
-        for (size_t i = 1; i < points.size(); i++) {
-            if (coord_pt[i].first == invalid_coord) {
-                continue;
+        size_t group_begin = 0;
+        while (group_begin < coord_pt.size() &&
+               coord_pt[group_begin].first != invalid_coord) {
+            const auto group_voxel = coord_pt[group_begin].first;
+            const auto group_scan_id = points[coord_pt[group_begin].second].scan_id;
+            Eigen::Vector3f sum_position = Eigen::Vector3f::Zero();
+            double sum_timestamp = 0.0;
+            size_t group_end = group_begin;
+            while (group_end < coord_pt.size() &&
+                   coord_pt[group_end].first == group_voxel) {
+                const auto &point = points[coord_pt[group_end].second];
+                sum_position += point.position;
+                sum_timestamp += point.timestamp;
+                ++group_end;
             }
 
-            if (coord_pt[i - 1].first != coord_pt[i].first) {
-                auto &point = downsampled[num_points++];
-                point.position = sum_pt.position / sum_pt_size;
-                point.timestamp = sum_pt.timestamp;
-                sum_pt.position.setZero();
-                sum_pt_size = 0;
-            }
-
-            const auto &point = points[coord_pt[i].second];
-            sum_pt.position += point.position;
-            sum_pt.timestamp = point.timestamp;
-            ++sum_pt_size;
+            const auto group_size = group_end - group_begin;
+            auto &point = downsampled[num_points++];
+            point.position = sum_position / static_cast<float>(group_size);
+            point.timestamp = sum_timestamp / static_cast<double>(group_size);
+            point.scan_id = group_scan_id;
+            group_begin = group_end;
         }
-
-        auto &point = downsampled[num_points++];
-        point.position = sum_pt.position / sum_pt_size;
-        point.timestamp = sum_pt.timestamp;
         downsampled.resize(num_points);
     }
 
