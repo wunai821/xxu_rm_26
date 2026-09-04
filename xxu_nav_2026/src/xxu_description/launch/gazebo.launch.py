@@ -397,14 +397,26 @@ def generate_launch_description():
                 "'lio_base_sensor' if '", compensate_gimbal_for_lio,
                 "' == 'true' else 'base_footprint'",
             ]),
+            "expected_source_frame": "mid360_link",
             "tf_lookup_timeout": 0.0,
             "use_point_timestamps": True,
+            "use_joint_interpolation": ParameterValue(
+                compensate_gimbal_for_lio, value_type=bool
+            ),
+            "joint_name": "gimbal_joint",
+            "joint_axis": [0.0, 0.0, 1.0],
+            "sensor_offset": [0.0, 0.08637, 0.0],
+            "sensor_rpy": [-0.2967059728, 0.0, 0.0],
+            "joint_position_offset": 0.0,
+            "max_joint_sample_gap": 0.05,
+            "time_reset_threshold": 0.5,
             "pending_timeout": 0.25,
             "pending_queue_size": 3,
         }],
         remappings=[
             ("points_in", "/mid360/livox_points"),
             ("points_out", "/mid360/livox_points_compensated"),
+            ("joint_states", "/joint_states"),
         ],
     )
 
@@ -424,7 +436,13 @@ def generate_launch_description():
             "joint_axis": [0.0, 0.0, 1.0],
             "sensor_offset": [0.0, 0.08637, 0.0],
             "sensor_rpy": [-0.2967059728, 0.0, 0.0],
+            "joint_position_offset": 0.0,
+            "input_acceleration_scale": 1.0,
             "angular_acceleration_time_constant": 0.05,
+            "joint_acceleration_time_constant": 0.05,
+            "max_joint_acceleration": 100.0,
+            "max_joint_sample_gap": 0.05,
+            "time_reset_threshold": 0.5,
         }],
         remappings=[
             ("imu_in", "/imu"),

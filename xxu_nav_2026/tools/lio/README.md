@@ -3,6 +3,29 @@
 这组工具用于把实机问题固定成可重复的数据集。录包同时保存原始 MID360
 点云/IMU、云台关节、TF、Small Point-LIO 输出和可选的独立里程计。
 
+## 启动补偿版 LIO
+
+先启动 `livox_ros_driver2` 和带时间戳的云台 `/joint_states`，再运行：
+
+```bash
+source install/setup.bash
+ros2 launch xxu_description mid360_lio.launch.py
+```
+
+该启动链将 `/livox/lidar` 按每个点的绝对时间插值云台角度，将
+`/livox/imu` 的加速度从 g 换算为 m/s²，并把两者补偿到刚性虚拟帧
+`lio_base_sensor` 后交给 Small Point-LIO。已有 robot_state_publisher 时使用：
+
+```bash
+ros2 launch xxu_description mid360_lio.launch.py \
+  start_robot_state_publisher:=false
+```
+
+云台关节名必须为 `gimbal_joint`，其时间基准须与 Livox 点时间一致。实机安装尺寸或
+Livox 标定外参变化后，应同步更新启动文件中的 `sensor_offset` 和 `sensor_rpy`。
+若二次封装的 Livox 驱动已经输出 m/s²，须加 `input_acceleration_scale:=1.0`；编码器
+零位与机械零位存在偏差时，可用 `joint_position_offset:=<rad>` 同时校正点云和 IMU。
+
 ## 录制
 
 先启动实机驱动、动态云台 TF 和 Small Point-LIO，并 source ROS 2 与工作空间。

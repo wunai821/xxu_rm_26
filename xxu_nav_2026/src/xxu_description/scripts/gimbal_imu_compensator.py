@@ -2,9 +2,9 @@
 """Convert a gimbal-mounted IMU into a virtual IMU at the gimbal axis."""
 
 import bisect
+from collections import deque
 import copy
 import math
-from collections import deque
 
 import numpy as np
 import rclpy
@@ -34,11 +34,13 @@ def _stamp_seconds(stamp):
     return float(stamp.sec) + float(stamp.nanosec) * 1.0e-9
 
 
-def _rotate_covariance(values, rotation):
+def _rotate_covariance(values, rotation, scale=1.0):
     if len(values) != 9 or values[0] < 0.0:
         return list(values)
     covariance = np.asarray(values, dtype=float).reshape(3, 3)
-    return (rotation @ covariance @ rotation.T).reshape(-1).tolist()
+    return (
+        scale * scale * (rotation @ covariance @ rotation.T)
+    ).reshape(-1).tolist()
 
 
 class GimbalImuCompensator(Node):
@@ -51,13 +53,21 @@ class GimbalImuCompensator(Node):
         self.declare_parameter('joint_axis', [0.0, 0.0, 1.0])
         self.declare_parameter('sensor_offset', [0.0, 0.08637, 0.0])
         self.declare_parameter('sensor_rpy', [-0.2967059728, 0.0, 0.0])
+        self.declare_parameter('joint_position_offset', 0.0)
+        self.declare_parameter('input_acceleration_scale', 1.0)
         self.declare_parameter('angular_acceleration_time_constant', 0.05)
+        self.declare_parameter('joint_acceleration_time_constant', 0.05)
+        self.declare_parameter('max_joint_acceleration', 100.0)
+        self.declare_parameter('max_joint_sample_gap', 0.05)
+        self.declare_parameter('time_reset_threshold', 0.5)
 
         self.joint_name = str(self.get_parameter('joint_name').value)
         self.target_frame = str(self.get_parameter('target_frame').value)
         self.joint_axis = np.asarray(
             self.get_parameter('joint_axis').value, dtype=float
         )
+        if self.joint_axis.shape != (3,) or not np.all(np.isfinite(self.joint_axis)):
+            raise ValueError('joint_axis must contain three finite values')
         axis_norm = np.linalg.norm(self.joint_axis)
         if axis_norm <= np.finfo(float).eps:
             raise ValueError('joint_axis must be non-zero')
@@ -65,13 +75,48 @@ class GimbalImuCompensator(Node):
         self.sensor_offset = np.asarray(
             self.get_parameter('sensor_offset').value, dtype=float
         )
-        sensor_rpy = self.get_parameter('sensor_rpy').value
+        if self.sensor_offset.shape != (3,) or not np.all(
+            np.isfinite(self.sensor_offset)
+        ):
+            raise ValueError('sensor_offset must contain three finite values')
+        sensor_rpy = np.asarray(
+            self.get_parameter('sensor_rpy').value, dtype=float
+        )
+        if sensor_rpy.shape != (3,) or not np.all(np.isfinite(sensor_rpy)):
+            raise ValueError('sensor_rpy must contain three finite values')
         self.sensor_rotation = _rotation_from_rpy(*sensor_rpy)
-        self.derivative_tau = max(
-            0.0,
-            float(
-                self.get_parameter('angular_acceleration_time_constant').value
-            ),
+        self.joint_position_offset = float(
+            self.get_parameter('joint_position_offset').value
+        )
+        if not math.isfinite(self.joint_position_offset):
+            raise ValueError('joint_position_offset must be finite')
+        self.input_acceleration_scale = float(
+            self.get_parameter('input_acceleration_scale').value
+        )
+        if (
+            not math.isfinite(self.input_acceleration_scale)
+            or self.input_acceleration_scale <= 0.0
+        ):
+            raise ValueError('input_acceleration_scale must be finite and positive')
+        self.derivative_tau = self._nonnegative_seconds_parameter(
+            'angular_acceleration_time_constant'
+        )
+        self.joint_acceleration_tau = self._nonnegative_seconds_parameter(
+            'joint_acceleration_time_constant'
+        )
+        self.max_joint_acceleration = float(
+            self.get_parameter('max_joint_acceleration').value
+        )
+        if (
+            not math.isfinite(self.max_joint_acceleration)
+            or self.max_joint_acceleration <= 0.0
+        ):
+            raise ValueError('max_joint_acceleration must be finite and positive')
+        self.max_joint_sample_gap = self._positive_seconds_parameter(
+            'max_joint_sample_gap'
+        )
+        self.time_reset_threshold = self._positive_seconds_parameter(
+            'time_reset_threshold'
         )
 
         self.joint_samples = deque(maxlen=2048)
@@ -82,6 +127,12 @@ class GimbalImuCompensator(Node):
         self.previous_base_omega = None
         self.previous_imu_time = None
         self.filtered_base_alpha = np.zeros(3)
+        self.previous_joint_velocity = None
+        self.previous_joint_time = None
+        self.filtered_joint_acceleration = 0.0
+        self.missing_joint_velocity_warned = False
+        self.nonfinite_imu_warned = False
+        self.dropped_nonfinite_imus = 0
 
         self.publisher = self.create_publisher(Imu, 'imu_out', qos_profile_sensor_data)
         self.create_subscription(
@@ -91,7 +142,8 @@ class GimbalImuCompensator(Node):
             Imu, 'imu_in', self._imu_callback, qos_profile_sensor_data
         )
         self.get_logger().info(
-            f'Compensating gimbal IMU into virtual frame {self.target_frame}'
+            f'Compensating gimbal IMU into virtual frame {self.target_frame} '
+            f'(acceleration scale={self.input_acceleration_scale:g})'
         )
 
     def _joint_callback(self, message):
@@ -99,7 +151,15 @@ class GimbalImuCompensator(Node):
             index = message.name.index(self.joint_name)
         except ValueError:
             return
-        if index >= len(message.position) or index >= len(message.velocity):
+        if index >= len(message.position):
+            return
+        if index >= len(message.velocity):
+            if not self.missing_joint_velocity_warned:
+                self.get_logger().error(
+                    f'JointState {self.joint_name} has no velocity; '
+                    'IMU compensation requires measured joint velocity'
+                )
+                self.missing_joint_velocity_warned = True
             return
         position = float(message.position[index])
         velocity = float(message.velocity[index])
@@ -108,7 +168,23 @@ class GimbalImuCompensator(Node):
             return
 
         if self.joint_samples and timestamp <= self.joint_samples[-1][0]:
-            return
+            backwards = self.joint_samples[-1][0] - timestamp
+            if backwards < self.time_reset_threshold:
+                return
+            self._reset_temporal_state(clear_joint_samples=True)
+            self.get_logger().warning(
+                'Joint timestamp moved backwards; reset IMU compensation state'
+            )
+        elif (
+            self.joint_samples
+            and timestamp - self.joint_samples[-1][0]
+            > self.max_joint_sample_gap
+        ):
+            gap = timestamp - self.joint_samples[-1][0]
+            self._reset_temporal_state(clear_joint_samples=True)
+            self.get_logger().warning(
+                f'Joint samples had a {gap:.3f}s gap; reset IMU compensation state'
+            )
 
         if self.last_raw_position is None:
             unwrapped = position
@@ -121,18 +197,61 @@ class GimbalImuCompensator(Node):
         self.last_raw_position = position
         self.last_unwrapped_position = unwrapped
 
-        self.joint_samples.append((timestamp, unwrapped, velocity))
+        joint_acceleration = 0.0
+        if (
+            self.previous_joint_velocity is not None
+            and self.previous_joint_time is not None
+        ):
+            dt = timestamp - self.previous_joint_time
+            raw_acceleration = (velocity - self.previous_joint_velocity) / dt
+            raw_acceleration = max(
+                -self.max_joint_acceleration,
+                min(self.max_joint_acceleration, raw_acceleration),
+            )
+            gain = 1.0 if self.joint_acceleration_tau == 0.0 else dt / (
+                self.joint_acceleration_tau + dt
+            )
+            self.filtered_joint_acceleration += gain * (
+                raw_acceleration - self.filtered_joint_acceleration
+            )
+            joint_acceleration = self.filtered_joint_acceleration
+        self.previous_joint_velocity = velocity
+        self.previous_joint_time = timestamp
+
+        self.joint_samples.append(
+            (timestamp, unwrapped, velocity, joint_acceleration)
+        )
         self._process_pending()
 
     def _imu_callback(self, message):
         timestamp = _stamp_seconds(message.header.stamp)
-        if not math.isfinite(timestamp):
+        measurement = (
+            message.angular_velocity.x,
+            message.angular_velocity.y,
+            message.angular_velocity.z,
+            message.linear_acceleration.x,
+            message.linear_acceleration.y,
+            message.linear_acceleration.z,
+        )
+        if not math.isfinite(timestamp) or not all(map(math.isfinite, measurement)):
+            self.dropped_nonfinite_imus += 1
+            if not self.nonfinite_imu_warned:
+                self.get_logger().error(
+                    'Dropping IMU with non-finite timestamp, gyro, or acceleration'
+                )
+                self.nonfinite_imu_warned = True
             return
         latest_timestamp = self.previous_imu_time
         if self.pending_imus:
             latest_timestamp = _stamp_seconds(self.pending_imus[-1].header.stamp)
         if latest_timestamp is not None and timestamp <= latest_timestamp:
-            return
+            backwards = latest_timestamp - timestamp
+            if backwards < self.time_reset_threshold:
+                return
+            self._reset_temporal_state(clear_joint_samples=False)
+            self.get_logger().warning(
+                'IMU timestamp moved backwards; reset IMU derivative state'
+            )
         if len(self.pending_imus) >= self.pending_imu_limit:
             self.pending_imus.popleft()
         self.pending_imus.append(copy.deepcopy(message))
@@ -151,23 +270,25 @@ class GimbalImuCompensator(Node):
             if upper == 0:
                 neighbor = self.joint_samples[1]
                 interval = neighbor[0] - sample[0]
-                acceleration = (neighbor[2] - sample[2]) / interval
+                if interval <= 0.0 or interval > self.max_joint_sample_gap:
+                    return None
             else:
                 neighbor = self.joint_samples[upper - 1]
                 interval = sample[0] - neighbor[0]
-                acceleration = (sample[2] - neighbor[2]) / interval
-            return sample[1], sample[2], acceleration
+                if interval <= 0.0 or interval > self.max_joint_sample_gap:
+                    return None
+            return sample[1], sample[2], sample[3]
         if upper == 0 or upper >= len(times):
             return None
         before = self.joint_samples[upper - 1]
         after = self.joint_samples[upper]
         interval = after[0] - before[0]
-        if interval <= 0.0:
+        if interval <= 0.0 or interval > self.max_joint_sample_gap:
             return None
         ratio = (timestamp - before[0]) / interval
         position = before[1] + ratio * (after[1] - before[1])
         velocity = before[2] + ratio * (after[2] - before[2])
-        acceleration = (after[2] - before[2]) / interval
+        acceleration = before[3] + ratio * (after[3] - before[3])
         return position, velocity, acceleration
 
     def _process_pending(self):
@@ -179,6 +300,11 @@ class GimbalImuCompensator(Node):
                 if self.joint_samples and timestamp < self.joint_samples[0][0]:
                     self.pending_imus.popleft()
                     continue
+                if self.joint_samples and timestamp <= self.joint_samples[-1][0]:
+                    # Timestamp is covered, but only across a missing/late joint
+                    # interval. Never extrapolate or block newer valid IMU data.
+                    self.pending_imus.popleft()
+                    continue
                 break
             self.pending_imus.popleft()
             self._publish_compensated(message, timestamp, *joint)
@@ -188,7 +314,7 @@ class GimbalImuCompensator(Node):
         joint_acceleration
     ):
         joint_rotation = _rotation_from_axis_angle(
-            self.joint_axis, joint_position
+            self.joint_axis, joint_position + self.joint_position_offset
         )
         base_from_sensor = joint_rotation @ self.sensor_rotation
         lever_arm = joint_rotation @ self.sensor_offset
@@ -233,7 +359,7 @@ class GimbalImuCompensator(Node):
             message.linear_acceleration.x,
             message.linear_acceleration.y,
             message.linear_acceleration.z,
-        ])
+        ]) * self.input_acceleration_scale
         base_specific_force = (
             base_from_sensor @ sensor_specific_force
             - sensor_origin_acceleration
@@ -260,9 +386,36 @@ class GimbalImuCompensator(Node):
             message.angular_velocity_covariance, base_from_sensor
         )
         output.linear_acceleration_covariance = _rotate_covariance(
-            message.linear_acceleration_covariance, base_from_sensor
+            message.linear_acceleration_covariance,
+            base_from_sensor,
+            self.input_acceleration_scale,
         )
         self.publisher.publish(output)
+
+    def _reset_temporal_state(self, clear_joint_samples):
+        if clear_joint_samples:
+            self.joint_samples.clear()
+            self.last_raw_position = None
+            self.last_unwrapped_position = None
+        self.pending_imus.clear()
+        self.previous_base_omega = None
+        self.previous_imu_time = None
+        self.filtered_base_alpha = np.zeros(3)
+        self.previous_joint_velocity = None
+        self.previous_joint_time = None
+        self.filtered_joint_acceleration = 0.0
+
+    def _positive_seconds_parameter(self, parameter_name):
+        value = float(self.get_parameter(parameter_name).value)
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f'{parameter_name} must be finite and positive')
+        return value
+
+    def _nonnegative_seconds_parameter(self, parameter_name):
+        value = float(self.get_parameter(parameter_name).value)
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f'{parameter_name} must be finite and non-negative')
+        return value
 
 
 def main():

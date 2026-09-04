@@ -2,8 +2,8 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU 简化模型
-    静态 TF 树：base_footprint -> base_link -> gimbal_link -> mid360_link，另含四个车轮帧。
-    动态 TF 树：odom -> base_footprint 由 Small Point-LIO 发布。
+    TF 树：base_footprint -> base_link -> gimbal_link -> mid360_link，另含四个车轮帧。
+    gimbal_link 由关节状态动态发布；odom -> base_footprint 由 Small Point-LIO 发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
@@ -129,15 +129,17 @@
   <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
 
   <!--
-    gimbal_link 位于车体中心的云台转轴；简化模型暂以固定 TF 表示云台零位。
+    gimbal_link 位于车体中心的云台转轴，角度由实机 /joint_states 驱动。
     雷达在云台 +Y 86.37 mm 处，17° 外倾角放在 gimbal_link -> mid360_link。
   -->
   <link name="gimbal_link"/>
-  <xacro:fixed_joint
-    name="gimbal_joint"
-    parent="base_link"
-    child="gimbal_link"
-    xyz="0 0 ${mid360_z}"/>
+  <joint name="gimbal_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="gimbal_link"/>
+    <origin xyz="0 0 ${mid360_z}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="8"/>
+  </joint>
 
   <!-- Rigid, level virtual body used by gimbal-motion-compensated LIO. -->
   <link name="lio_base_sensor"/>
@@ -156,6 +158,13 @@
     child="mid360_link"
     xyz="${mid360_x} ${mid360_y} 0"
     rpy="${mid360_rpy}"/>
+
+  <!-- Official livox_ros_driver2 uses livox_frame for both MID360 streams. -->
+  <link name="livox_frame"/>
+  <xacro:fixed_joint
+    name="livox_frame_joint"
+    parent="mid360_link"
+    child="livox_frame"/>
 
   <!-- 四轮全向轮底盘，轮轴朝向 base_link 中心 -->
   <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
