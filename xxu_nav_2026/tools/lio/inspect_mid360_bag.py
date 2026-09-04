@@ -159,6 +159,9 @@ class CloudStats:
         self.midpoint_header_errors = []
         self.point_time_min = None
         self.point_time_max = None
+        self.scan_time_ranges = []
+        self.previous_timestamp_groups = None
+        self.shared_timestamp_groups = []
 
     def add(self, message, bag_time_ns):
         header_time = message_time(message, bag_time_ns)
@@ -203,11 +206,18 @@ class CloudStats:
             point_times, scale, mode = infer_point_times(
                 raw_times, header_time, timestamp_name
             )
+            timestamp_groups = set(raw_times)
             self.scan_spans.append(max(point_times) - min(point_times))
-            self.time_groups.append(len(set(raw_times)))
+            self.time_groups.append(len(timestamp_groups))
             self.time_scales.append({"scale": scale, "mode": mode})
             cloud_min = min(point_times)
             cloud_max = max(point_times)
+            self.scan_time_ranges.append((cloud_min, cloud_max))
+            if self.previous_timestamp_groups is not None:
+                self.shared_timestamp_groups.append(
+                    len(timestamp_groups & self.previous_timestamp_groups)
+                )
+            self.previous_timestamp_groups = timestamp_groups
             self.point_time_min = (
                 cloud_min
                 if self.point_time_min is None
@@ -221,9 +231,19 @@ class CloudStats:
             if mode == "absolute":
                 midpoint = 0.5 * (cloud_min + cloud_max)
                 self.midpoint_header_errors.append(midpoint - header_time)
+        else:
+            self.scan_time_ranges.append(None)
+            self.previous_timestamp_groups = None
 
     def report(self):
         result = rate_summary(self.times)
+        scan_boundary_gaps = [
+            after[0] - before[1]
+            for before, after in zip(
+                self.scan_time_ranges, self.scan_time_ranges[1:]
+            )
+            if before is not None and after is not None
+        ]
         result.update(
             {
                 "frames": sorted(self.frames),
@@ -247,6 +267,16 @@ class CloudStats:
                 "point_time_end_s": self.point_time_max,
                 "point_time_midpoint_minus_header_s": scalar_summary(
                     self.midpoint_header_errors
+                ),
+                "scan_boundary_gap_s": scalar_summary(scan_boundary_gaps),
+                "overlapping_scan_boundaries": sum(
+                    gap < -1.0e-6 for gap in scan_boundary_gaps
+                ),
+                "touching_scan_boundaries": sum(
+                    abs(gap) <= 1.0e-6 for gap in scan_boundary_gaps
+                ),
+                "shared_timestamp_groups_between_clouds": scalar_summary(
+                    self.shared_timestamp_groups
                 ),
             }
         )
@@ -543,6 +573,20 @@ def make_warnings(args, reports):
             warnings.append(
                 f"LiDAR point-time domain differs from the cloud header by {header_error:.3f}s"
             )
+        overlaps = cloud.get("overlapping_scan_boundaries", 0)
+        if overlaps:
+            boundary_gap = cloud.get("scan_boundary_gap_s") or {}
+            warnings.append(
+                f"LiDAR has {overlaps} overlapping scan boundaries; minimum "
+                f"next-start minus previous-end is "
+                f"{boundary_gap.get('min', 0.0):.6f}s"
+            )
+        shared_groups = cloud.get("shared_timestamp_groups_between_clouds") or {}
+        if shared_groups.get("max", 0) > 0:
+            warnings.append(
+                "adjacent LiDAR clouds share timestamp groups; inspect whether "
+                "they contain duplicate or distinct rays"
+            )
 
     imu = reports.get(args.imu_topic, {})
     if (
@@ -630,6 +674,16 @@ def print_report(report, args):
                     format_number(spans.get("median"), 6),
                     format_number(groups.get("median"), 0),
                     values.get("point_time_interpretations") or "missing",
+                )
+            )
+            boundary = values.get("scan_boundary_gap_s") or {}
+            shared = values.get("shared_timestamp_groups_between_clouds") or {}
+            print(
+                "  boundary_gap_median={} s overlaps={} touching={} shared_groups_max={}".format(
+                    format_number(boundary.get("median"), 6),
+                    values.get("overlapping_scan_boundaries", 0),
+                    values.get("touching_scan_boundaries", 0),
+                    format_number(shared.get("max"), 0),
                 )
             )
         elif topic == args.imu_topic:
