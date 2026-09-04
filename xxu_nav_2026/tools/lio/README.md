@@ -1,0 +1,50 @@
+# MID360 旋转云台实机回归
+
+这组工具用于把实机问题固定成可重复的数据集。录包同时保存原始 MID360
+点云/IMU、云台关节、TF、Small Point-LIO 输出和可选的独立里程计。
+
+## 录制
+
+先启动实机驱动、动态云台 TF 和 Small Point-LIO，并 source ROS 2 与工作空间。
+每个工况单独录一个包：
+
+```bash
+tools/lio/record_mid360_regression.sh locked_stationary --duration 20
+tools/lio/record_mid360_regression.sh rotating_stationary --duration 20
+tools/lio/record_mid360_regression.sh locked_motion
+tools/lio/record_mid360_regression.sh rotating_motion
+```
+
+运动组应走同一条可测量的路线，旋转组使用云台正常工作速度；不要为了复现仿真
+而强行把实机设为 4 rad/s。如果底盘或动捕提供独立里程计，增加例如：
+
+```bash
+tools/lio/record_mid360_regression.sh rotating_motion \
+  --reference-odom /wheel_odom
+```
+
+为避免录包进程与 LIO 抢占 CPU，默认 MCAP 使用低开销 `fastwrite`，且不录
+`/cloud_registered` 等重型派生点云。如确实需要检查派生云，再加
+`--include-derived-clouds`；存储空间受限时可另选 `--storage-profile zstd_fast`。
+
+默认关键话题为 `/livox/lidar`、`/livox/imu`、`/joint_states` 和 `/odom`，
+均可通过脚本参数覆盖。缺少任一关键话题时脚本会拒绝开始，避免得到无法回放的包。
+每个包还包含采集时的 Git commit、话题清单和 Small Point-LIO 参数快照。
+
+## 检查
+
+```bash
+tools/lio/inspect_mid360_bag.py bags/lio_regression/<bag-directory>
+```
+
+检查器输出：
+
+- 点云频率、每帧点数、有限坐标比例；
+- 点内时间字段、单帧时间跨度和时间组数量；
+- IMU 与云台关节频率；底盘静止时还可比较两者角速度；
+- `/odom` 的路径长度、净位移和相对起点最大漂移；
+- 可选独立里程计的同类统计。
+
+静止旋转包首先看 `max_xy_from_start`；两组运动包再比较 LIO 与实测路线或独立里程计
+的净位移。这样可将“旋转时漂移”拆分为输入时序/格式问题、静止旋转漂移和运动尺度
+误差三个层次。
