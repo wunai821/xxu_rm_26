@@ -1,0 +1,34 @@
+gicp_localization:
+  ros__parameters:
+    use_sim_time: true
+    # Leave empty for a real robot until a survey/map PCD has been supplied.
+    pcd_map: ""
+    map_frame: map
+    odom_frame: odom
+    base_frame: base_footprint
+    cloud_topic: /mid360/livox_points_compensated
+    amcl_topic: /amcl_pose
+    pose_topic: /gicp_pose
+    cloud_frame: lio_base_sensor
+    downsampling_resolution: 0.20
+    num_neighbors: 20
+    num_threads: 4
+    max_iterations: 32
+    max_correspondence_distance: 1.0
+    tf_lookup_timeout: 0.10
+    min_range: 0.5
+    max_range: 50.0
+    min_cloud_points: 80
+    min_inliers: 40
+    # Mean small_gicp objective per inlier (the library reports a summed error).
+    max_error: 1.0
+    max_pose_jump: 1.5
+    max_yaw_jump: 1.2
+    max_relocalization_jump: 8.0
+    max_relocalization_yaw: 3.14159265359
+    amcl_timeout: 2.0
+    cloud_timeout: 0.5
+    amcl_relocalization_distance: 1.5
+    amcl_relocalization_yaw: 1.0
+    output_covariance_xy: 0.04
+    output_covariance_yaw: 0.04

@@ -11,6 +11,7 @@ install(
 install(
   PROGRAMS
     scripts/auto_initial_pose.py
+    scripts/mock_robot_io.py
     scripts/nav2_navigation_startup.py
   DESTINATION lib/${PROJECT_NAME}
 )

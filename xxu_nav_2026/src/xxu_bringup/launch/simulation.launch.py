@@ -23,10 +23,16 @@ def generate_launch_description():
     use_fake_frame = LaunchConfiguration("use_fake_frame")
     world = LaunchConfiguration("world")
     auto_initial_pose = LaunchConfiguration("auto_initial_pose")
+    enable_gicp = LaunchConfiguration("enable_gicp")
+    gicp_pcd_map = LaunchConfiguration("gicp_pcd_map")
     initial_pose_relocalize = LaunchConfiguration("initial_pose_relocalize")
     initial_pose_x = LaunchConfiguration("initial_pose_x")
     initial_pose_y = LaunchConfiguration("initial_pose_y")
     initial_pose_yaw = LaunchConfiguration("initial_pose_yaw")
+    initial_pose_covariance_xy = LaunchConfiguration("initial_pose_covariance_xy")
+    initial_pose_covariance_yaw = LaunchConfiguration("initial_pose_covariance_yaw")
+    cmd_vel_in_topic = LaunchConfiguration("cmd_vel_in_topic")
+    cmd_vel_out_topic = LaunchConfiguration("cmd_vel_out_topic")
 
     default_map = PathJoinSubstitution([bringup_share, "maps", "empty.yaml"])
     default_nav2_params = PathJoinSubstitution(
@@ -62,6 +68,10 @@ def generate_launch_description():
             "params_file": nav2_params_file,
             "rviz": rviz,
             "use_fake_frame": use_fake_frame,
+            "enable_gicp": enable_gicp,
+            "gicp_pcd_map": gicp_pcd_map,
+            "cmd_vel_in_topic": cmd_vel_in_topic,
+            "cmd_vel_out_topic": cmd_vel_out_topic,
         }.items(),
     )
 
@@ -106,6 +116,26 @@ def generate_launch_description():
             "rviz",
             default_value="false",
             description="Start RViz from navigation.launch.py",
+        ),
+        DeclareLaunchArgument(
+            "enable_gicp",
+            default_value="false",
+            description="Use AMCL for coarse pose and small_gicp for map->odom",
+        ),
+        DeclareLaunchArgument(
+            "gicp_pcd_map",
+            default_value="",
+            description="Map-frame PCD for small_gicp localization",
+        ),
+        DeclareLaunchArgument(
+            "cmd_vel_in_topic",
+            default_value="cmd_vel_smoothed",
+            description="Velocity input consumed by collision_monitor",
+        ),
+        DeclareLaunchArgument(
+            "cmd_vel_out_topic",
+            default_value="/cmd_vel_collision",
+            description="Collision-monitored velocity output",
         ),
         DeclareLaunchArgument(
             "enable_lio",

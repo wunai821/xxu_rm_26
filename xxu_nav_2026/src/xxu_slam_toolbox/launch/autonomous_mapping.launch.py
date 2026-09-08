@@ -43,7 +43,7 @@ def generate_launch_description():
     rviz = LaunchConfiguration("rviz")
     rviz_config = LaunchConfiguration("rviz_config")
     nav2_base_frame = PythonExpression([
-        "'base_link_fake' if '",
+        "'gimbal_yaw_fake' if '",
         use_fake_frame,
         "' == 'true' else 'base_link'",
     ])
@@ -51,6 +51,9 @@ def generate_launch_description():
         source_file=nav2_params_file,
         root_key="",
         param_rewrites={
+            # The launch argument is the single time source for every Nav2
+            # node, including nested local/global costmaps.
+            "use_sim_time": use_sim_time,
             "bt_navigator.ros__parameters.robot_base_frame": nav2_base_frame,
             "local_costmap.local_costmap.ros__parameters.robot_base_frame": nav2_base_frame,
             "global_costmap.global_costmap.ros__parameters.robot_base_frame": nav2_base_frame,
@@ -106,7 +109,7 @@ def generate_launch_description():
     declare_use_fake_frame = DeclareLaunchArgument(
         "use_fake_frame",
         default_value="false",
-        description="Use base_link_fake as the Nav2 robot base frame",
+        description="Use gimbal_yaw_fake as the Nav2 robot base frame",
     )
     declare_rviz = DeclareLaunchArgument(
         "rviz",

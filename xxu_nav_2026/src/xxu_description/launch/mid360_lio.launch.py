@@ -10,6 +10,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+    use_sim_time = LaunchConfiguration("use_sim_time")
     model = LaunchConfiguration("model")
     config_file = LaunchConfiguration("config_file")
     lidar_topic = LaunchConfiguration("lidar_topic")
@@ -42,7 +43,7 @@ def generate_launch_description():
             "robot_description": ParameterValue(
                 Command(["xacro ", model]), value_type=str
             ),
-            "use_sim_time": False,
+            "use_sim_time": use_sim_time,
         }],
         remappings=[("joint_states", joint_states_topic)],
     )
@@ -53,7 +54,7 @@ def generate_launch_description():
         name="pointcloud_motion_compensator",
         output="screen",
         parameters=[{
-            "use_sim_time": False,
+            "use_sim_time": use_sim_time,
             "target_frame": "lio_base_sensor",
             "expected_source_frame": "livox_frame",
             "use_point_timestamps": True,
@@ -83,7 +84,7 @@ def generate_launch_description():
         name="gimbal_imu_compensator",
         output="screen",
         parameters=[{
-            "use_sim_time": False,
+            "use_sim_time": use_sim_time,
             "target_frame": "lio_base_sensor",
             "joint_name": "gimbal_joint",
             "joint_axis": [0.0, 0.0, 1.0],
@@ -116,10 +117,15 @@ def generate_launch_description():
         executable="small_point_lio_node",
         name="small_point_lio",
         output="screen",
-        parameters=[config_file],
+        parameters=[config_file, {"use_sim_time": use_sim_time}],
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            "use_sim_time",
+            default_value="false",
+            description="Use the ROS simulation clock when true",
+        ),
         DeclareLaunchArgument(
             "model",
             default_value=default_model,

@@ -301,6 +301,10 @@ def generate_launch_description():
             "max_wheel_speed": 100.0,
             "timeout": 0.3,
             "publish_rate": 50.0,
+            "cmd_vel_topic": "/cmd_vel",
+            "wheel_command_topic": "/wheel_velocity_controller/commands",
+            "expected_frame_id": "base_link",
+            "accept_empty_frame_id": True,
         }],
     )
 
@@ -317,10 +321,11 @@ def generate_launch_description():
             # base_link -> gimbal_link TF remains dynamic for LiDAR/LIO.
             "fake_robot_base_frame": "gimbal_yaw_fake",
             "odom_topic": "/odom",
-            "input_cmd_vel_topic": "/cmd_vel_keyboard",
+            "input_cmd_vel_topic": "/cmd_vel_collision",
             "output_cmd_vel_topic": "/cmd_vel_transformed",
             "spin_speed": gyro_spin_rate,
             "gyro_linear_threshold": 0.01,
+            "odom_timeout": 0.5,
         }],
     )
     # IMU bridge (GZ -> ROS 单向)
@@ -343,7 +348,10 @@ def generate_launch_description():
         name="imu_frame_republisher",
         output="screen",
         # 仿真实车 MID360 内置 IMU，数值和坐标系都随雷达运动。
-        parameters=[{"target_frame": "mid360_link"}],
+        parameters=[{
+            "use_sim_time": use_sim_time,
+            "target_frame": "mid360_link",
+        }],
         remappings=[
             ("imu_in", "/imu_raw"),
             ("imu_out", "/imu"),
@@ -519,6 +527,7 @@ def generate_launch_description():
         name="pointcloud_to_laserscan",
         output="screen",
         parameters=[{
+            "use_sim_time": use_sim_time,
             "target_frame": "base_footprint",
             "transform_tolerance": 0.05,
             "min_height": 0.05,
@@ -576,14 +585,35 @@ def generate_launch_description():
         name="cmd_vel_watchdog",
         output="screen",
         parameters=[{
+            "use_sim_time": use_sim_time,
             "input_topic": PythonExpression([
                 "'/cmd_vel_transformed' if '",
                 use_fake_frame,
-                "' == 'true' else '/cmd_vel_keyboard'",
+                "' == 'true' else '/cmd_vel_collision'",
             ]),
             "output_topic": "/cmd_vel",
+            "status_topic": "/cmd_vel_watchdog/healthy",
             "timeout": 0.3,
             "publish_rate": 20.0,
+            "output_frame_id": "base_link",
+            "require_odom": True,
+            "odom_topic": "/odom",
+            "odom_timeout": 0.5,
+            "require_scan": True,
+            "scan_topic": "/scan",
+            "scan_timeout": 0.5,
+            "require_joint_states": True,
+            "joint_states_topic": "/joint_states",
+            "joint_states_timeout": 0.5,
+            "require_tf": True,
+            "tf_topic": "/tf",
+            "tf_target_frame": "odom",
+            "tf_source_frame": "base_link",
+            "tf_timeout": 0.5,
+            "required_tf_pairs": [
+                "odom->base_footprint",
+                "base_link->gimbal_link",
+            ],
         }],
     )
 

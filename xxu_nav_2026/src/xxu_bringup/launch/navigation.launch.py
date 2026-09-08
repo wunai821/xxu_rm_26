@@ -6,11 +6,13 @@ from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from nav2_common.launch import RewrittenYaml
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
     bringup_share = FindPackageShare("xxu_bringup")
+    gicp_share = FindPackageShare("xxu_gicp_localization")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     map_file = LaunchConfiguration("map")
@@ -19,11 +21,18 @@ def generate_launch_description():
     rviz_config = LaunchConfiguration("rviz_config")
     autostart = LaunchConfiguration("autostart")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
+    enable_gicp = LaunchConfiguration("enable_gicp")
+    gicp_pcd_map = LaunchConfiguration("gicp_pcd_map")
+    cmd_vel_in_topic = LaunchConfiguration("cmd_vel_in_topic")
+    cmd_vel_out_topic = LaunchConfiguration("cmd_vel_out_topic")
 
     # Keep standalone Nav2 consistent with the saved-map simulation and maps README.
     default_map = PathJoinSubstitution([bringup_share, "maps", "auto_map.yaml"])
     default_params = PathJoinSubstitution([bringup_share, "config", "nav2_navigation.yaml"])
     default_rviz_config = PathJoinSubstitution([bringup_share, "rviz", "navigation.rviz"])
+    default_gicp_params = PathJoinSubstitution(
+        [gicp_share, "config", "gicp_localization.yaml"]
+    )
 
     localization_lifecycle_nodes = [
         "map_server",
@@ -50,11 +59,17 @@ def generate_launch_description():
         source_file=params_file,
         root_key="",
         param_rewrites={
+            # The YAML files keep usable defaults for standalone launches, but
+            # the launch argument is the single source of truth.  A leaf-key
+            # rewrite updates every Nav2 node, including nested costmaps.
+            "use_sim_time": use_sim_time,
             "bt_navigator.ros__parameters.robot_base_frame": nav2_base_frame,
             "local_costmap.local_costmap.ros__parameters.robot_base_frame": nav2_base_frame,
             "global_costmap.global_costmap.ros__parameters.robot_base_frame": nav2_base_frame,
             "behavior_server.ros__parameters.robot_base_frame": nav2_base_frame,
             "collision_monitor.ros__parameters.base_frame_id": nav2_base_frame,
+            "collision_monitor.ros__parameters.cmd_vel_in_topic": cmd_vel_in_topic,
+            "collision_monitor.ros__parameters.cmd_vel_out_topic": cmd_vel_out_topic,
         },
         convert_types=True,
     )
@@ -93,7 +108,27 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "use_fake_frame",
             default_value="false",
-            description="Use base_link_fake as the Nav2 robot base frame",
+            description="Use gimbal_yaw_fake as the Nav2 robot base frame",
+        ),
+        DeclareLaunchArgument(
+            "enable_gicp",
+            default_value="false",
+            description="Use AMCL only for initialization and small_gicp for map->odom",
+        ),
+        DeclareLaunchArgument(
+            "gicp_pcd_map",
+            default_value="",
+            description="Map-frame PCD consumed by xxu_gicp_localization",
+        ),
+        DeclareLaunchArgument(
+            "cmd_vel_in_topic",
+            default_value="cmd_vel_smoothed",
+            description="Velocity input consumed by collision_monitor",
+        ),
+        DeclareLaunchArgument(
+            "cmd_vel_out_topic",
+            default_value="/cmd_vel_collision",
+            description="Collision-monitored velocity output",
         ),
         Node(
             package="nav2_map_server",
@@ -106,9 +141,26 @@ def generate_launch_description():
             package="nav2_amcl",
             executable="amcl",
             name="amcl",
-            output="screen",
-            parameters=[configured_params],
+            output="both",
+            # AMCL remains the coarse initializer/relocalizer, but must not
+            # publish map->odom while GICP owns that transform.
+            parameters=[configured_params, {
+                "tf_broadcast": ParameterValue(PythonExpression([
+                    "'false' if '", enable_gicp, "' == 'true' else 'true'",
+                ]), value_type=bool),
+            }],
             remappings=nav2_common_remaps,
+        ),
+        Node(
+            package="xxu_gicp_localization",
+            executable="gicp_localization_node",
+            name="gicp_localization",
+            output="both",
+            condition=IfCondition(enable_gicp),
+            parameters=[default_gicp_params, {
+                "use_sim_time": use_sim_time,
+                "pcd_map": gicp_pcd_map,
+            }],
         ),
         Node(
             package="nav2_controller",
