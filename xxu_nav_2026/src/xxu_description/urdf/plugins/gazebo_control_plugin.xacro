@@ -8,6 +8,7 @@
       front_right_joint
       back_left_joint
       back_right_joint
+      gimbal_joint
       wheel_radius
       controllers_file">
 
@@ -47,6 +48,16 @@
         <command_interface name="velocity">
           <param name="min">-100</param>
           <param name="max">100</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <!-- 云台偏航使用速度控制，避免位置目标更新与物理步长产生周期性抖动。 -->
+      <joint name="${gimbal_joint}">
+        <command_interface name="velocity">
+          <param name="min">-8</param>
+          <param name="max">8</param>
         </command_interface>
         <state_interface name="position"/>
         <state_interface name="velocity"/>

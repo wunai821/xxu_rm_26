@@ -22,7 +22,10 @@ namespace util {
     public:
         void voxelgrid_sampling(const std::vector<Eigen::Vector3f> &points, std::vector<Eigen::Vector3f> &downsampled, double leaf_size);
 
-        void voxelgrid_sampling(const std::vector<common::Point> &points, std::vector<common::Point> &downsampled, double leaf_size);
+        void voxelgrid_sampling(
+                const std::vector<common::Point> &points,
+                std::vector<common::Point> &downsampled,
+                double leaf_size);
 
         void voxelgrid_sampling_omp(const std::vector<Eigen::Vector3f> &points, std::vector<Eigen::Vector3f> &downsampled, double leaf_size, int num_threads = 4);
     };

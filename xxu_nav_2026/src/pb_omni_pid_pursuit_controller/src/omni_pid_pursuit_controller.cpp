@@ -255,7 +255,7 @@ void OmniPidPursuitController::activate()
   RCLCPP_INFO(
     logger_,
     "Activating controller: %s of type "
-    "regulated_pure_pursuit_controller::OmniPidPursuitController",
+    "pb_omni_pid_pursuit_controller::OmniPidPursuitController",
     plugin_name_.c_str());
   local_path_pub_->on_activate();
   carrot_pub_->on_activate();
@@ -274,7 +274,7 @@ void OmniPidPursuitController::deactivate()
   RCLCPP_INFO(
     logger_,
     "Deactivating controller: %s of type "
-    "regulated_pure_pursuit_controller::OmniPidPursuitController",
+    "pb_omni_pid_pursuit_controller::OmniPidPursuitController",
     plugin_name_.c_str());
   local_path_pub_->on_deactivate();
   carrot_pub_->on_deactivate();
@@ -672,9 +672,13 @@ bool OmniPidPursuitController::isCollisionDetected(const nav_msgs::msg::Path & p
     unsigned int mx, my;
     // 将世界坐标 (pose.x, pose.y) 转换为代价地图的网格索引 (mx, my)
     if (costmap->worldToMap(pose.position.x, pose.position.y, mx, my)) {
-      // 检查该网格的代价值是否达到碰撞级别
-      // INSCRIBED_INFLATED_OBSTACLE: 机器人内切圆一定会碰到的区域
-      if (costmap->getCost(mx, my) >= nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
+      // Unknown cells (NO_INFORMATION) are expected at exploration frontiers
+      // and must not be treated as physical obstacles. Navfn is configured to
+      // allow unknown space; the local costmap/collision monitor still handles
+      // newly observed obstacles while the robot approaches it.
+      const auto cost = costmap->getCost(mx, my);
+      if (cost == nav2_costmap_2d::LETHAL_OBSTACLE)
+      {
         return true;
       }
     } else {

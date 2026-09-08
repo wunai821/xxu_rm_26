@@ -23,6 +23,7 @@ namespace small_point_lio {
         double last_timestamp_lidar = -1;
         double last_timestamp_dense_point = -1;
         double last_timestamp_imu = -1;
+        std::uint64_t next_scan_id = 1;
         util::VoxelgridSampling downsampler;
         std::vector<common::Point> filtered_points;
         std::vector<common::Point> dense_points;

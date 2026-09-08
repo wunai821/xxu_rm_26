@@ -18,14 +18,19 @@ def generate_launch_description():
     enable_cmd_vel_odom = LaunchConfiguration("enable_cmd_vel_odom")
     use_livox_native = LaunchConfiguration("use_livox_native")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
+    gyro_spin_rate = LaunchConfiguration("gyro_spin_rate")
+    gazebo_gui = LaunchConfiguration("gazebo_gui")
+    gimbal_mode = LaunchConfiguration("gimbal_mode")
     world = LaunchConfiguration("world")
     auto_initial_pose = LaunchConfiguration("auto_initial_pose")
     initial_pose_relocalize = LaunchConfiguration("initial_pose_relocalize")
     initial_pose_x = LaunchConfiguration("initial_pose_x")
     initial_pose_y = LaunchConfiguration("initial_pose_y")
     initial_pose_yaw = LaunchConfiguration("initial_pose_yaw")
+    initial_pose_covariance_xy = LaunchConfiguration("initial_pose_covariance_xy")
+    initial_pose_covariance_yaw = LaunchConfiguration("initial_pose_covariance_yaw")
 
-    default_map = PathJoinSubstitution([bringup_share, "maps", "auto_map.yaml"])
+    default_map = PathJoinSubstitution([bringup_share, "maps", "complex_map.yaml"])
     default_nav2_params = PathJoinSubstitution(
         [bringup_share, "config", "nav2_navigation.yaml"]
     )
@@ -44,12 +49,17 @@ def generate_launch_description():
             "enable_cmd_vel_odom": enable_cmd_vel_odom,
             "use_livox_native": use_livox_native,
             "use_fake_frame": use_fake_frame,
+            "gyro_spin_rate": gyro_spin_rate,
+            "gazebo_gui": gazebo_gui,
+            "gimbal_mode": gimbal_mode,
             "world": world,
             "auto_initial_pose": auto_initial_pose,
             "initial_pose_relocalize": initial_pose_relocalize,
             "initial_pose_x": initial_pose_x,
             "initial_pose_y": initial_pose_y,
             "initial_pose_yaw": initial_pose_yaw,
+            "initial_pose_covariance_xy": initial_pose_covariance_xy,
+            "initial_pose_covariance_yaw": initial_pose_covariance_yaw,
         }.items(),
     )
 
@@ -86,13 +96,28 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "use_livox_native",
-            default_value="false",
-            description="Use the xxu_livox_sim Gazebo System plugin",
+            default_value="true",
+            description="Use the batch-raycast MID360 simulation with per-point timestamps",
         ),
         DeclareLaunchArgument(
             "use_fake_frame",
             default_value="true",
-            description="Use base_link_fake and fake_vel_transform for Nav2",
+            description="Use gimbal_yaw_fake and fake_vel_transform for Nav2",
+        ),
+        DeclareLaunchArgument(
+            "gyro_spin_rate",
+            default_value="31.4159265359",
+            description="Chassis gyro angular speed while translating (rad/s); 0 disables it",
+        ),
+        DeclareLaunchArgument(
+            "gazebo_gui",
+            default_value="true",
+            description="Start the Gazebo Sim GUI; disable it to reduce CPU load",
+        ),
+        DeclareLaunchArgument(
+            "gimbal_mode",
+            default_value="spin",
+            description="Radar gimbal mode: spin or hold",
         ),
         DeclareLaunchArgument(
             "world",
@@ -127,6 +152,16 @@ def generate_launch_description():
             "initial_pose_yaw",
             default_value="0.0",
             description="Fixed simulation initial pose yaw in map",
+        ),
+        DeclareLaunchArgument(
+            "initial_pose_covariance_xy",
+            default_value="1.0",
+            description="Initial x/y variance in m^2; increase for a rough hand-set pose",
+        ),
+        DeclareLaunchArgument(
+            "initial_pose_covariance_yaw",
+            default_value="0.2741557",
+            description="Initial yaw variance in rad^2 (default is about 30 deg sigma)",
         ),
         simulation,
     ])

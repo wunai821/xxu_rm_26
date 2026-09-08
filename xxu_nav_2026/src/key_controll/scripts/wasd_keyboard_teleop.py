@@ -10,7 +10,7 @@ import os
 os.environ.setdefault("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp")
 
 import rclpy
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import TwistStamped
 from rclpy.duration import Duration
 from rclpy.node import Node
 
@@ -39,6 +39,7 @@ class WasdKeyboardTeleop(Node):
         self.declare_parameter("gyro_angular_speed", 1.5)
         self.declare_parameter("publish_rate", 50.0)
         self.declare_parameter("key_timeout", 0.35)
+        self.declare_parameter("cmd_frame_id", "gimbal_yaw_fake")
 
         cmd_vel_topic = self.get_parameter("cmd_vel_topic").value
         self.linear_speed = float(self.get_parameter("linear_speed").value)
@@ -47,6 +48,7 @@ class WasdKeyboardTeleop(Node):
         self.angular_acceleration = float(self.get_parameter("angular_acceleration").value)
         self.gyro_angular_speed = float(self.get_parameter("gyro_angular_speed").value)
         self.key_timeout = float(self.get_parameter("key_timeout").value)
+        self.cmd_frame_id = str(self.get_parameter("cmd_frame_id").value)
         publish_rate = float(self.get_parameter("publish_rate").value)
 
         if publish_rate <= 0.0:
@@ -62,10 +64,10 @@ class WasdKeyboardTeleop(Node):
             self.get_logger().warn("key_timeout must be positive; using 0.35")
             self.key_timeout = 0.35
 
-        self.publisher = self.create_publisher(Twist, cmd_vel_topic, 10)
+        self.publisher = self.create_publisher(TwistStamped, cmd_vel_topic, 10)
         self.active_until = {}
         self.last_publish_time = self.get_clock().now()
-        self.output_cmd = Twist()
+        self.output_cmd = TwistStamped()
         self.gyro_enabled = False
         self.gyro_direction = 1.0
         self.timer = self.create_timer(1.0 / publish_rate, self.publish_cmd)
@@ -96,8 +98,8 @@ class WasdKeyboardTeleop(Node):
         elif key == " ":
             self.gyro_enabled = False
             self.active_until.clear()
-            self.output_cmd = Twist()
-            self.publisher.publish(self.output_cmd)
+            self.output_cmd = TwistStamped()
+            self.publish_output()
         else:
             return
 
@@ -120,18 +122,18 @@ class WasdKeyboardTeleop(Node):
             del self.active_until[key]
 
     def build_target_cmd(self, now):
-        target = Twist()
+        target = TwistStamped()
         x_axis = float(self.key_active("w", now)) - float(self.key_active("s", now))
         y_axis = float(self.key_active("a", now)) - float(self.key_active("d", now))
 
-        target.linear.x = x_axis * self.linear_speed
-        target.linear.y = y_axis * self.linear_speed
+        target.twist.linear.x = x_axis * self.linear_speed
+        target.twist.linear.y = y_axis * self.linear_speed
 
         if self.gyro_enabled:
-            target.angular.z = self.gyro_cmd()
+            target.twist.angular.z = self.gyro_cmd()
         else:
             angular_axis = float(self.key_active("q", now)) - float(self.key_active("e", now))
-            target.angular.z = angular_axis * self.angular_speed
+            target.twist.angular.z = angular_axis * self.angular_speed
 
         return target
 
@@ -144,23 +146,28 @@ class WasdKeyboardTeleop(Node):
 
         linear_step = self.linear_acceleration * dt
         angular_step = self.angular_acceleration * dt
-        self.output_cmd.linear.x = self.approach(
-            self.output_cmd.linear.x, target_cmd.linear.x, linear_step
+        self.output_cmd.twist.linear.x = self.approach(
+            self.output_cmd.twist.linear.x, target_cmd.twist.linear.x, linear_step
         )
-        self.output_cmd.linear.y = self.approach(
-            self.output_cmd.linear.y, target_cmd.linear.y, linear_step
+        self.output_cmd.twist.linear.y = self.approach(
+            self.output_cmd.twist.linear.y, target_cmd.twist.linear.y, linear_step
         )
-        self.output_cmd.angular.z = self.approach(
-            self.output_cmd.angular.z, target_cmd.angular.z, angular_step
+        self.output_cmd.twist.angular.z = self.approach(
+            self.output_cmd.twist.angular.z, target_cmd.twist.angular.z, angular_step
         )
 
+        self.publish_output()
+
+    def publish_output(self):
+        self.output_cmd.header.stamp = self.get_clock().now().to_msg()
+        self.output_cmd.header.frame_id = self.cmd_frame_id
         self.publisher.publish(self.output_cmd)
 
     def stop(self):
         self.gyro_enabled = False
         self.active_until.clear()
-        self.output_cmd = Twist()
-        self.publisher.publish(self.output_cmd)
+        self.output_cmd = TwistStamped()
+        self.publish_output()
 
 
 def read_key(timeout):

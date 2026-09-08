@@ -4,12 +4,18 @@ small_point_lio:
         lidar_topic: /mid360/livox_points
         imu_topic: /imu
         lidar_type: livox_pointcloud2
-        lidar_frame: base_footprint
+        # LIO估计随云台运动的MID360位姿，发布时再通过动态TF换算到底盘。
+        lidar_frame: mid360_link
         odom_topic: /odom
         registered_cloud_topic: /cloud_registered
         odom_frame: odom
         base_frame: base_footprint
+        # 等待动态云台关节TF追上雷达/IMU测量时间戳。
+        tf_lookup_timeout: 0.1
         save_pcd: false
+        # 无 timestamp 字段时，用于按点序估计一帧点云的采样时间跨度。
+        # 当前 livox_pointcloud2 适配器优先读取点内 timestamp，因此这里不是
+        # 当前仿真 shaper 的实际控制项。
         scan_period: 0.1
 
         # 点云过滤
@@ -30,10 +36,17 @@ small_point_lio:
         # 地图
         map_resolution: 0.5
         init_map_size: 20
+        # Legacy raw-sensor rollback: preserve the pre-fix online insertion
+        # behavior and the MID360's fixed mounting tilt.
+        defer_map_insertion_by_scan: false
+        # LIO状态原点在MID360。雷达相对base_footprint高度为
+        # base_link_z(0.09519 m) + 云台轴高(0.1938 m) = 0.28899 m，
+        # 因此让雷达状态保持在该高度，输出到底盘后 odom->base_footprint 的Z为0。
         planar_constraint_en: true
-        planar_z: 0.0
+        planar_z: 0.28899
+        planar_preserve_initial_tilt: true
 
-        # 雷达与IMU相对位姿
+        # MID360点云与其内置IMU共用mid360_link，二者外参为单位变换。
         extrinsic_est_en: false
         extrinsic_T: [0.0, 0.0, 0.0]
         extrinsic_R: [1.0, 0.0, 0.0,

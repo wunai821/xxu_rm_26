@@ -1,0 +1,100 @@
+# XXU hardware boundary.  Keep this file in sync with real_robot.launch.py
+# and replace only the topic names when a vendor driver uses a namespace.
+version: 1
+
+frames:
+  odom: odom
+  navigation_base: base_link
+  ground_base: base_footprint
+  gimbal: gimbal_link
+  lidar: livox_frame
+  lidar_compensated: lio_base_sensor
+  fake_navigation_base: gimbal_yaw_fake
+
+topics:
+  radar:
+    pointcloud:
+      name: /livox/lidar
+      type: sensor_msgs/msg/PointCloud2
+      frame_id: livox_frame
+      fields:
+        x: float32
+        y: float32
+        z: float32
+        tag: uint8
+        timestamp: float64_ns
+    imu:
+      name: /livox/imu
+      type: sensor_msgs/msg/Imu
+      frame_id: livox_frame
+      linear_acceleration_unit: g
+  gimbal:
+    joint_states:
+      name: /joint_states
+      type: sensor_msgs/msg/JointState
+      required_joint: gimbal_joint
+      position_unit: rad
+      velocity_unit: rad/s
+  localization:
+    odometry:
+      name: /odom
+      type: nav_msgs/msg/Odometry
+      header_frame_id: odom
+      child_frame_id: base_footprint
+      owner: small_point_lio_or_hardware_adapter
+    scan:
+      name: /scan
+      type: sensor_msgs/msg/LaserScan
+      frame_id: base_footprint
+      owner: pointcloud_to_laserscan_or_hardware_adapter
+  navigation:
+    controller_output:
+      name: /cmd_vel_nav
+      type: geometry_msgs/msg/TwistStamped
+      frame_id: gimbal_yaw_fake
+    smoothed_output:
+      name: /cmd_vel_smoothed
+      type: geometry_msgs/msg/TwistStamped
+      frame_id: gimbal_yaw_fake
+    collision_output:
+      name: /cmd_vel_collision
+      type: geometry_msgs/msg/TwistStamped
+      frame_id: gimbal_yaw_fake
+    chassis_input:
+      name: /cmd_vel
+      type: geometry_msgs/msg/TwistStamped
+      frame_id: base_link
+  chassis:
+    wheel_command:
+      name: /wheel_velocity_controller/commands
+      type: std_msgs/msg/Float64MultiArray
+      data_order: [front_left, front_right, rear_left, rear_right]
+      unit: rad/s
+      length: 4
+
+tf_contract:
+  static_or_dynamic:
+    - parent: base_footprint
+      child: base_link
+    - parent: base_link
+      child: lio_base_sensor
+    - parent: base_link
+      child: gimbal_link
+    - parent: gimbal_link
+      child: livox_frame
+  dynamic:
+    - parent: odom
+      child: base_footprint
+    - parent: base_link
+      child: gimbal_link
+
+safety:
+  final_gate: /cmd_vel_watchdog
+  health_topic: /cmd_vel_watchdog/healthy
+  zero_command: "TwistStamped with all twist fields = 0"
+  stale_timeouts_seconds:
+    command: 0.3
+    odom: 0.5
+    scan: 0.5
+    joint_states: 0.5
+    tf: 0.5

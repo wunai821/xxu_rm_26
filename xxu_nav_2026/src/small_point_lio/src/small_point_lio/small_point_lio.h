@@ -16,6 +16,7 @@ namespace small_point_lio {
 
     class SmallPointLio {
     private:
+        rclcpp::Logger logger;
         Parameters parameters;
         Preprocess preprocess;
         Estimator estimator;
@@ -24,6 +25,11 @@ namespace small_point_lio {
         std::function<void(const std::vector<Eigen::Vector3f> &pointcloud)> pointcloud_callback;
         std::function<void(const common::Odometry &odometry)> odometry_callback;
         bool is_init = false;
+        std::uint64_t active_map_scan_id = 0;
+        std::vector<Eigen::Vector3f> pending_scan_map_points;
+        bool planar_reference_initialized = false;
+        Eigen::Matrix<state::value_type, 3, 3> planar_tilt_rotation =
+                Eigen::Matrix<state::value_type, 3, 3>::Identity();
 
     public:
         Eigen::Matrix<state::value_type, state::DIM, state::DIM> Q;
@@ -43,7 +49,15 @@ namespace small_point_lio {
         void set_odometry_callback(const std::function<void(const common::Odometry &odometry)> &odometry_callback);
 
     private:
+        void predict_state_with_diagnostics(double timestamp);
+
+        void log_motion_diagnostics();
+
         void apply_planar_constraint();
+
+        void begin_map_scan(std::uint64_t scan_id);
+
+        void flush_pending_map_points();
 
         void publish_odometry(double timestamp);
     };

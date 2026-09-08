@@ -1,0 +1,36 @@
+# Minimal standalone collision-monitor configuration used by
+# interface_validation.launch.py.  It intentionally contains only a static
+# stop zone, so the test does not depend on a running Nav2 local costmap.
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    enable_stamped_cmd_vel: true
+    # Keep this standalone monitor's scan and command in base_link so the
+    # test isolates collision behavior from TF extrapolation.  The production
+    # navigation config still accepts the real pointcloud_to_laserscan output
+    # in base_footprint and exercises that transform in the full stack.
+    base_frame_id: base_link
+    odom_frame_id: odom
+    cmd_vel_in_topic: /cmd_vel_smoothed
+    cmd_vel_out_topic: /cmd_vel_collision
+    state_topic: /collision_monitor_state
+    transform_tolerance: 0.5
+    source_timeout: 0.5
+    stop_pub_timeout: 0.5
+    polygons: ["EmergencyStop"]
+    EmergencyStop:
+      type: "polygon"
+      # The mock publishes a forward return at x=0.15 m after obstacle_after.
+      points: "[[0.42, 0.34], [0.42, -0.34], [-0.10, -0.34], [-0.10, 0.34]]"
+      action_type: "stop"
+      min_points: 4
+      visualize: true
+      polygon_pub_topic: /collision_monitor/emergency_stop
+      enabled: true
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      topic: /scan
+      min_height: 0.0
+      max_height: 2.0
+      enabled: true

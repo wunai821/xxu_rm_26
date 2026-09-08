@@ -27,6 +27,7 @@ namespace common {
     struct Point {
         double timestamp;        // Unit: s
         Eigen::Vector3f position;// Unit: m
+        std::uint64_t scan_id = 0;
     };
 
 }// namespace common

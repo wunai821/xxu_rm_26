@@ -15,6 +15,25 @@ namespace small_point_lio {
 
     class Estimator {
     public:
+        // Accumulated only when motion_diagnostics_en is enabled.
+        struct MotionDiagnostics {
+            double start = 0.0;
+            Eigen::Vector3d position_start = Eigen::Vector3d::Zero();
+            Eigen::Vector3d predict_dp = Eigen::Vector3d::Zero();
+            Eigen::Vector3d point_dp = Eigen::Vector3d::Zero();
+            Eigen::Vector3d imu_dp = Eigen::Vector3d::Zero();
+            Eigen::Vector3d constraint_dp = Eigen::Vector3d::Zero();
+            Eigen::Vector3d predict_dv = Eigen::Vector3d::Zero();
+            Eigen::Vector3d point_dv = Eigen::Vector3d::Zero();
+            Eigen::Vector3d imu_dv = Eigen::Vector3d::Zero();
+            Eigen::Matrix2d normal_xy_sum = Eigen::Matrix2d::Zero();
+            double residual_squared_sum = 0.0;
+            std::size_t attempted = 0, accepted = 0;
+            std::size_t no_neighbors = 0, nonplanar = 0, residual_rejected = 0;
+            std::size_t imu_updates = 0, imu_failed = 0;
+            std::size_t late_points = 0, late_imus = 0;
+        } diagnostics;
+
         // for common
         Parameters *parameters = nullptr;
         eskf kf;

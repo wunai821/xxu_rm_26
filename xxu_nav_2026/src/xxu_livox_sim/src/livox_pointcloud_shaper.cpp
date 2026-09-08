@@ -27,7 +27,7 @@ public:
   LivoxPointCloudShaper()
   : Node("livox_pointcloud_shaper")
   {
-    target_frame_ = this->declare_parameter<std::string>("target_frame", "radar_link");
+    target_frame_ = this->declare_parameter<std::string>("target_frame", "mid360_link");
     scan_period_ = this->declare_parameter<double>("scan_period", 0.1);
     max_points_ = this->declare_parameter<int>("max_points", 12000);
     scan_mode_csv_ = this->declare_parameter<std::string>("scan_mode_csv", "");

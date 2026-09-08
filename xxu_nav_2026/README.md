@@ -40,15 +40,30 @@ ros2 launch xxu_bringup simulation.launch.py start_navigation:=true rviz:=true
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `start_navigation` | `false` | 是否同时启动 Nav2 |
-| `map` | `maps/empty.yaml` | 地图文件 |
+| `map` | `maps/complex_map.yaml` | 与 `complex_mapping.sdf` 对应的地图文件 |
 | `nav2_params_file` | `config/nav2_navigation.yaml` | Nav2 参数文件 |
 | `rviz` | `false` | 是否启动 RViz |
 | `enable_lio` | `true` | 是否启用 Small Point-LIO |
 | `enable_cmd_vel_odom` | `false` | 是否启用 cmd_vel 里程计 |
-| `use_livox_native` | `false` | 是否使用 Livox 原生仿真 |
-| `use_fake_frame` | `false` | 是否使用 `base_link_fake` |
-| `auto_initial_pose` | `false` | 是否自动设置初始位姿 |
-| `initial_pose_x/y/yaw` | `0.0/0.0/0.0` | 初始位姿 |
+| `use_livox_native` | `true` | 是否使用带逐点时间戳的分批射线 MID-360 仿真 |
+| `use_fake_frame` | `true` | 是否使用底盘上的 `gimbal_yaw_fake` 稳定速度参考系 |
+| `gyro_spin_rate` | `31.416（5转/s）` | 移动过程中的小陀螺角速度，设为 `0` 关闭 |
+| `enable_stamped_cmd_vel` | `true` | 使用 Jazzy 的 `TwistStamped` 命令链路 |
+| `auto_initial_pose` | `true` | 导航启动时用 `/scan` 对栅格地图粗匹配并初始化 AMCL |
+| `initial_pose_x/y/yaw` | `0.02/0.03/0.0` | 自动匹配失败时使用的后备初始位姿 |
+| `initial_pose_covariance_xy/yaw` | `1.0/0.2741557` | 发布给 AMCL 的初始位姿 XY/Yaw 方差（m²/rad²） |
+
+### MID-360 扫描与噪声模型
+
+`use_livox_native=true` 时，`xxu_livox_sim` 的 Gazebo System 插件读取
+`src/xxu_livox_sim/config/mid360.csv` 中的官方 Livox 扫描方向序列，按连续轨迹
+分帧射线检测，并为每个命中点写入 0.1 s 扫描周期内的时间戳。当前仓库资源是从
+官方 800,000 条记录均匀抽样的 2,400 条版本，插件也支持直接替换为完整 CSV。
+默认测距噪声为零均值高斯噪声，标准差 `0.02 m`，可在
+`gazebo_mid360_livox_system_plugin` 中通过 `range_noise_stddev` 和 `noise_seed`
+调整。
+
+官方轨迹来源：[Livox livox_laser_simulation](https://github.com/Livox-SDK/livox_laser_simulation)。
 
 ## 常用启动命令
 
@@ -58,6 +73,56 @@ ros2 launch xxu_bringup simulation.launch.py start_navigation:=true rviz:=true
 cd ~/xxu_2026/xxu_nav_2026
 source install/setup.zsh
 ```
+
+## 实车启动与接口合同
+
+实车入口不启动 Gazebo，直接接入真实 Livox、云台关节状态和底盘轮速适配器：
+
+```bash
+ros2 launch xxu_bringup real_robot.launch.py
+```
+
+实车默认使用真实时间（`use_sim_time=false`）。需要回放或仿真时只切换入口参数，
+该参数会透传给 URDF TF、点云/IMU 补偿、LIO、AMCL、Nav2、碰撞监测和最终安全门控：
+
+```bash
+ros2 launch xxu_bringup real_robot.launch.py use_sim_time:=true
+```
+
+底盘、雷达、云台的消息类型、单位、字段顺序和 TF 归属以
+`src/xxu_bringup/config/robot_interfaces.yaml` 为准。速度链路固定为：
+
+```text
+/cmd_vel_nav -> /cmd_vel_smoothed -> /cmd_vel_collision
+  -> /cmd_vel_transformed（可选）-> /cmd_vel -> Float64MultiArray[4]
+```
+
+`/cmd_vel` 之前的速度消息统一为 `geometry_msgs/msg/TwistStamped`；最终 watchdog
+同时检查速度、/odom、/scan、/joint_states 和关键 TF，任一输入断流就以 20 Hz 发布零
+速度。底盘控制器自身还有 0.3 s 超时，因此上游节点退出时也会停止轮速输出。
+
+## 接口和停车验证
+
+无需 Gazebo 或真实硬件即可运行确定性接口测试。默认测试在 3 s 后插入 0.15 m
+前向障碍，并由模拟底盘断言障碍出现后轮速为零：
+
+```bash
+ros2 launch xxu_bringup interface_validation.launch.py
+```
+
+还可以把输入流停止来验证 fail-safe（以下示例不启动碰撞监测，直接测试最终门控）：
+
+```bash
+ros2 launch xxu_bringup interface_validation.launch.py \
+  enable_collision_monitor:=false obstacle_after:=-1 drop_odom_after:=3.0
+ros2 launch xxu_bringup interface_validation.launch.py \
+  enable_collision_monitor:=false obstacle_after:=-1 drop_tf_after:=3.0
+ros2 launch xxu_bringup interface_validation.launch.py \
+  enable_collision_monitor:=false obstacle_after:=-1 stop_test_command_after:=3.0
+```
+
+测试节点输出 `PASS` 表示在故障前观察到非零轮速、故障后只观察到零轮速；输出
+`FAIL` 或进程异常退出都应视为接口/安全链路回归。
 
 完整仿真 + Nav2 + RViz：
 
@@ -86,7 +151,7 @@ src/xxu_description/scripts/kill_simulation.sh
 ros2 launch xxu_bringup single_point_simulation.launch.py rviz:=true
 ```
 
-默认会加载 `src/xxu_bringup/maps/auto_map.yaml`，启动复杂地图世界、LIO、Nav2 和 RViz。启动后可在 RViz 里发送 `Nav2 Goal`。
+默认会加载与 `complex_mapping.sdf` 对应的 `src/xxu_bringup/maps/complex_map.yaml`，启动复杂地图世界、LIO、Nav2 和 RViz。启动后可在 RViz 里发送 `Nav2 Goal`。
 
 启动依赖顺序由 launch 自动保证：Gazebo 与 `/clock` -> 机器人、传感器与 LIO 里程计 -> `map_server` 和 AMCL -> 自动初始位姿 -> `map -> odom` -> Nav2 控制、规划、行为树主链。各阶段按服务、订阅和 TF 就绪状态推进，初始位姿和导航激活不再依赖固定等待时长。
 

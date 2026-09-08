@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "XXU 全向机器人仿真与导航架构",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/wunai821/xxu_rm_26.git",
+      "revision": "74b7bee00c37dec72dc7fd837f8f7e4e1c33f2fb"
+    }
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [40, 60],
+    "cols": 8,
+    "gapX": 52,
+    "gapY": 120,
+    "cellW": 150,
+    "cellH": 78
+  },
+  "components": [
+    {
+      "id": "operator",
+      "type": "external",
+      "label": "操作端",
+      "sources": [
+        { "path": "xxu_nav_2026/README.md", "label": "启动与 RViz" },
+        { "path": "xxu_nav_2026/src/xxu_bringup/launch/navigation.launch.py", "line": 201, "end_line": 215, "label": "RViz 节点" }
+      ],
+      "row": 1,
+      "col": 0,
+      "size": [166, 78]
+    },
+    {
+      "id": "gazebo",
+      "type": "cloud",
+      "label": "Gazebo 仿真",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "line": 158, "end_line": 240, "label": "仿真与控制器" },
+        { "path": "xxu_nav_2026/src/xxu_description/urdf/plugins/gazebo_control_plugin.xacro", "line": 15, "end_line": 63, "label": "GazeboSimSystem" }
+      ],
+      "row": 0,
+      "col": 1,
+      "size": [176, 78]
+    },
+    {
+      "id": "bridge",
+      "type": "backend",
+      "label": "ROS-GZ 桥接",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "line": 300, "end_line": 357, "label": "IMU/LiDAR bridge" },
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "label": "clock bridge" }
+      ],
+      "row": 0,
+      "col": 2,
+      "size": [176, 78]
+    },
+    {
+      "id": "lio",
+      "type": "backend",
+      "label": "Small Point-LIO",
+      "sources": [
+        { "path": "xxu_nav_2026/src/small_point_lio/src/small_point_lio_node.cpp", "line": 21, "end_line": 33, "label": "输入/输出话题" },
+        { "path": "xxu_nav_2026/src/small_point_lio/src/small_point_lio_node.cpp", "line": 58, "end_line": 119, "label": "odom 与 TF" }
+      ],
+      "row": 0,
+      "col": 3,
+      "size": [176, 78]
+    },
+    {
+      "id": "scan",
+      "type": "backend",
+      "label": "点云投影",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "line": 408, "end_line": 443, "label": "cloud_registered → scan" },
+        { "path": "xxu_nav_2026/src/pointcloud_to_laserscan/src/pointcloud_to_laserscan_node.cpp", "line": 1, "end_line": 40, "label": "转换节点" }
+      ],
+      "row": 0,
+      "col": 4,
+      "size": [176, 78]
+    },
+    {
+      "id": "localization",
+      "type": "backend",
+      "label": "地图与定位",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_bringup/launch/navigation.launch.py", "line": 98, "end_line": 112, "label": "map_server + AMCL" },
+        { "path": "xxu_nav_2026/src/xxu_bringup/config/nav2_navigation.yaml", "line": 1, "end_line": 45, "label": "AMCL/map 配置" }
+      ],
+      "row": 2,
+      "col": 3,
+      "size": [176, 78]
+    },
+    {
+      "id": "nav2",
+      "type": "backend",
+      "label": "Nav2 导航栈",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_bringup/launch/navigation.launch.py", "line": 113, "end_line": 175, "label": "导航节点" },
+        { "path": "xxu_nav_2026/src/xxu_bringup/config/nav2_navigation.yaml", "line": 47, "end_line": 220, "label": "规划/控制/costmap" }
+      ],
+      "row": 2,
+      "col": 4,
+      "size": [176, 78]
+    },
+    {
+      "id": "plugins",
+      "type": "backend",
+      "label": "XXU Nav2 插件",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_bringup/config/nav2_navigation.yaml", "line": 88, "end_line": 90, "label": "Omni PID controller" },
+        { "path": "xxu_nav_2026/src/xxu_bringup/config/nav2_navigation.yaml", "line": 223, "end_line": 249, "label": "backup 行为" }
+      ],
+      "row": 3,
+      "col": 4,
+      "size": [176, 78]
+    },
+    {
+      "id": "safety",
+      "type": "security",
+      "label": "速度安全链",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_bringup/config/nav2_navigation.yaml", "line": 262, "end_line": 291, "label": "速度与碰撞" },
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "label": "cmd_vel watchdog" }
+      ],
+      "row": 2,
+      "col": 5,
+      "size": [176, 78]
+    },
+    {
+      "id": "transform",
+      "type": "backend",
+      "label": "速度坐标变换",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "line": 279, "end_line": 296, "label": "速度变换节点" },
+        { "path": "xxu_nav_2026/src/fake_vel_transform/src/fake_vel_transform.cpp", "line": 45, "end_line": 53, "label": "订阅/发布" }
+      ],
+      "row": 2,
+      "col": 6,
+      "size": [176, 78]
+    },
+    {
+      "id": "chassis",
+      "type": "backend",
+      "label": "全向底盘",
+      "sources": [
+        { "path": "xxu_nav_2026/src/xxu_description/launch/gazebo.launch.py", "line": 261, "end_line": 277, "label": "底盘控制器" },
+        { "path": "xxu_nav_2026/src/xxu_chassis_controller/src/chassis_controller.cpp", "line": 53, "end_line": 58, "label": "cmd_vel 输入" }
+      ],
+      "row": 2,
+      "col": 7,
+      "size": [176, 78]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "仿真与感知域",
+      "wraps": ["gazebo", "bridge", "lio", "scan"],
+      "pad": 26
+    },
+    {
+      "kind": "security-group",
+      "label": "导航与运动控制域",
+      "wraps": ["localization", "nav2", "plugins", "safety", "transform", "chassis"],
+      "pad": 26
+    }
+  ],
+  "connections": [
+    { "id": "operator-gazebo", "from": "operator", "to": "gazebo", "label": "ros2 launch", "variant": "emphasis", "route": "orthogonal-h", "labelAt": [230, 200] },
+    { "id": "operator-nav2", "from": "operator", "to": "nav2", "label": "Nav2 goal", "fromSide": "bottom", "toSide": "bottom", "route": "orthogonal-v", "via": [[123, 600], [936, 600]] },
+    { "id": "gazebo-bridge", "from": "gazebo", "to": "bridge", "label": "GZ Transport", "variant": "emphasis", "labelDy": -60 },
+    { "id": "bridge-lio", "from": "bridge", "to": "lio", "label": "/imu + PointCloud2", "labelDy": -60 },
+    { "id": "lio-scan", "from": "lio", "to": "scan", "label": "/cloud_registered", "labelDy": -60 },
+    { "id": "lio-localization", "from": "lio", "to": "localization", "label": "/odom + TF", "fromSide": "bottom", "toSide": "top", "route": "orthogonal-v" },
+    { "id": "scan-localization", "from": "scan", "to": "localization", "label": "/scan", "fromSide": "bottom", "toSide": "top", "route": "orthogonal-v" },
+    { "id": "localization-nav2", "from": "localization", "to": "nav2", "label": "map→odom", "labelDy": 60 },
+    { "id": "scan-nav2", "from": "scan", "to": "nav2", "label": "障碍观测", "fromSide": "bottom", "toSide": "top", "route": "orthogonal-v", "labelDx": 60 },
+    { "id": "plugins-nav2", "from": "plugins", "to": "nav2", "label": "插件实现", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "route": "orthogonal-v", "labelDx": -60 },
+    { "id": "nav2-safety", "from": "nav2", "to": "safety", "label": "/cmd_vel_nav", "variant": "emphasis", "labelDy": 60 },
+    { "id": "safety-transform", "from": "safety", "to": "transform", "label": "/cmd_vel_keyboard", "labelDy": 60 },
+    { "id": "transform-chassis", "from": "transform", "to": "chassis", "label": "/cmd_vel → wheels", "variant": "security", "labelDy": 60 },
+    { "id": "chassis-gazebo", "from": "chassis", "to": "gazebo", "label": "ros2_control", "fromSide": "top", "toSide": "top", "route": "orthogonal-v", "via": [[1542, -80], [330, -80]] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "定位闭环",
+      "items": ["MID-360 + IMU 经 Small Point-LIO 产出 /odom", "注册点云投影成 /scan，供 AMCL 与 costmap 使用"]
+    },
+    {
+      "dot": "amber",
+      "title": "控制闭环",
+      "items": ["Nav2 规划与全向控制器生成速度指令", "平滑、碰撞监测、坐标变换和 watchdog 后驱动四轮"]
+    }
+  ]
+}

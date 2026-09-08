@@ -37,6 +37,10 @@ slam_toolbox:
     minimum_travel_distance: 0.25
     minimum_travel_heading: 0.25
     scan_buffer_size: 20
+    # The scan producer runs at 10 Hz while matching is limited by
+    # minimum_time_interval. Keep enough TF-filtered scans queued so a slow
+    # solve does not discard the next scan.
+    scan_queue_size: 10
     scan_buffer_maximum_scan_distance: 20.0
     link_match_minimum_response_fine: 0.1
     link_scan_maximum_distance: 1.5

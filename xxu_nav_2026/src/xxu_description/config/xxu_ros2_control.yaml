@@ -1,11 +1,15 @@
 controller_manager:
   ros__parameters:
-    update_rate: 50
+    # 提高关节状态/TF 时间分辨率，覆盖 10 Hz LiDAR 帧内的动态云台运动。
+    update_rate: 333
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
     wheel_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
+    gimbal_velocity_controller:
       type: velocity_controllers/JointGroupVelocityController
 
 wheel_velocity_controller:
@@ -15,4 +19,10 @@ wheel_velocity_controller:
       - wheel_fr_joint
       - wheel_rl_joint
       - wheel_rr_joint
+    interface_name: velocity
+
+gimbal_velocity_controller:
+  ros__parameters:
+    joints:
+      - gimbal_joint
     interface_name: velocity

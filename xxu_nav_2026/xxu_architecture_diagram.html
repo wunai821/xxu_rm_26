@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>XXU 全向机器人整体架构分层图</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --font-scale: 1;
+    }
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* 分层框架容器 */
+    .arch-layer {
+      border-radius: 1rem;
+      border: 1.5px solid;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .arch-layer:hover {
+      box-shadow: 0 12px 30px -3px rgba(0, 0, 0, 0.7);
+    }
+    /* 模块组件卡片 */
+    .module-card {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.65rem;
+      padding: 0.65rem 0.75rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    /* 箭头连接线 */
+    .layer-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0.35rem 0;
+      position: relative;
+    }
+    .arrow-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: calc(11px * var(--font-scale));
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      border: 1px solid;
+      z-index: 2;
+    }
+    .arrow-stem {
+      width: 2px;
+      height: 16px;
+      background-color: #475569;
+    }
+    .code-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: calc(11px * var(--font-scale));
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    /* 脉冲光效 */
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 max-w-xl mx-auto antialiased">
+
+  <!-- 顶部控制条 -->
+  <header class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 sticky top-2 z-40 backdrop-blur-md shadow-xl">
+    <div class="flex items-center justify-between gap-2">
+      <div>
+        <div class="flex items-center gap-1.5 mb-1">
+          <span class="pulse-dot bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs font-bold tracking-wider text-emerald-400 uppercase">System Architecture Blueprint</span>
+        </div>
+        <h1 class="text-lg sm:text-xl font-black tracking-tight text-white">
+          XXU 全向机器人整体架构分层图
+        </h1>
+        <p class="text-xs text-slate-400 mt-0.5">
+          RoboMaster 2026 仿真与自主导航系统全景
+        </p>
+      </div>
+
+      <!-- 字体缩放 -->
+      <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700 shrink-0">
+        <button id="btn-dec" class="px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white active:scale-95" title="缩小字体">A-</button>
+        <div class="w-px h-3.5 bg-slate-700"></div>
+        <button id="btn-inc" class="px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white active:scale-95" title="放大字体">A+</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 架构分层图主体 (自顶向下分层) -->
+  <div class="space-y-1">
+
+    <!-- ======================== 第 7 层: 应用与监控交互层 ======================== -->
+    <section class="arch-layer border-teal-500/50 bg-gradient-to-b from-teal-950/40 to-slate-900/90 p-3.5">
+      <!-- 层次标签 -->
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-teal-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-teal-500 text-slate-950 text-xs font-black">第 7 层</span>
+          <h2 class="font-bold text-sm text-teal-300">应用与监控交互层 (Application & Tools)</h2>
+        </div>
+        <span class="text-[11px] text-teal-400 font-mono">User Space</span>
+      </div>
+
+      <!-- 模块网格 -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="module-card border-teal-500/30">
+          <div class="text-xs font-bold text-white mb-0.5">RViz 2 可视化</div>
+          <div class="text-[11px] text-slate-400">导航雷达点云/路径监控</div>
+          <div class="text-[10px] text-teal-300 mt-1 font-mono">rviz2</div>
+        </div>
+
+        <div class="module-card border-teal-500/30">
+          <div class="text-xs font-bold text-white mb-0.5">键盘/手柄遥控</div>
+          <div class="text-[11px] text-slate-400">WASD + G键小陀螺</div>
+          <div class="text-[10px] text-teal-300 mt-1 font-mono">key_controll</div>
+        </div>
+
+        <div class="module-card border-teal-500/30">
+          <div class="text-xs font-bold text-white mb-0.5">AI 自动调参器</div>
+          <div class="text-[11px] text-slate-400">LLM 闭环动态调参+Web</div>
+          <div class="text-[10px] text-teal-300 mt-1 font-mono">ai_controller_tuner</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 连接箭头 7 -> 6 -->
+    <div class="layer-arrow">
+      <div class="arrow-stem"></div>
+      <div class="arrow-badge bg-blue-950 text-blue-300 border-blue-500/40">
+        目标位姿 Goal Pose / 调优参数 SetParameters
+      </div>
+      <div class="arrow-stem"></div>
+    </div>
+
+    <!-- ======================== 第 6 层: 导航决策与路径规划层 ======================== -->
+    <section class="arch-layer border-blue-500/50 bg-gradient-to-b from-blue-950/40 to-slate-900/90 p-3.5">
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-blue-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-blue-500 text-white text-xs font-black">第 6 层</span>
+          <h2 class="font-bold text-sm text-blue-300">导航决策与规划控制层 (Nav2 Core)</h2>
+        </div>
+        <span class="text-[11px] text-blue-400 font-mono">Decision & Control</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="module-card border-blue-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white">行为树状态导航</span>
+            <span class="code-pill text-blue-300">bt_navigator</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1">全局导航动作调度、导航恢复容错流</div>
+        </div>
+
+        <div class="module-card border-blue-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white">全局路径规划器</span>
+            <span class="code-pill text-blue-300">planner_server</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1">NavfnPlanner / GridBased 2D 栅格 A* 寻优</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="module-card border-blue-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white">局部控制器 (双算法支持)</span>
+            <span class="code-pill text-blue-300">controller_server</span>
+          </div>
+          <div class="text-[11px] text-slate-300 mt-1 space-y-0.5">
+            <div>• <strong class="text-blue-300">MPPI Omni</strong>：1200条轨迹并行采样滚动优化</div>
+            <div>• <strong class="text-blue-300">Omni PID Pursuit</strong>：曲率前瞻自适应降速</div>
+          </div>
+        </div>
+
+        <div class="module-card border-blue-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white">双层代价地图</span>
+            <span class="code-pill text-blue-300">costmap_2d</span>
+          </div>
+          <div class="text-[11px] text-slate-300 mt-1 space-y-0.5">
+            <div>• 全局静态地图层 (StaticLayer)</div>
+            <div>• 局部滚动避障 (Obstacle + IntensityVoxelLayer)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/30 rounded-lg p-2 border border-blue-800/40 text-[11px] text-slate-300 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="text-blue-400 font-bold">★ 特色插件:</span>
+          <span>BackUpFreeSpace (搜索代价地图最宽敞方向智能后退)</span>
+        </div>
+        <span class="text-blue-400 font-mono text-[10px]">pb_nav2_plugins</span>
+      </div>
+    </section>
+
+    <!-- 连接箭头 6 -> 5 -->
+    <div class="layer-arrow">
+      <div class="arrow-stem"></div>
+      <div class="arrow-badge bg-purple-950 text-purple-300 border-purple-500/40">
+        解耦系速度指令 /cmd_vel_nav (基于 gimbal_yaw_fake)
+      </div>
+      <div class="arrow-stem"></div>
+    </div>
+
+    <!-- ======================== 第 5 层: 坐标系解耦与安全防护层 ======================== -->
+    <section class="arch-layer border-purple-500/60 bg-gradient-to-b from-purple-950/50 to-slate-900/90 p-3.5">
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-purple-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-purple-500 text-white text-xs font-black">第 5 层</span>
+          <h2 class="font-bold text-sm text-purple-300">坐标解耦与安全防护层 (Decoupling & Safety)</h2>
+        </div>
+        <span class="text-[11px] text-purple-400 font-mono">RM Gyro Special</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="module-card border-purple-500/40 bg-purple-950/30">
+          <div class="text-xs font-bold text-purple-200 mb-1 flex items-center gap-1">
+            <span>🔄</span> 虚拟基座坐标变换
+          </div>
+          <div class="text-[11px] text-slate-300 leading-snug">
+            发布 <code class="code-pill text-purple-300">gimbal_yaw_fake</code> (角度 = -yaw)。底盘狂转而导航基准不动！
+          </div>
+          <div class="text-[10px] text-purple-400 mt-1 font-mono">fake_vel_transform</div>
+        </div>
+
+        <div class="module-card border-purple-500/40 bg-purple-950/30">
+          <div class="text-xs font-bold text-purple-200 mb-1 flex items-center gap-1">
+            <span>🌀</span> 小陀螺速度合成
+          </div>
+          <div class="text-[11px] text-slate-300 leading-snug">
+            线速度按实时航向旋回底盘，有平移时自动混入 <code class="code-pill text-purple-300">+31.4 rad/s</code> 自旋角速度。
+          </div>
+          <div class="text-[10px] text-purple-400 mt-1 font-mono">TwistStamped Sync</div>
+        </div>
+      </div>
+
+      <!-- 三重安全防护链 -->
+      <div class="bg-slate-900/80 rounded-lg p-2.5 border border-slate-800">
+        <div class="text-xs font-bold text-rose-400 mb-1 flex items-center justify-between">
+          <span>速度安全防护网 (3-Stage Safety Guard)</span>
+          <span class="text-[10px] text-slate-400">输出防撞与看门狗</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 text-[11px] text-center text-slate-300">
+          <div class="bg-slate-800/80 rounded p-1.5 border border-slate-700">
+            <div class="font-semibold text-white">平滑限幅</div>
+            <div class="text-[10px] text-slate-400">velocity_smoother</div>
+          </div>
+          <div class="bg-slate-800/80 rounded p-1.5 border border-slate-700">
+            <div class="font-semibold text-white">碰撞监测</div>
+            <div class="text-[10px] text-slate-400">collision_monitor</div>
+          </div>
+          <div class="bg-slate-800/80 rounded p-1.5 border border-slate-700">
+            <div class="font-semibold text-white">速度看门狗</div>
+            <div class="text-[10px] text-slate-400">cmd_vel_watchdog (0.3s)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 连接箭头 5 -> 4 -->
+    <div class="layer-arrow">
+      <div class="arrow-stem"></div>
+      <div class="arrow-badge bg-emerald-950 text-emerald-300 border-emerald-500/40">
+        反馈里程计 /odom & 全局位姿 map ➔ odom ➔ base
+      </div>
+      <div class="arrow-stem"></div>
+    </div>
+
+    <!-- ======================== 第 4 层: 状态估计与地图定位层 ======================== -->
+    <section class="arch-layer border-emerald-500/50 bg-gradient-to-b from-emerald-950/40 to-slate-900/90 p-3.5">
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-emerald-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 text-xs font-black">第 4 层</span>
+          <h2 class="font-bold text-sm text-emerald-300">状态估计与地图定位层 (Localization & SLAM)</h2>
+        </div>
+        <span class="text-[11px] text-emerald-400 font-mono">State Estimation</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="module-card border-emerald-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white">Small Point-LIO</span>
+            <span class="code-pill text-emerald-300">高频里程计</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1">
+            IEKF 融合补偿点云与 IMU，发布 <code class="code-pill text-emerald-300">/odom</code> 并维持 <code class="code-pill">odom ➔ base</code> TF。
+          </div>
+        </div>
+
+        <div class="module-card border-emerald-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-white">AMCL 全局定位</span>
+            <span class="code-pill text-emerald-300">全局闭环</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1">
+            OmniMotionModel 全向粒子滤波，广播关键全局变换：<code class="code-pill text-emerald-300">map ➔ odom</code>。
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div class="module-card border-emerald-500/30">
+          <div class="text-xs font-bold text-white">自动初始位姿配准</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">开机用 /scan 与栅格地图粗匹配自动发 pose</div>
+          <div class="text-[10px] text-emerald-400 mt-1 font-mono">auto_initial_pose.py</div>
+        </div>
+
+        <div class="module-card border-emerald-500/30">
+          <div class="text-xs font-bold text-white">导航生命周期门禁</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">监听 map➔odom，定位就绪后再激活 Nav2</div>
+          <div class="text-[10px] text-emerald-400 mt-1 font-mono">nav2_navigation_startup.py</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 连接箭头 4 -> 3 -->
+    <div class="layer-arrow">
+      <div class="arrow-stem"></div>
+      <div class="arrow-badge bg-cyan-950 text-cyan-300 border-cyan-500/40">
+        去畸变点云 /mid360/livox_points_compensated & 补偿 IMU
+      </div>
+      <div class="arrow-stem"></div>
+    </div>
+
+    <!-- ======================== 第 3 层: 传感器采集与运动畸变补偿层 ======================== -->
+    <section class="arch-layer border-cyan-500/50 bg-gradient-to-b from-cyan-950/40 to-slate-900/90 p-3.5">
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-cyan-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-cyan-500 text-slate-950 text-xs font-black">第 3 层</span>
+          <h2 class="font-bold text-sm text-cyan-300">传感器采集与运动畸变补偿层 (Preprocess)</h2>
+        </div>
+        <span class="text-[11px] text-cyan-400 font-mono">Compensation</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="module-card border-cyan-500/30">
+          <div class="text-xs font-bold text-white">点云高频插值去畸变</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">逐点时间戳 + 关节角插值 + 罗德里格旋转</div>
+          <div class="text-[10px] text-cyan-300 mt-1 font-mono">pointcloud_frame_repub</div>
+        </div>
+
+        <div class="module-card border-cyan-500/30">
+          <div class="text-xs font-bold text-white">云台 IMU 惯性补偿</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">消除云台旋转引入的切向加速度与离心过载</div>
+          <div class="text-[10px] text-cyan-300 mt-1 font-mono">gimbal_imu_compensator</div>
+        </div>
+
+        <div class="module-card border-cyan-500/30">
+          <div class="text-xs font-bold text-white">3D点云投射2D激光</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">切片生成 2D /scan 供 AMCL 与 Costmap 避障</div>
+          <div class="text-[10px] text-cyan-300 mt-1 font-mono">pointcloud_to_laserscan</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 连接箭头 3 -> 2 -->
+    <div class="layer-arrow">
+      <div class="arrow-stem"></div>
+      <div class="arrow-badge bg-rose-950 text-rose-300 border-rose-500/40">
+        底盘合成控制量 /cmd_vel (vx, vy, wz_spin)
+      </div>
+      <div class="arrow-stem"></div>
+    </div>
+
+    <!-- ======================== 第 2 层: 底盘逆运动学解算层 ======================== -->
+    <section class="arch-layer border-rose-500/50 bg-gradient-to-b from-rose-950/40 to-slate-900/90 p-3.5">
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-rose-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-rose-500 text-white text-xs font-black">第 2 层</span>
+          <h2 class="font-bold text-sm text-rose-300">底盘逆运动学与驱动执行层 (Kinematics)</h2>
+        </div>
+        <span class="text-[11px] text-rose-400 font-mono">xxu_chassis_controller</span>
+      </div>
+
+      <div class="module-card border-rose-500/30 bg-slate-900/80">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-bold text-white">4路全向轮 (Omni/Mecanum) 逆解投影</span>
+          <span class="code-pill text-rose-300">50 Hz 循环</span>
+        </div>
+        <div class="text-[11px] text-slate-300 font-mono bg-black/40 p-2 rounded border border-slate-800 overflow-x-auto">
+          v_wheel[i] = (cos(θ[i]) * (vx - wz*y[i]) + sin(θ[i]) * (vy + wz*x[i])) / R
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2">
+          <span>• 轮速超限等比例自动缩放</span>
+          <span>输出：<code class="code-pill text-rose-400">/wheel_velocity_controller/commands</code></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 连接箭头 2 -> 1 -->
+    <div class="layer-arrow">
+      <div class="arrow-stem"></div>
+      <div class="arrow-badge bg-amber-950 text-amber-300 border-amber-500/40">
+        电机扭矩/转速指令 ➔ 关节动力学 ➔ 传感器原始数据反馈
+      </div>
+      <div class="arrow-stem"></div>
+    </div>
+
+    <!-- ======================== 第 1 层: 仿真物理与实体硬件层 ======================== -->
+    <section class="arch-layer border-amber-500/50 bg-gradient-to-b from-amber-950/40 to-slate-900/90 p-3.5">
+      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-500/20">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 text-xs font-black">第 1 层</span>
+          <h2 class="font-bold text-sm text-amber-300">仿真环境与物理硬件层 (Simulation & Hardware)</h2>
+        </div>
+        <span class="text-[11px] text-amber-400 font-mono">Gazebo Harmonic</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="module-card border-amber-500/30">
+          <div class="text-xs font-bold text-white">Gazebo 物理环境</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">complex_mapping.sdf 障碍/重力/摩擦动力学</div>
+          <div class="text-[10px] text-amber-300 mt-1 font-mono">ros_gz_sim</div>
+        </div>
+
+        <div class="module-card border-amber-500/30">
+          <div class="text-xs font-bold text-white">Livox Mid-360 仿真</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">官方 mid360.csv 射线阵列花瓣扫描</div>
+          <div class="text-[10px] text-amber-300 mt-1 font-mono">xxu_livox_sim</div>
+        </div>
+
+        <div class="module-card border-amber-500/30">
+          <div class="text-xs font-bold text-white">ros2_control 硬件接口</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">4轮速度 + 云台旋转电机控制与编码器</div>
+          <div class="text-[10px] text-amber-300 mt-1 font-mono">gz_ros2_control</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 底部固定脚标 -->
+  <footer class="mt-6 text-center text-xs text-slate-500 pb-6">
+    XXU RoboMaster 2026 Navigation Architecture • 7层垂直架构蓝图
+  </footer>
+
+  <script>
+    let scale = 1.0;
+    const btnInc = document.getElementById('btn-inc');
+    const btnDec = document.getElementById('btn-dec');
+
+    btnInc.addEventListener('click', () => {
+      if (scale < 1.4) {
+        scale += 0.08;
+        document.documentElement.style.setProperty('--font-scale', scale);
+      }
+    });
+
+    btnDec.addEventListener('click', () => {
+      if (scale > 0.85) {
+        scale -= 0.08;
+        document.documentElement.style.setProperty('--font-scale', scale);
+      }
+    });
+  </script>
+</body>
+</html>

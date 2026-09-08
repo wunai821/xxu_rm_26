@@ -16,6 +16,7 @@ namespace small_point_lio {
         last_timestamp_lidar = -1;
         last_timestamp_imu = -1;
         last_timestamp_dense_point = -1;
+        next_scan_id = 1;
     }
 
     void Preprocess::on_point_cloud_callback(const std::vector<common::Point> &pointcloud) {
@@ -23,8 +24,10 @@ namespace small_point_lio {
         dense_points.reserve(pointcloud.size());
         filtered_points.clear();
         filtered_points.reserve(pointcloud.size());
+        const auto scan_id = next_scan_id++;
         for (size_t i = 0; i < pointcloud.size(); i++) {
-            const auto &point = pointcloud[i];
+            auto point = pointcloud[i];
+            point.scan_id = scan_id;
             if (point.timestamp >= last_timestamp_dense_point) {
                 dense_points.push_back(point);
             }
@@ -41,7 +44,10 @@ namespace small_point_lio {
             filtered_points.push_back(point);
         }
         if (parameters->space_downsample) {
-            downsampler.voxelgrid_sampling(filtered_points, processed_pointcloud, parameters->space_downsample_leaf_size);
+            downsampler.voxelgrid_sampling(
+                    filtered_points,
+                    processed_pointcloud,
+                    parameters->space_downsample_leaf_size);
         } else {
             processed_pointcloud = std::move(filtered_points);
         }

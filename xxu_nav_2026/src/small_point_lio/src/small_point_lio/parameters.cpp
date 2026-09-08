@@ -30,8 +30,12 @@ namespace small_point_lio {
         // 地图
         map_resolution = node.declare_parameter<float>("map_resolution");
         init_map_size = static_cast<size_t>(node.declare_parameter<long>("init_map_size"));
+        defer_map_insertion_by_scan = node.declare_parameter<bool>(
+                "defer_map_insertion_by_scan", false);
         planar_constraint_en = node.declare_parameter<bool>("planar_constraint_en", false);
         planar_z = node.declare_parameter<double>("planar_z", 0.0);
+        planar_preserve_initial_tilt = node.declare_parameter<bool>(
+                "planar_preserve_initial_tilt", true);
 
         // 雷达与IMU相对位姿
         extrinsic_est_en = node.declare_parameter<bool>("extrinsic_est_en");
@@ -53,6 +57,8 @@ namespace small_point_lio {
         bg_cov = node.declare_parameter<double>("bg_cov");
         plane_threshold = node.declare_parameter<double>("plane_threshold");
         match_sqaured = node.declare_parameter<double>("match_sqaured");
+
+        motion_diagnostics_en = node.declare_parameter<bool>("motion_diagnostics_en", false);
 
         // 数据发布
         publish_odometry_without_downsample = node.declare_parameter<bool>("publish_odometry_without_downsample");

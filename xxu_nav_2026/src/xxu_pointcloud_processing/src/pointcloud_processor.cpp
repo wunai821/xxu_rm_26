@@ -36,7 +36,7 @@ public:
     tf_buffer_(this->get_clock()),
     tf_listener_(tf_buffer_)
   {
-    input_frame_ = this->declare_parameter<std::string>("input_frame", "radar_link");
+    input_frame_ = this->declare_parameter<std::string>("input_frame", "mid360_link");
     output_frame_ = this->declare_parameter<std::string>("output_frame", "base_footprint");
     project_to_2d_ = this->declare_parameter<bool>("project_to_2d", true);
     z_value_ = this->declare_parameter<double>("z_value", 0.0);
@@ -190,7 +190,10 @@ private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
     sensor_msgs::msg::PointCloud2 input = *msg;
-    input.header.frame_id = input_frame_;
+    // A frame_id is a coordinate declaration, not a transform. Preserve the
+    // incoming frame; use input_frame only for legacy messages with no frame.
+    const std::string source_frame = input.header.frame_id.empty() ? input_frame_ : input.header.frame_id;
+    input.header.frame_id = source_frame;
 
     PointFields fields{};
     if (!findFields(input, fields)) {
@@ -204,7 +207,7 @@ private:
     try {
       transform = tf_buffer_.lookupTransform(
         output_frame_,
-        input.header.frame_id,
+        source_frame,
         input.header.stamp,
         rclcpp::Duration::from_seconds(0.05));
     } catch (const tf2::TransformException & ex) {

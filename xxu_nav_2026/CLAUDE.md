@@ -43,7 +43,7 @@ ros2 launch xxu_bringup simulation.launch.py
 | `enable_lio` | `false` | 启用 Small Point-LIO |
 | `enable_cmd_vel_odom` | `false` | 启用 cmd_vel 里程计 |
 | `use_livox_native` | `false` | 使用 Livox 原生仿真 |
-| `use_fake_frame` | `false` | 使用 base_link_fake 替代 base_link |
+| `use_fake_frame` | `true` | 使用底盘上的 gimbal_yaw_fake 替代 base_link |
 | `auto_initial_pose` | `false` | 自动设置初始位姿 |
 | `initial_pose_x/y/yaw` | `0.0/0.0/0.0` | 初始位姿 |
 

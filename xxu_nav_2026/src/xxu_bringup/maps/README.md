@@ -8,13 +8,13 @@ Use `nav2_map_server` to save a map:
 ros2 run nav2_map_server map_saver_cli -f src/xxu_bringup/maps/your_map
 ```
 
-Start navigation with the saved `auto_map.yaml`:
+Start navigation with the map corresponding to the `complex_mapping.sdf` world:
 
 ```bash
 ros2 launch xxu_bringup navigation.launch.py
 ```
 
-Start simulation, load the saved `auto_map.yaml`, and use RViz to set the
+Start simulation, load the matching `complex_map.yaml`, and use RViz to set the
 initial pose and send a single Nav2 goal:
 
 ```bash

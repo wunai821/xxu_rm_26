@@ -2,35 +2,52 @@
 <robot name="xxu" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <!--
     XXU Gazebo 仿真模型
-    静态 TF 树：base_footprint -> base_link -> mid360_link + 4 wheels (continuous joints)
-    动态 TF 树：odom -> base_footprint 由 Small Point-LIO 发布。
+    TF 树：base_footprint -> base_link -> gimbal_link -> mid360_link + 4 wheels。
+    gimbal_link 的偏航由云台自稳节点动态控制；odom -> base_footprint 由里程计发布。
   -->
 
   <xacro:include filename="wheel.urdf.xacro"/>
+  <xacro:include filename="livox_mid360.urdf.xacro"/>
   <xacro:include filename="plugins/gazebo_control_plugin.xacro"/>
   <xacro:include filename="plugins/gazebo_sensor_plugin.xacro"/>
 
   <xacro:arg name="controllers_file" default="src/xxu_description/config/xxu_ros2_control.yaml"/>
-  <xacro:arg name="use_livox_native" default="false"/>
+  <xacro:arg name="use_livox_native" default="true"/>
+  <xacro:arg name="scan_mode_csv" default=""/>
 
-  <!-- 尺寸和质量参数 -->
-  <xacro:property name="base_radius" value="0.25"/>
-  <xacro:property name="base_height" value="0.18"/>
+  <!--
+    尺寸参数（由毫米换算为米）。base_link 位于底盘底面上方 95.19 mm，
+    因此底盘实体从 base_link 平面向上延伸到离地 269.49 mm。
+  -->
+  <xacro:property name="base_radius" value="0.265"/>
+  <xacro:property name="base_link_z" value="0.09519"/>
+  <xacro:property name="base_top_z" value="0.26949"/>
+  <xacro:property name="base_height" value="${base_top_z - base_link_z}"/>
   <xacro:property name="base_mass" value="4.935"/>
 
-  <xacro:property name="radar_radius" value="0.0325"/>
-  <xacro:property name="radar_height" value="0.065"/>
-  <xacro:property name="mid360_xyz" value="0.20565 0 0.1520"/>
-  <xacro:property name="mid360_rpy" value="0 0.1745 0"/>
-  <xacro:property name="radar_mass" value="0.265"/>
+  <!-- 云台上的雷达安装位姿，相对于 base_link：(0, 86.37, 193.8) mm。 -->
+  <xacro:property name="mid360_x" value="0"/>
+  <xacro:property name="mid360_y" value="0.08637"/>
+  <xacro:property name="mid360_z" value="0.1938"/>
+  <xacro:property name="mid360_xyz" value="${mid360_x} ${mid360_y} ${mid360_z}"/>
+  <!--
+    标称姿态：雷达位于 +Y 侧并绕 X 轴向车体外侧倾斜约 17°。
+    按 ROS 右手坐标系取负 roll；云台偏航关节在仿真中保持初始世界航向。
+  -->
+  <xacro:property name="mid360_roll" value="-0.2967059728"/>
+  <xacro:property name="mid360_pitch" value="0"/>
+  <xacro:property name="mid360_yaw" value="0"/>
+  <xacro:property name="mid360_rpy" value="${mid360_roll} ${mid360_pitch} ${mid360_yaw}"/>
   <xacro:property name="mid360_range_max" value="40.0"/>
 
-  <xacro:property name="wheel_radius" value="0.07"/>
+  <xacro:property name="wheel_radius" value="0.0762"/>
   <xacro:property name="wheel_width" value="0.04"/>
   <xacro:property name="wheel_mass" value="0.45"/>
-  <xacro:property name="wheel_spacing" value="${(base_radius - wheel_radius) * 0.7071}"/>
-  <xacro:property name="wheel_z" value="${-base_height / 2}"/>
-  <xacro:property name="base_link_z" value="${-wheel_z + wheel_radius + 0.001}"/>
+  <!-- 446.55 mm 按相对两轮中心距解释，因此四轮坐标为 ±223.275 mm。 -->
+  <xacro:property name="wheel_center_distance" value="0.44655"/>
+  <xacro:property name="wheel_spacing" value="${wheel_center_distance / 2}"/>
+  <!-- 轮子底部与地面相切：轮心相对 base_link 为 76.2-95.19=-18.99 mm。 -->
+  <xacro:property name="wheel_z" value="${wheel_radius - base_link_z}"/>
 
   <!-- 颜色定义 -->
   <xacro:macro name="solid_material" params="name rgba">
@@ -40,7 +57,6 @@
   </xacro:macro>
 
   <xacro:solid_material name="chassis_blue" rgba="0.10 0.25 0.80 1.0"/>
-  <xacro:solid_material name="radar_red" rgba="0.85 0.15 0.15 1.0"/>
   <xacro:solid_material name="wheel_black" rgba="0.15 0.15 0.15 1.0"/>
 
   <!-- 固定关节宏 -->
@@ -64,23 +80,23 @@
   </xacro:macro>
 
   <!-- 圆柱 link 宏 -->
-  <xacro:macro name="cylinder_link" params="name radius length mass ixx iyy izz material">
+  <xacro:macro name="cylinder_link" params="name radius length mass ixx iyy izz material origin_z:=0">
     <link name="${name}">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${origin_z}" rpy="0 0 0"/>
         <geometry>
           <cylinder radius="${radius}" length="${length}"/>
         </geometry>
         <material name="${material}"/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${origin_z}" rpy="0 0 0"/>
         <geometry>
           <cylinder radius="${radius}" length="${length}"/>
         </geometry>
       </collision>
       <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 ${origin_z}" rpy="0 0 0"/>
         <mass value="${mass}"/>
         <inertia ixx="${ixx}" ixy="0" ixz="0" iyy="${iyy}" iyz="0" izz="${izz}"/>
       </inertial>
@@ -123,45 +139,58 @@
     ixx="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
     iyy="${base_mass * (3 * base_radius * base_radius + base_height * base_height) / 12}"
     izz="${base_mass * base_radius * base_radius / 2}"
-    material="chassis_blue"/>
+    material="chassis_blue"
+    origin_z="${base_height / 2}"/>
 
   <xacro:fixed_joint name="base_footprint_joint" parent="base_footprint" child="base_link" xyz="0 0 ${base_link_z}"/>
 
-  <!-- mid360_link: LiDAR and IMU measurement frame. -->
-  <link name="mid360_link">
-    <visual>
-      <origin xyz="0 0 ${-radar_height / 2}" rpy="0 0 0"/>
-      <geometry>
-        <cylinder radius="${radar_radius}" length="${radar_height}"/>
-      </geometry>
-      <material name="radar_red"/>
-    </visual>
-    <!-- 顶部半球，模仿 Mid-360 外观 -->
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <sphere radius="${radar_radius}"/>
-      </geometry>
-      <material name="radar_red"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 ${-radar_height / 2}" rpy="0 0 0"/>
-      <geometry>
-        <cylinder radius="${radar_radius}" length="${radar_height}"/>
-      </geometry>
-    </collision>
+
+  <!--
+    云台绕车体中心 Z 轴独立旋转。雷达位于云台转轴 +Y 86.37 mm 处，
+    因此云台旋转时雷达会绕中心公转，而不是绕雷达自身旋转。
+  -->
+  <link name="gimbal_link">
+    <!--
+      云台是动态关节的实体本体，不能使用完全空的 link：MID-360 虽然
+      通过固定关节连接在它下面，但空 link + 带质量固定子 link 会让
+      Gazebo 在求解关节运动时产生周期性位姿抖动。
+    -->
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${radar_mass}"/>
-      <inertia
-        ixx="${radar_mass * (3 * radar_radius * radar_radius + radar_height * radar_height) / 12}"
-        ixy="0" ixz="0"
-        iyy="${radar_mass * (3 * radar_radius * radar_radius + radar_height * radar_height) / 12}"
-        iyz="0"
-        izz="${radar_mass * radar_radius * radar_radius / 2}"/>
+      <mass value="0.05"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0"
+               iyy="0.0001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  <xacro:fixed_joint name="mid360_joint" parent="base_link" child="mid360_link" xyz="${mid360_xyz}" rpy="${mid360_rpy}"/>
+  <joint name="gimbal_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="gimbal_link"/>
+    <origin xyz="0 0 ${mid360_z}" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="8"/>
+    <dynamics damping="0.05" friction="0.01"/>
+  </joint>
+
+  <!--
+    Virtual LIO body frame at the gimbal axis.  It is rigidly attached to the
+    chassis and stays level while gimbal_link rotates.  Point/IMU compensation
+    removes the known joint motion into this frame before state estimation.
+  -->
+  <link name="lio_base_sensor"/>
+  <xacro:fixed_joint
+    name="lio_base_sensor_joint"
+    parent="base_link"
+    child="lio_base_sensor"
+    xyz="0 0 ${mid360_z}"/>
+
+  <!-- MID-360 外形、碰撞和惯量由仿真/简化模型共用的宏定义。 -->
+  <xacro:livox_mid360_link name="mid360_link"/>
+  <xacro:fixed_joint
+    name="mid360_joint"
+    parent="gimbal_link"
+    child="mid360_link"
+    xyz="${mid360_x} ${mid360_y} 0"
+    rpy="${mid360_rpy}"/>
 
   <!-- 四轮全向轮底盘（连续关节） -->
   <xacro:wheel name="wheel_fl" radius="${wheel_radius}" width="${wheel_width}" mass="${wheel_mass}"/>
@@ -185,29 +214,54 @@
     front_right_joint="wheel_fr_joint"
     back_left_joint="wheel_rl_joint"
     back_right_joint="wheel_rr_joint"
+    gimbal_joint="gimbal_joint"
     wheel_radius="${wheel_radius}"
     controllers_file="$(arg controllers_file)"/>
 
-  <xacro:gazebo_imu_plugin reference_link="base_footprint" frame_id="base_footprint"/>
+  <!--
+    Gazebo Harmonic 内置 IMU 在动态固定链上会把云台加速度算到错误的
+    模型参考点。使用与 Livox 仿真相同的自定义运动学 IMU，直接读取
+    gimbal_link 加真实雷达外参得到 mid360_link 的世界运动，并发布到
+    同一个 Gazebo Transport 话题。Gazebo 会合并固定子 link，因此这里
+    不能依赖被合并的 mid360_link 实体名。
+  -->
+  <gazebo>
+    <plugin
+      filename="liblivox_mid360_system.so"
+      name="xxu_livox_sim::LivoxMid360ImuSystem">
+      <reference_link>gimbal_link</reference_link>
+      <topic>/imu</topic>
+      <frame_id>mid360_link</frame_id>
+      <update_rate>100</update_rate>
+      <sensor_pose>0 0.08637 0 -0.2967059728 0 0</sensor_pose>
+      <!-- 当前 Gazebo 约束求解器的加速度组件含有尖峰，使用运动学差分回退。 -->
+      <use_physics_kinematics>false</use_physics_kinematics>
+      <angular_velocity_noise_stddev>0.0001</angular_velocity_noise_stddev>
+      <linear_acceleration_noise_stddev>0.001</linear_acceleration_noise_stddev>
+      <noise_seed>2026</noise_seed>
+    </plugin>
+  </gazebo>
 
   <xacro:unless value="$(arg use_livox_native)">
     <xacro:gazebo_mid360_lidar_plugin
-      reference_link="base_footprint"
+      reference_link="gimbal_link"
       topic="/mid360"
-      frame_id="base_footprint"
+      frame_id="mid360_link"
       range_max="${mid360_range_max}"
-      pose="0 0 0 0 0 0"/>
+      pose="${mid360_x} ${mid360_y} 0 ${mid360_roll} ${mid360_pitch} ${mid360_yaw}"/>
   </xacro:unless>
 
   <xacro:if value="$(arg use_livox_native)">
     <xacro:gazebo_mid360_livox_system_plugin
-      reference_link="base_footprint"
+      reference_link="gimbal_link"
       topic="/mid360/livox_points_gz"
-      frame_id="base_footprint"
+      frame_id="mid360_link"
       range_max="${mid360_range_max}"
-      sensor_pose="0 0 0 0 0 0"/>
+      scan_mode_csv="$(arg scan_mode_csv)"
+      range_noise_stddev="0.02"
+      noise_seed="2026"
+      sensor_pose="${mid360_x} ${mid360_y} 0 ${mid360_roll} ${mid360_pitch} ${mid360_yaw}"/>
   </xacro:if>
-
 
   <!-- 轮子物理属性 -->
   <gazebo reference="wheel_fl">
