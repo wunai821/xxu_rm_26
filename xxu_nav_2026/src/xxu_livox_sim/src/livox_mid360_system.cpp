@@ -24,6 +24,7 @@
 #include <gz/sim/Link.hh>
 #include <gz/sim/Model.hh>
 #include <gz/sim/System.hh>
+#include <gz/sim/Util.hh>
 #include <gz/sim/components/AngularAcceleration.hh>
 #include <gz/sim/components/AngularVelocity.hh>
 #include <gz/sim/components/Link.hh>
@@ -306,27 +307,34 @@ public:
       return;
     }
 
-    this->lastSensorWorldPose = *linkWorldPose * this->sensorPose;
+    const auto sensorWorldPose = *linkWorldPose * this->sensorPose;
+    // RaycastData is attached to this plugin's model entity.  Gazebo defines
+    // both its ray endpoints and hit points in that entity's coordinates, not
+    // world coordinates.  Convert the sensor pose once per batch and keep the
+    // request/result conversion in the same frame.
+    const auto entityWorldPose = gz::sim::worldPose(this->entity, _ecm);
+    this->lastSensorEntityPose = entityWorldPose.Inverse() *
+      sensorWorldPose;
     this->currentBatchStart = this->nextRayIndex;
     const size_t remaining = this->sensorRays.size() - this->currentBatchStart;
     this->currentBatchSize =
       std::min(static_cast<size_t>(this->raysPerBatch), remaining);
-    this->lastWorldRays = this->WorldRays(
-      this->lastSensorWorldPose, this->currentBatchStart, this->currentBatchSize);
+    this->lastEntityRays = this->EntityRays(
+      this->lastSensorEntityPose, this->currentBatchStart, this->currentBatchSize);
 
     auto *component =
       _ecm.Component<gz::sim::components::RaycastData>(this->entity);
     if (!component)
     {
       RaycastDataInfo raycastData;
-      raycastData.rays = this->lastWorldRays;
+      raycastData.rays = this->lastEntityRays;
       _ecm.CreateComponent(this->entity,
         gz::sim::components::RaycastData(raycastData));
     }
     else
     {
       auto raycastData = component->Data();
-      raycastData.rays = this->lastWorldRays;
+      raycastData.rays = this->lastEntityRays;
       raycastData.results.clear();
       _ecm.SetComponentData<gz::sim::components::RaycastData>(
         this->entity, raycastData);
@@ -369,8 +377,8 @@ public:
       return;
     }
 
-    const auto pointCount = std::min(results.size(), this->lastWorldRays.size());
-    // Every point in this batch was raycast from lastSensorWorldPose at
+    const auto pointCount = std::min(results.size(), this->lastEntityRays.size());
+    // Every point in this batch was raycast from lastSensorEntityPose at
     // lastRaycastRequestTime. Use that exact simulation time instead of
     // inventing a timestamp from the point index. The pose and timestamp must
     // describe the same instant, especially when the gimbal is rotating.
@@ -379,7 +387,7 @@ public:
       this->lastRaycastRequestTime).count());
     for (size_t i = 0; i < pointCount; ++i)
     {
-      const auto &ray = this->lastWorldRays[i];
+      const auto &ray = this->lastEntityRays[i];
       const auto &result = results[i];
       if (!std::isfinite(result.point.X()) ||
           !std::isfinite(result.point.Y()) ||
@@ -397,8 +405,8 @@ public:
       }
 
       auto localPoint =
-        this->lastSensorWorldPose.Rot().RotateVectorReverse(
-          result.point - this->lastSensorWorldPose.Pos());
+        this->lastSensorEntityPose.Rot().RotateVectorReverse(
+          result.point - this->lastSensorEntityPose.Pos());
 
       // The official Livox Gazebo model uses Gaussian range noise. Apply it
       // along the measured ray after the exact collision point is returned.
@@ -504,24 +512,24 @@ private:
     this->lastPubTime = _time;
   }
 
-  std::vector<RayInfo> WorldRays(
-    const gz::math::Pose3d &_sensorWorldPose,
+  std::vector<RayInfo> EntityRays(
+    const gz::math::Pose3d &_sensorEntityPose,
     const size_t _start,
     const size_t _count) const
   {
-    std::vector<RayInfo> worldRays;
-    worldRays.reserve(_count);
+    std::vector<RayInfo> entityRays;
+    entityRays.reserve(_count);
     const size_t end = std::min(this->sensorRays.size(), _start + _count);
     for (size_t i = _start; i < end; ++i)
     {
       const auto &ray = this->sensorRays[i];
-      RayInfo worldRay;
-      worldRay.start = _sensorWorldPose.Pos();
-      worldRay.end = _sensorWorldPose.CoordPositionAdd(
+      RayInfo entityRay;
+      entityRay.start = _sensorEntityPose.Pos();
+      entityRay.end = _sensorEntityPose.CoordPositionAdd(
         ray.direction * this->rangeMax);
-      worldRays.push_back(worldRay);
+      entityRays.push_back(entityRay);
     }
-    return worldRays;
+    return entityRays;
   }
 
   gz::sim::Entity FindReferenceLink(
@@ -571,13 +579,13 @@ private:
   double rangeNoiseStddev{0.02};
   int noiseSeed{2026};
   gz::math::Pose3d sensorPose{gz::math::Pose3d::Zero};
-  gz::math::Pose3d lastSensorWorldPose{gz::math::Pose3d::Zero};
+  gz::math::Pose3d lastSensorEntityPose{gz::math::Pose3d::Zero};
   std::vector<PatternRay> scanPattern;
   size_t scanPatternCursor{0};
   std::mt19937 noiseRng{2026};
   std::normal_distribution<double> standardNormal{0.0, 1.0};
   std::vector<PatternRay> sensorRays;
-  std::vector<RayInfo> lastWorldRays;
+  std::vector<RayInfo> lastEntityRays;
   std::vector<AccumulatedPoint> accumulatedPoints;
   std::chrono::steady_clock::duration lastPubTime{0};
   std::chrono::steady_clock::duration lastRaycastRequestTime{0};
