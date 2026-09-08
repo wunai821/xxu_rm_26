@@ -40,6 +40,7 @@ namespace small_point_lio {
 
     void Estimator::h_point(const state &s, point_measurement_result &measurement_result) {
         measurement_result.valid = false;
+        if (parameters->motion_diagnostics_en) { ++diagnostics.attempted; }
         // get closest point
         Eigen::Matrix<state::value_type, 3, 1> point_imu_frame;
         if (parameters->extrinsic_est_en) {
@@ -50,6 +51,7 @@ namespace small_point_lio {
         point_odom_frame = (kf.x.rotation * point_imu_frame + kf.x.position).cast<float>();
         ivox->get_closest_point(point_odom_frame, nearest_points, NUM_MATCH_POINTS);
         if (nearest_points.size() != NUM_MATCH_POINTS) {
+            if (parameters->motion_diagnostics_en) { ++diagnostics.no_neighbors; }
             return;
         }
         // estimate plane
@@ -81,11 +83,13 @@ namespace small_point_lio {
         for (int j = 0; j < NUM_MATCH_POINTS; j++) {
             float point_distanace = std::abs(normal.dot(nearest_points[j]) + d);
             if (point_distanace > parameters->plane_threshold) {
+                if (parameters->motion_diagnostics_en) { ++diagnostics.nonplanar; }
                 return;
             }
         }
         float point_distanace = normal.dot(point_odom_frame) + d;
         if (point_lidar_frame.norm() <= parameters->match_sqaured * point_distanace * point_distanace) {
+            if (parameters->motion_diagnostics_en) { ++diagnostics.residual_rejected; }
             return;
         }
         // calculate residual and jacobian matrix
@@ -105,6 +109,12 @@ namespace small_point_lio {
         }
         measurement_result.z = -point_distanace;
         measurement_result.valid = true;
+        if (parameters->motion_diagnostics_en) {
+            ++diagnostics.accepted;
+            diagnostics.residual_squared_sum += static_cast<double>(point_distanace) * point_distanace;
+            const Eigen::Vector2d n = normal.head<2>().cast<double>();
+            diagnostics.normal_xy_sum.noalias() += n * n.transpose();
+        }
     }
 
     void Estimator::h_imu(const state &s, imu_measurement_result &measurement_result) {

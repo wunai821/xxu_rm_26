@@ -1,10 +1,10 @@
 chassis_controller:
   ros__parameters:
     use_sim_time: true
-    wheel_radius: 0.07
+    wheel_radius: 0.0762
     wheel_command_sign: -1.0
-    wheel_x: [0.127278, 0.127278, -0.127278, -0.127278]
-    wheel_y: [0.127278, -0.127278, 0.127278, -0.127278]
+    wheel_x: [0.223275, 0.223275, -0.223275, -0.223275]
+    wheel_y: [0.223275, -0.223275, 0.223275, -0.223275]
     drive_direction_angle: [-0.785398, -2.356194, 0.785398, 2.356194]
     max_wheel_speed: 100.0
     timeout: 0.3

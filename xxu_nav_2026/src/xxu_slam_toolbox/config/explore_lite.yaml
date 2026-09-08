@@ -6,7 +6,9 @@
     costmap_updates_topic: /map_updates
     visualize: true
     planner_frequency: 0.2
-    progress_timeout: 45.0
+    # Do not spend a full timeout retrying a frontier blocked by the global
+    # costmap boundary; choose another reachable frontier instead.
+    progress_timeout: 25.0
     lock_goal_until_reached: true
     goal_update_min_distance: 0.75
     goal_replan_min_period: 20.0

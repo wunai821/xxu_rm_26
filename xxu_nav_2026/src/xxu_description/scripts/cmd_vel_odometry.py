@@ -4,7 +4,7 @@
 import math
 
 import rclpy
-from geometry_msgs.msg import TransformStamped, Twist
+from geometry_msgs.msg import TransformStamped, TwistStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
@@ -44,7 +44,7 @@ class CmdVelOdometry(Node):
 
         self.odom_pub = self.create_publisher(Odometry, self.odom_topic, 10)
         self.tf_broadcaster = TransformBroadcaster(self)
-        self.create_subscription(Twist, self.cmd_vel_topic, self.cmd_callback, 10)
+        self.create_subscription(TwistStamped, self.cmd_vel_topic, self.cmd_callback, 10)
         self.create_timer(1.0 / publish_rate, self.timer_callback)
 
         self.get_logger().info(
@@ -53,9 +53,9 @@ class CmdVelOdometry(Node):
         )
 
     def cmd_callback(self, msg):
-        self.vx = msg.linear.x
-        self.vy = msg.linear.y
-        self.wz = msg.angular.z
+        self.vx = msg.twist.linear.x
+        self.vy = msg.twist.linear.y
+        self.wz = msg.twist.angular.z
         self.last_cmd_time = self.get_clock().now()
 
     def timer_callback(self):

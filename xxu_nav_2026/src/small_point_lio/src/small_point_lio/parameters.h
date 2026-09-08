@@ -47,6 +47,7 @@ namespace small_point_lio {
         double plane_threshold;
         double match_sqaured;
 
+        bool motion_diagnostics_en = false;
         bool publish_odometry_without_downsample = false;
 
         void read_parameters(rclcpp::Node &node);

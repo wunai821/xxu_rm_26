@@ -13,6 +13,7 @@ install(
     scripts/auto_initial_pose.py
     scripts/mock_robot_io.py
     scripts/nav2_navigation_startup.py
+    scripts/wait_for_odom.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -26,8 +26,8 @@ def generate_launch_description():
     cmd_vel_in_topic = LaunchConfiguration("cmd_vel_in_topic")
     cmd_vel_out_topic = LaunchConfiguration("cmd_vel_out_topic")
 
-    # Keep standalone Nav2 consistent with the saved-map simulation and maps README.
-    default_map = PathJoinSubstitution([bringup_share, "maps", "auto_map.yaml"])
+    # Keep standalone Nav2 aligned with the complex_mapping Gazebo world.
+    default_map = PathJoinSubstitution([bringup_share, "maps", "complex_map.yaml"])
     default_params = PathJoinSubstitution([bringup_share, "config", "nav2_navigation.yaml"])
     default_rviz_config = PathJoinSubstitution([bringup_share, "rviz", "navigation.rviz"])
     default_gicp_params = PathJoinSubstitution(
@@ -51,7 +51,7 @@ def generate_launch_description():
 
     nav2_common_remaps = [("/tf", "tf"), ("/tf_static", "tf_static")]
     nav2_base_frame = PythonExpression([
-        "'base_link_fake' if '",
+        "'gimbal_yaw_fake' if '",
         use_fake_frame,
         "' == 'true' else 'base_link'",
     ])

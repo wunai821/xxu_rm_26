@@ -58,6 +58,8 @@ namespace small_point_lio {
         plane_threshold = node.declare_parameter<double>("plane_threshold");
         match_sqaured = node.declare_parameter<double>("match_sqaured");
 
+        motion_diagnostics_en = node.declare_parameter<bool>("motion_diagnostics_en", false);
+
         // 数据发布
         publish_odometry_without_downsample = node.declare_parameter<bool>("publish_odometry_without_downsample");
     }

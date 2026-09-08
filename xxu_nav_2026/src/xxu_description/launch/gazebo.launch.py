@@ -94,6 +94,10 @@ def generate_launch_description():
         default_value="true",
         description="Use simulation clock",
     )
+    declare_lio_motion_diagnostics = DeclareLaunchArgument(
+        "lio_motion_diagnostics", default_value="false",
+        description="Log LIO motion propagation and matching diagnostics once per simulation second",
+    )
     declare_enable_lio = DeclareLaunchArgument(
         "enable_lio",
         default_value="true",
@@ -565,7 +569,10 @@ def generate_launch_description():
         name="small_point_lio",
         output="screen",
         condition=IfCondition(enable_lio),
-        parameters=[small_point_lio_config],
+        parameters=[small_point_lio_config, {
+            "motion_diagnostics_en": ParameterValue(
+                LaunchConfiguration("lio_motion_diagnostics"), value_type=bool),
+        }],
     )
 
     # Clock bridge
@@ -640,6 +647,7 @@ def generate_launch_description():
         gz_system_plugin_path,
         declare_use_sim_time,
         declare_enable_lio,
+        declare_lio_motion_diagnostics,
         declare_compensate_gimbal_for_lio,
         declare_enable_cmd_vel_odom,
         declare_use_livox_native,

@@ -16,6 +16,7 @@ namespace small_point_lio {
 
     class SmallPointLio {
     private:
+        rclcpp::Logger logger;
         Parameters parameters;
         Preprocess preprocess;
         Estimator estimator;
@@ -48,6 +49,10 @@ namespace small_point_lio {
         void set_odometry_callback(const std::function<void(const common::Odometry &odometry)> &odometry_callback);
 
     private:
+        void predict_state_with_diagnostics(double timestamp);
+
+        void log_motion_diagnostics();
+
         void apply_planar_constraint();
 
         void begin_map_scan(std::uint64_t scan_id);
