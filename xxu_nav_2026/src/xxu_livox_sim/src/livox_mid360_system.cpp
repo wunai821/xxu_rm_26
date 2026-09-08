@@ -19,6 +19,7 @@
 #include <gz/sim/Link.hh>
 #include <gz/sim/Model.hh>
 #include <gz/sim/System.hh>
+#include <gz/sim/Util.hh>
 #include <gz/sim/components/Link.hh>
 #include <gz/sim/components/Name.hh>
 #include <gz/sim/components/RaycastData.hh>
@@ -200,27 +201,31 @@ public:
       return;
     }
 
-    this->lastSensorWorldPose = *linkWorldPose * this->sensorPose;
+    const auto sensorWorldPose = *linkWorldPose * this->sensorPose;
+    // RaycastData is attached to this plugin's model entity. Gazebo defines
+    // both ray endpoints and hit points in that entity's coordinates.
+    const auto entityWorldPose = gz::sim::worldPose(this->entity, _ecm);
+    this->lastSensorEntityPose = entityWorldPose.Inverse() * sensorWorldPose;
     this->currentBatchStart = this->nextRayIndex;
     const size_t remaining = this->sensorRays.size() - this->currentBatchStart;
     this->currentBatchSize =
       std::min(static_cast<size_t>(this->raysPerBatch), remaining);
-    this->lastWorldRays = this->WorldRays(
-      this->lastSensorWorldPose, this->currentBatchStart, this->currentBatchSize);
+    this->lastEntityRays = this->EntityRays(
+      this->lastSensorEntityPose, this->currentBatchStart, this->currentBatchSize);
 
     auto *component =
       _ecm.Component<gz::sim::components::RaycastData>(this->entity);
     if (!component)
     {
       RaycastDataInfo raycastData;
-      raycastData.rays = this->lastWorldRays;
+      raycastData.rays = this->lastEntityRays;
       _ecm.CreateComponent(this->entity,
         gz::sim::components::RaycastData(raycastData));
     }
     else
     {
       auto raycastData = component->Data();
-      raycastData.rays = this->lastWorldRays;
+      raycastData.rays = this->lastEntityRays;
       raycastData.results.clear();
       _ecm.SetComponentData<gz::sim::components::RaycastData>(
         this->entity, raycastData);
@@ -262,14 +267,14 @@ public:
       return;
     }
 
-    const auto pointCount = std::min(results.size(), this->lastWorldRays.size());
+    const auto pointCount = std::min(results.size(), this->lastEntityRays.size());
     const double scanPeriod = 1.0 / this->updateRate;
     const auto scanStartNs = static_cast<double>(
       std::chrono::duration_cast<std::chrono::nanoseconds>(
       this->scanStartTime).count());
     for (size_t i = 0; i < pointCount; ++i)
     {
-      const auto &ray = this->lastWorldRays[i];
+      const auto &ray = this->lastEntityRays[i];
       const auto &result = results[i];
       const double range = ray.start.Distance(result.point);
       if (range < this->rangeMin || range > this->rangeMax ||
@@ -279,8 +284,8 @@ public:
       }
 
       const auto localPoint =
-        this->lastSensorWorldPose.Rot().RotateVectorReverse(
-          result.point - this->lastSensorWorldPose.Pos());
+        this->lastSensorEntityPose.Rot().RotateVectorReverse(
+          result.point - this->lastSensorEntityPose.Pos());
 
       const size_t rayIndex = this->currentBatchStart + i;
       AccumulatedPoint point;
@@ -364,23 +369,23 @@ private:
     this->lastPubTime = _time;
   }
 
-  std::vector<RayInfo> WorldRays(
-    const gz::math::Pose3d &_sensorWorldPose,
+  std::vector<RayInfo> EntityRays(
+    const gz::math::Pose3d &_sensorEntityPose,
     const size_t _start,
     const size_t _count) const
   {
-    std::vector<RayInfo> worldRays;
-    worldRays.reserve(_count);
+    std::vector<RayInfo> entityRays;
+    entityRays.reserve(_count);
     const size_t end = std::min(this->sensorRays.size(), _start + _count);
     for (size_t i = _start; i < end; ++i)
     {
       const auto &ray = this->sensorRays[i];
-      RayInfo worldRay;
-      worldRay.start = _sensorWorldPose.CoordPositionAdd(ray.start);
-      worldRay.end = _sensorWorldPose.CoordPositionAdd(ray.end);
-      worldRays.push_back(worldRay);
+      RayInfo entityRay;
+      entityRay.start = _sensorEntityPose.CoordPositionAdd(ray.start);
+      entityRay.end = _sensorEntityPose.CoordPositionAdd(ray.end);
+      entityRays.push_back(entityRay);
     }
-    return worldRays;
+    return entityRays;
   }
 
   gz::sim::Entity FindReferenceLink(
@@ -427,9 +432,9 @@ private:
   double minVertical{-0.1221730};
   double maxVertical{0.9075712};
   gz::math::Pose3d sensorPose{gz::math::Pose3d::Zero};
-  gz::math::Pose3d lastSensorWorldPose{gz::math::Pose3d::Zero};
+  gz::math::Pose3d lastSensorEntityPose{gz::math::Pose3d::Zero};
   std::vector<RayInfo> sensorRays;
-  std::vector<RayInfo> lastWorldRays;
+  std::vector<RayInfo> lastEntityRays;
   std::vector<AccumulatedPoint> accumulatedPoints;
   std::chrono::steady_clock::duration lastPubTime{0};
   std::chrono::steady_clock::duration lastRaycastRequestTime{0};
