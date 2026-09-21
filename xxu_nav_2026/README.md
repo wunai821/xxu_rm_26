@@ -2,7 +2,16 @@
 
 XXU 机器人 ROS 2 + Gazebo Harmonic 仿真与导航项目，包含机器人模型、仿真启动、Nav2 导航、SLAM 建图、点云处理、底盘控制器和自定义 Nav2 插件。
 
+## 小陀螺导航
+
+底盘自旋由上位机控制，雷达云台保持独立旋转。导航与真实底盘使用不同速度表达；
+详见 [小陀螺导航职责、启动与验证](tools/navigation/README.md)。
+
 ## 构建
+
+导航和探索均使用官方 `nav2_mppi_controller::MPPIController`，运动模型为
+`Omni`，由系统 ROS 2/Nav2 包提供。参数分别位于
+`src/xxu_bringup/config/nav2_navigation.yaml` 和 `nav2_exploration.yaml`。
 
 ```bash
 cd ~/xxu_2026/xxu_nav_2026
@@ -19,6 +28,13 @@ src/xxu_description/scripts/kill_simulation.sh
 ```
 
 ## 启动仿真与导航
+
+当前 AMCL/GICP 定位尚未验证通过，已通过 `enable_localization:=false` 默认暂停，
+依赖定位的地图导航也不启动。此开关覆盖仿真、实机、单点导航及独立导航入口；
+即使指定 `start_navigation:=true`，也仍需显式设置 `enable_localization:=true`
+才能恢复定位和导航。GICP 另需 `enable_gicp:=true`，默认仍为关闭。
+雷达、Small Point-LIO 里程计和仿真继续保留；这不代表地图定位精度已经修复。
+修改在重新启动 launch 后生效，不会停止已经运行的节点。
 
 完整启动命令行：
 
@@ -40,6 +56,7 @@ ros2 launch xxu_bringup simulation.launch.py start_navigation:=true rviz:=true
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `start_navigation` | `false` | 是否同时启动 Nav2 |
+| `enable_localization` | `false` | 临时定位总开关，关闭时 AMCL/GICP 和地图导航均不启动 |
 | `map` | `maps/complex_map.yaml` | 与 `complex_mapping.sdf` 对应的地图文件 |
 | `nav2_params_file` | `config/nav2_navigation.yaml` | Nav2 参数文件 |
 | `rviz` | `false` | 是否启动 RViz |
@@ -47,7 +64,7 @@ ros2 launch xxu_bringup simulation.launch.py start_navigation:=true rviz:=true
 | `enable_cmd_vel_odom` | `false` | 是否启用 cmd_vel 里程计 |
 | `use_livox_native` | `true` | 是否使用带逐点时间戳的分批射线 MID-360 仿真 |
 | `use_fake_frame` | `true` | 是否使用底盘上的 `gimbal_yaw_fake` 稳定速度参考系 |
-| `gyro_spin_rate` | `31.416（5转/s）` | 移动过程中的小陀螺角速度，设为 `0` 关闭 |
+| `gyro_spin_rate` | `1.5 rad/s` | 移动过程中的小陀螺角速度，设为 `0` 关闭 |
 | `enable_stamped_cmd_vel` | `true` | 使用 Jazzy 的 `TwistStamped` 命令链路 |
 | `auto_initial_pose` | `true` | 导航启动时用 `/scan` 对栅格地图粗匹配并初始化 AMCL |
 | `initial_pose_x/y/yaw` | `0.02/0.03/0.0` | 自动匹配失败时使用的后备初始位姿 |
@@ -100,6 +117,11 @@ ros2 launch xxu_bringup real_robot.launch.py use_sim_time:=true
 `/cmd_vel` 之前的速度消息统一为 `geometry_msgs/msg/TwistStamped`；最终 watchdog
 同时检查速度、/odom、/scan、/joint_states 和关键 TF，任一输入断流就以 20 Hz 发布零
 速度。底盘控制器自身还有 0.3 s 超时，因此上游节点退出时也会停止轮速输出。
+
+Small Point-LIO 发布的 `/odom` 固定使用 `header.frame_id=odom`、
+`child_frame_id=base_footprint`；位姿由 LIO 传感器帧经时间匹配 TF 换到底盘，
+`twist` 也在 `base_footprint` 中表达，并与发布的 `odom→base_footprint` 位姿同源。
+小陀螺/平移组合动作的仿真验证见 `tools/lio/README.md`。
 
 ## 接口和停车验证
 

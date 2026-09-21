@@ -1,0 +1,40 @@
+# MaleCNS V1 smoke benchmark plan.  This file is copied verbatim into the run
+# directory before execution; benchmark_plan.example.yaml remains untouched.
+preflight_status: ready
+run_id: run_20260919_smoke_v1
+results_root: /home/naiwu/fly_brain/gazebo_results/runs/run_20260919_smoke_v1
+rmw_implementation: rmw_cyclonedds_cpp
+cyclonedds_uri: file:///home/naiwu/xxu_2026/xxu_nav_2026/src/flybrain_nav_bridge/config/cyclonedds_benchmark.xml
+brain_device: cpu
+real_data_dir: /home/naiwu/fly-data
+real_brain_sha256: cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca
+rewired_data_dir: /home/naiwu/fly_brain/rewired/seed_1000
+rewired_brain_sha256: cc9bd1ecd00bd703a6fa648bc6ad145c93c7c1ee53debdcc9ce0d1f4305e6aca
+scenario_file: /home/naiwu/fly_brain/gazebo_results/runs/run_20260919_smoke_v1/config/benchmark_scenarios.yaml
+map_file: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_bringup/share/xxu_bringup/maps/complex_map.yaml
+world_file: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_description/share/xxu_description/worlds/complex_mapping.sdf
+nav2_params_file: /home/naiwu/xxu_2026/xxu_nav_2026/install/xxu_bringup/share/xxu_bringup/config/nav2_navigation.yaml
+# The scan values are a common sensor-preprocessing contract for A–D.  They
+# remove measured chassis-top self returns before all shared safety layers.
+scan_self_filter_radius: 0.42
+scan_min_height: 0.30
+planner_tolerance: 0.0
+trial_timeout_s: 45.0
+# Independent distant-success guard; Nav2's active goal checker remains at
+# xy_goal_tolerance: 0.12 m.  This 0.30 m guard rejects planner fallback.
+goal_success_guard_m: 0.30
+startup_grace_s: 120.0
+response_delta_threshold: 0.02
+start:
+  gazebo_world: {x: 1.75, y: 0.0, yaw: 3.14159}
+  # Disable scan relocalization so every paired trial receives this exact
+  # map-frame pose before Nav2 is activated.
+  map_reference: {frame: map, x: 0.025, y: -0.054, yaw: 0.0, relocalize: false}
+scenarios: [static_front, cross_left, cross_right, front_approach]
+controllers: [mppi, heuristic, flybrain, rewired]
+seeds: {start: 1000, count: 5}
+goals:
+  static_front: {frame: map, x: -1.0, y: 0.0, yaw: 0.0}
+  cross_left: {frame: map, x: -1.0, y: 0.0, yaw: 0.0}
+  cross_right: {frame: map, x: -1.0, y: 0.0, yaw: 0.0}
+  front_approach: {frame: map, x: -1.0, y: 0.0, yaw: 0.0}

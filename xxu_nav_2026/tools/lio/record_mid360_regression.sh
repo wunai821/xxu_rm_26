@@ -15,7 +15,7 @@ Options:
   --joint-topic TOPIC     Gimbal JointState (default: /joint_states)
   --lio-odom-topic TOPIC  Small Point-LIO output (default: /odom)
   --reference-odom TOPIC  Independent wheel/mocap odometry to include
-  --include-derived-clouds  Also record registered/compensated point clouds
+  --include-derived-clouds  Also record deskewed/compensated point clouds
   --storage-profile NAME  MCAP profile: fastwrite, zstd_fast or zstd_small
                           (default: fastwrite, to minimize recorder CPU load)
   -h, --help              Show this help
@@ -171,7 +171,7 @@ optional_topics=(
 )
 if [[ "$include_derived_clouds" == true ]]; then
   optional_topics+=(
-    /cloud_registered
+    /cloud_deskewed
     /livox/lidar_compensated
     /mid360/livox_points_compensated
   )

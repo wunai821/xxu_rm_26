@@ -7,12 +7,15 @@ small_point_lio:
         # LIO估计随云台运动的MID360位姿，发布时再通过动态TF换算到底盘。
         lidar_frame: mid360_link
         odom_topic: /odom
-        registered_cloud_topic: /cloud_registered
+        deskewed_cloud_topic: /cloud_deskewed
         odom_frame: odom
         base_frame: base_footprint
         # 等待动态云台关节TF追上雷达/IMU测量时间戳。
         tf_lookup_timeout: 0.1
         save_pcd: false
+        deskew_pose_history_duration: 5.0
+        deskew_pending_timeout: 0.25
+        deskew_pending_queue_size: 3
         # 无 timestamp 字段时，用于按点序估计一帧点云的采样时间跨度。
         # 当前 livox_pointcloud2 适配器优先读取点内 timestamp，因此这里不是
         # 当前仿真 shaper 的实际控制项。

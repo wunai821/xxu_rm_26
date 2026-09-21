@@ -46,6 +46,7 @@ find_package(OpenMP REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclpy REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -88,6 +89,7 @@ ament_target_dependencies(${PROJECT_NAME}
     rclcpp
     rclcpp_components
     rclpy
+    builtin_interfaces
     sensor_msgs
     geometry_msgs
     nav_msgs
@@ -120,6 +122,11 @@ install(TARGETS ${PROJECT_NAME}
 #############
 
 if(BUILD_TESTING)
+    add_executable(validated_livox_cloud_test test/validated_livox_cloud_test.cpp)
+    target_include_directories(validated_livox_cloud_test PRIVATE src)
+    ament_target_dependencies(validated_livox_cloud_test sensor_msgs)
+    target_compile_options(validated_livox_cloud_test PRIVATE -UNDEBUG)
+    add_test(NAME validated_livox_cloud_test COMMAND validated_livox_cloud_test)
     find_package(ament_lint_auto REQUIRED)
     list(APPEND AMENT_LINT_AUTO_EXCLUDE
         ament_cmake_copyright

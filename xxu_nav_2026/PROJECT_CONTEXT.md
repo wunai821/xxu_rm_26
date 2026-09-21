@@ -57,7 +57,7 @@ Nav2：规划、控制、行为树、避障
 | `src/pointcloud_to_laserscan` | PointCloud2 与 LaserScan 转换 |
 | `src/xxu_slam_toolbox` | 手动建图和自主探索建图 |
 | `src/pb_nav2_plugins` | 自定义 Nav2 行为和 costmap 插件 |
-| `src/pb_omni_mppi_controller` | 全向 MPPI 控制器 |
+| 系统包 `nav2_mppi_controller` | 官方 Nav2 MPPI，导航和探索均使用 `Omni` 全向模型 |
 | `src/pb_omni_pid_pursuit_controller` | 全向 PID 路径追踪控制器 |
 | `src/goal_approach_controller` | 目标接近控制器 |
 | `src/ai_controller_tuner` | 控制器参数自动调节工具 |
@@ -190,7 +190,7 @@ src/xxu_bringup/config/nav2_exploration.yaml
 
 ```bash
 colcon build --symlink-install --packages-select \
-  pb_nav2_plugins pb_omni_mppi_controller \
+  pb_nav2_plugins \
   pb_omni_pid_pursuit_controller
 source install/setup.zsh
 ```
@@ -216,4 +216,3 @@ source install/setup.zsh
 6. `src/xxu_bringup/config/nav2_navigation.yaml`
 7. 与当前问题直接相关的控制器、LIO 或传感器包
 8. `../PROJECT_LOG.md`
-

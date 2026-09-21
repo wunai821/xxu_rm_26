@@ -8,7 +8,7 @@
 
 #include "base_lidar.h"
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include "validated_livox_cloud.h"
 
 namespace small_point_lio {
 
@@ -21,27 +21,29 @@ namespace small_point_lio {
             subscription = node->create_subscription<sensor_msgs::msg::PointCloud2>(
                     topic,
                     rclcpp::SensorDataQoS(),
-                    [callback](const sensor_msgs::msg::PointCloud2 &msg) {
-                        sensor_msgs::PointCloud2ConstIterator<float> out_x(msg, "x");
-                        sensor_msgs::PointCloud2ConstIterator<float> out_y(msg, "y");
-                        sensor_msgs::PointCloud2ConstIterator<float> out_z(msg, "z");
-                        sensor_msgs::PointCloud2ConstIterator<uint8_t> out_tag(msg, "tag");
-                        sensor_msgs::PointCloud2ConstIterator<double> out_timestamp(msg, "timestamp");
-                        size_t size = msg.width * msg.height;
+                    [callback, logger = node->get_logger(), clock = node->get_clock()](const sensor_msgs::msg::PointCloud2 &msg) {
+                        std::array<uint32_t, 5> offsets{};
+                        if (!validateLivoxCloud(msg, offsets)) {
+                            RCLCPP_WARN_THROTTLE(logger, *clock, 2000, "Rejecting malformed Livox PointCloud2");
+                            return;
+                        }
+                        const size_t size = size_t(msg.width) * msg.height;
                         std::vector<common::Point> pointcloud;
                         pointcloud.reserve(size);
-                        for (size_t i = 0; i < size; ++i) {
-                            if ((*out_tag & 0b00111111) == 0b00000000) {
+                        for (uint32_t row = 0; row < msg.height; ++row) {
+                          for (uint32_t col = 0; col < msg.width; ++col) {
+                            const auto *data = msg.data.data() + size_t(row) * msg.row_step + size_t(col) * msg.point_step;
+                            if ((data[offsets[3]] & 0b00111111) == 0b00000000) {
                                 common::Point new_point;
-                                new_point.position << *out_x, *out_y, *out_z;
-                                new_point.timestamp = *out_timestamp * 1e-9;
-                                pointcloud.push_back(new_point);
+                                new_point.position << readLivoxValue<float>(data + offsets[0], msg.is_bigendian),
+                                    readLivoxValue<float>(data + offsets[1], msg.is_bigendian),
+                                    readLivoxValue<float>(data + offsets[2], msg.is_bigendian);
+                                new_point.timestamp = readLivoxValue<double>(data + offsets[4], msg.is_bigendian) * 1e-9;
+                                if (new_point.position.allFinite() && std::isfinite(new_point.timestamp)) {
+                                    pointcloud.push_back(new_point);
+                                }
                             }
-                            ++out_x;
-                            ++out_y;
-                            ++out_z;
-                            ++out_tag;
-                            ++out_timestamp;
+                          }
                         }
                         callback(pointcloud);
                     });

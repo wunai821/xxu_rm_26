@@ -68,7 +68,7 @@ tools/lio/record_mid360_regression.sh rotating_motion \
 ```
 
 为避免录包进程与 LIO 抢占 CPU，默认 MCAP 使用低开销 `fastwrite`，且不录
-`/cloud_registered` 等重型派生点云。如确实需要检查派生云，再加
+`/cloud_deskewed` 等重型派生点云。如确实需要检查派生云，再加
 `--include-derived-clouds`；存储空间受限时可另选 `--storage-profile zstd_fast`。
 
 默认关键话题为 `/livox/lidar`、`/livox/imu`、`/joint_states` 和 `/odom`，
@@ -92,6 +92,45 @@ tools/lio/inspect_mid360_bag.py bags/lio_regression/<bag-directory>
 静止旋转包首先看 `max_xy_from_start`；两组运动包再比较 LIO 与实测路线或独立里程计
 的净位移。这样可将“旋转时漂移”拆分为输入时序/格式问题、静止旋转漂移和运动尺度
 误差三个层次。
+
+## 仿真动作验证与小陀螺速度上限
+
+启动仿真后，可用 Gazebo 真值桥接和动作验证器检查 `/odom` 的帧、位姿和速度：
+
+```bash
+ros2 run ros_gz_bridge parameter_bridge \
+  '/world/complex_mapping/dynamic_pose/info@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V'
+python3 tools/lio/validate_motion.py static --duration 3
+python3 tools/lio/validate_motion.py translate --duration 2.5 --speed 0.2
+python3 tools/lio/validate_motion.py rotate --duration 2.5 --angular-speed 0.5
+python3 tools/lio/validate_motion.py gyro_translate --duration 2.5 --speed 0.2
+```
+
+基础定位验收建议用 `gyro_spin_rate:=0`；组合工况可用键盘默认的小陀螺
+`gyro_spin_rate:=1.5`。验证器要求 `/odom` 的 `header.frame_id=odom`、
+`child_frame_id=base_footprint`，并同时报告 Gazebo 真值误差、`Odometry.twist`、
+轮速和云台速度。
+
+当前底盘参数为轮半径 0.0762 m、轮速上限 100 rad/s。对纯 X 平移叠加小陀螺角速度，
+轮速逆解为：
+
+```text
+wheel_i = (tx_i (vx - wz y_i) + ty_i (wz x_i)) / wheel_radius
+```
+
+由四轮几何计算得到“不触发全局轮速缩放”的平移范围。这里的范围是控制器
+轮速约束，不是安全运行速度；当纯小陀螺项本身已超过轮速上限时，不存在可行的
+平移速度范围：
+
+| 小陀螺 `wz` | 平移范围 `vx` | 说明 |
+|---:|---:|---|
+| 1.5 rad/s | -10.11 ～ +10.11 m/s | 远高于当前 Nav2 上限 1.5 m/s |
+| 31.416 rad/s | 不存在 | 纯小陀螺轮速约 130.18 rad/s，已超过 100 rad/s |
+
+仅旋转、不平移时，小陀螺角速度约不超过 24.13 rad/s 才不会触发轮速缩放。
+超过该范围时控制器会按比例缩放四个轮速，不能把输入命令值当作实际底盘速度。
+仿真中 `gyro_spin_rate:=1.5`、`vx=5.0` 的轮速峰值约 66.3 rad/s，`vx=10.5`
+达到 100 rad/s 饱和；这两个高速度点仅用于测边界，不代表安全运行速度。
 
 ## 仿真平移丢失诊断
 

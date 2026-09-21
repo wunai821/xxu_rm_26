@@ -1,0 +1,33 @@
+# All coordinates are Gazebo world coordinates. Keep this file unchanged across
+# A/B/C/D runs; the manager applies a seeded paired perturbation equally.
+scenarios:
+  static_front:
+    duration_s: 12.0
+    position_jitter_m: 0.0
+    keyframes:
+      - {t: 0.0, x: 0.30, y: 0.00, z: 0.40, yaw: 0.0}
+      - {t: 12.0, x: 0.30, y: 0.00, z: 0.40, yaw: 0.0}
+  cross_left:
+    duration_s: 12.0
+    position_jitter_m: 0.03
+    keyframes:
+      - {t: 0.0, x: 0.40, y: 2.00, z: 0.40, yaw: 0.0}
+      - {t: 6.0, x: 0.40, y: -2.00, z: 0.40, yaw: 0.0}
+      - {t: 12.0, x: 0.40, y: -2.00, z: 0.40, yaw: 0.0}
+  cross_right:
+    duration_s: 12.0
+    position_jitter_m: 0.03
+    keyframes:
+      - {t: 0.0, x: 0.40, y: -2.00, z: 0.40, yaw: 0.0}
+      - {t: 6.0, x: 0.40, y: 2.00, z: 0.40, yaw: 0.0}
+      - {t: 12.0, x: 0.40, y: 2.00, z: 0.40, yaw: 0.0}
+  front_approach:
+    duration_s: 8.0
+    position_jitter_m: 0.02
+    keyframes:
+      # The robot starts at world x=1.75 facing toward decreasing x.  This
+      # obstacle begins in front and moves toward it at 0.55 m/s, producing a
+      # nominal initial closing TTC of about two seconds.
+      - {t: 0.0, x: 0.30, y: 0.00, z: 0.40, yaw: 0.0}
+      - {t: 3.0, x: 1.95, y: 0.00, z: 0.40, yaw: 0.0}
+      - {t: 8.0, x: 1.95, y: 0.00, z: 0.40, yaw: 0.0}

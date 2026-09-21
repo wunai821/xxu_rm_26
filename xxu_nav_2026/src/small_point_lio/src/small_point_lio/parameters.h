@@ -49,6 +49,7 @@ namespace small_point_lio {
 
         bool motion_diagnostics_en = false;
         bool publish_odometry_without_downsample = false;
+        double deskew_pose_history_duration = 5.0;
 
         void read_parameters(rclcpp::Node &node);
     };

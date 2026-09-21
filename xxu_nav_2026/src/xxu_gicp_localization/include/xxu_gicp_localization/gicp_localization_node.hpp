@@ -14,6 +14,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <cstddef>
 #include <vector>
 
 namespace xxu_gicp_localization
@@ -22,6 +23,7 @@ namespace xxu_gicp_localization
 class GicpLocalizationNode final : public rclcpp::Node {
 public:
   explicit GicpLocalizationNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  ~GicpLocalizationNode() override;
 
 private:
   using Point = Eigen::Vector3d;
@@ -87,7 +89,7 @@ private:
   int num_threads_{4};
   int max_iterations_{32};
   double max_correspondence_distance_{1.0};
-  double tf_lookup_timeout_{0.1};
+  double tf_lookup_timeout_{0.25};
   double min_range_{0.5};
   double max_range_{50.0};
   int min_cloud_points_{80};
@@ -110,6 +112,27 @@ private:
   Transform last_odom_base_{Transform::Identity()};
   bool have_last_pose_{false};
   bool map_ready_{false};
+
+  // Registration counters are emitted once at shutdown so throttled warning
+  // logs cannot hide how many clouds were actually attempted or rejected.
+  std::size_t clouds_received_{0};
+  std::size_t dropped_map_not_ready_{0};
+  std::size_t dropped_no_frame_{0};
+  std::size_t dropped_unexpected_frame_{0};
+  std::size_t dropped_stale_{0};
+  std::size_t dropped_cloud_points_{0};
+  std::size_t dropped_no_amcl_{0};
+  std::size_t dropped_tf_{0};
+  std::size_t dropped_preprocess_sparse_{0};
+  std::size_t registration_attempts_{0};
+  std::size_t converged_results_{0};
+  std::size_t accepted_results_{0};
+  std::size_t rejected_not_converged_{0};
+  std::size_t rejected_inliers_{0};
+  std::size_t rejected_error_{0};
+  std::size_t rejected_jump_{0};
+  std::size_t rejected_yaw_jump_{0};
+  std::size_t registration_exceptions_{0};
 };
 
 }  // namespace xxu_gicp_localization

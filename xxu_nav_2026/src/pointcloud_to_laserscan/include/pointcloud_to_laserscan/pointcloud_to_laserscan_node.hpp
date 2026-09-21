@@ -95,7 +95,7 @@ private:
   std::string target_frame_;
   double tolerance_;
   double min_height_, max_height_, angle_min_, angle_max_, angle_increment_, scan_time_, range_min_,
-    range_max_;
+    range_max_, robot_self_filter_radius_;
   bool use_inf_;
   double inf_epsilon_;
   bool publish_processed_cloud_;

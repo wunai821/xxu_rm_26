@@ -48,6 +48,12 @@ topics:
       frame_id: base_footprint
       owner: pointcloud_to_laserscan_or_hardware_adapter
   navigation:
+    odometry:
+      name: /odom_nav
+      type: nav_msgs/msg/Odometry
+      header_frame_id: odom
+      child_frame_id: gimbal_yaw_fake
+      owner: fake_vel_transform
     controller_output:
       name: /cmd_vel_nav
       type: geometry_msgs/msg/TwistStamped
@@ -83,6 +89,8 @@ tf_contract:
     - parent: gimbal_link
       child: livox_frame
   dynamic:
+    - parent: base_footprint
+      child: gimbal_yaw_fake
     - parent: odom
       child: base_footprint
     - parent: base_link

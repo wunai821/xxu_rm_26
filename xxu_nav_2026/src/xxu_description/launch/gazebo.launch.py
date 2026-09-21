@@ -4,6 +4,7 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    LogInfo,
     RegisterEventHandler,
     SetEnvironmentVariable,
     TimerAction,
@@ -65,6 +66,29 @@ def generate_launch_description():
     gyro_spin_rate = LaunchConfiguration("gyro_spin_rate")
     gazebo_gui = LaunchConfiguration("gazebo_gui")
     world = LaunchConfiguration("world")
+    spawn_x = LaunchConfiguration("spawn_x")
+    spawn_y = LaunchConfiguration("spawn_y")
+    spawn_yaw = LaunchConfiguration("spawn_yaw")
+    scan_self_filter_radius = LaunchConfiguration("scan_self_filter_radius")
+    scan_min_height = LaunchConfiguration("scan_min_height")
+    cmd_vel_out_topic = LaunchConfiguration("cmd_vel_out_topic")
+
+    odom_only_warning = LogInfo(
+        msg=(
+            "enable_lio=false with enable_cmd_vel_odom=true is odom-only: "
+            "the safety scan uses gimbal-compensated points without LIO body-motion deskew. "
+            "This diagnostic mode does not support map navigation."
+        ),
+        condition=IfCondition(
+            PythonExpression([
+                "'",
+                enable_lio,
+                "' == 'false' and '",
+                enable_cmd_vel_odom,
+                "' == 'true'",
+            ])
+        ),
+    )
 
     gz_resource_path = SetEnvironmentVariable(
         "GZ_SIM_RESOURCE_PATH",
@@ -114,7 +138,10 @@ def generate_launch_description():
     declare_enable_cmd_vel_odom = DeclareLaunchArgument(
         "enable_cmd_vel_odom",
         default_value="false",
-        description="Publish simulation planar /odom by integrating /cmd_vel",
+        description=(
+            "Publish odom by integrating /cmd_vel when LIO is disabled; "
+            "this fallback has no /scan and is not a navigation source"
+        ),
     )
     declare_use_livox_native = DeclareLaunchArgument(
         "use_livox_native",
@@ -143,7 +170,7 @@ def generate_launch_description():
     )
     declare_gyro_spin_rate = DeclareLaunchArgument(
         "gyro_spin_rate",
-        default_value="31.4159265359",
+        default_value="1.5",
         description="Chassis gyro angular speed while translating (rad/s); 0 disables it",
     )
     declare_gazebo_gui = DeclareLaunchArgument(
@@ -155,6 +182,30 @@ def generate_launch_description():
         "world",
         default_value=PathJoinSubstitution([pkg_share, "worlds", "complex_mapping.sdf"]),
         description="Gazebo world SDF path",
+    )
+    declare_spawn_x = DeclareLaunchArgument(
+        "spawn_x", default_value="1.75",
+        description="Gazebo robot spawn x in world coordinates",
+    )
+    declare_spawn_y = DeclareLaunchArgument(
+        "spawn_y", default_value="0.0",
+        description="Gazebo robot spawn y in world coordinates",
+    )
+    declare_spawn_yaw = DeclareLaunchArgument(
+        "spawn_yaw", default_value="3.14159",
+        description="Gazebo robot spawn yaw in world coordinates",
+    )
+    declare_scan_self_filter_radius = DeclareLaunchArgument(
+        "scan_self_filter_radius", default_value="0.42",
+        description="Base-frame radius that deterministically removes chassis self-returns from /scan",
+    )
+    declare_scan_min_height = DeclareLaunchArgument(
+        "scan_min_height", default_value="0.30",
+        description="Minimum base-frame point height retained in the shared navigation scan",
+    )
+    declare_cmd_vel_out_topic = DeclareLaunchArgument(
+        "cmd_vel_out_topic", default_value="/cmd_vel_collision",
+        description="Collision-monitor output consumed by the downstream safety chain",
     )
 
     # robot_state_publisher
@@ -212,10 +263,10 @@ def generate_launch_description():
         executable="create",
         arguments=["-topic", "robot_description",
                    "-name", "xxu",
-                   "-x", "1.75",
-                   "-y", "0.0",
+                   "-x", spawn_x,
+                   "-y", spawn_y,
                    "-z", "0.05",
-                   "-Y", "3.14159",
+                   "-Y", spawn_yaw,
                    "-allow_renaming", "false"],
         output="screen",
     )
@@ -325,7 +376,7 @@ def generate_launch_description():
             # base_link -> gimbal_link TF remains dynamic for LiDAR/LIO.
             "fake_robot_base_frame": "gimbal_yaw_fake",
             "odom_topic": "/odom",
-            "input_cmd_vel_topic": "/cmd_vel_collision",
+            "input_cmd_vel_topic": cmd_vel_out_topic,
             "output_cmd_vel_topic": "/cmd_vel_transformed",
             "spin_speed": gyro_spin_rate,
             "gyro_linear_threshold": 0.01,
@@ -534,7 +585,10 @@ def generate_launch_description():
             "use_sim_time": use_sim_time,
             "target_frame": "base_footprint",
             "transform_tolerance": 0.05,
-            "min_height": 0.05,
+            # The chassis top is z=0.26949 m in base_footprint.  Retaining
+            # only points above it removes deterministic deskewed body echoes
+            # before the shared Nav2/TTC/Collision Monitor scan is formed.
+            "min_height": ParameterValue(scan_min_height, value_type=float),
             "max_height": 0.50,
             "angle_min": -3.1415926,
             "angle_max": 3.1415926,
@@ -542,6 +596,7 @@ def generate_launch_description():
             "scan_time": 0.1,
             "range_min": 0.30,
             "range_max": 40.0,
+            "robot_self_filter_radius": scan_self_filter_radius,
             "use_inf": True,
             "inf_epsilon": 1.0,
             "scan_qos_reliability": "reliable",
@@ -555,9 +610,12 @@ def generate_launch_description():
             "crop_max_y": 40.0,
         }],
         remappings=[
-            # Navigation stays independent of LIO and shares the same strict
-            # point-time compensated cloud in the production configuration.
-            ("cloud_in", "/mid360/livox_points_compensated"),
+            # Navigation uses LIO body-motion deskew. Without LIO, retain a
+            # gimbal-compensated scan for the diagnostic safety chain.
+            ("cloud_in", PythonExpression([
+                "'/cloud_deskewed' if '", enable_lio,
+                "' == 'true' else '/mid360/livox_points_compensated'",
+            ])),
             ("scan", "/scan"),
             ("processed_cloud", "/mid360/points_navigation"),
         ],
@@ -570,6 +628,7 @@ def generate_launch_description():
         output="screen",
         condition=IfCondition(enable_lio),
         parameters=[small_point_lio_config, {
+            "use_sim_time": ParameterValue(use_sim_time, value_type=bool),
             "motion_diagnostics_en": ParameterValue(
                 LaunchConfiguration("lio_motion_diagnostics"), value_type=bool),
         }],
@@ -596,12 +655,12 @@ def generate_launch_description():
             "input_topic": PythonExpression([
                 "'/cmd_vel_transformed' if '",
                 use_fake_frame,
-                "' == 'true' else '/cmd_vel_collision'",
+                "' == 'true' else '", cmd_vel_out_topic, "'",
             ]),
             "output_topic": "/cmd_vel",
             "status_topic": "/cmd_vel_watchdog/healthy",
             "timeout": 0.3,
-            "publish_rate": 20.0,
+            "publish_rate": 100.0,
             "output_frame_id": "base_link",
             "require_odom": True,
             "odom_topic": "/odom",
@@ -658,6 +717,13 @@ def generate_launch_description():
         declare_gyro_spin_rate,
         declare_gazebo_gui,
         declare_world,
+        declare_spawn_x,
+        declare_spawn_y,
+        declare_spawn_yaw,
+        declare_scan_self_filter_radius,
+        declare_scan_min_height,
+        declare_cmd_vel_out_topic,
+        odom_only_warning,
         robot_state_publisher,
         gz_sim,
         # Gazebo advertises /clock only after the world is running. Starting

@@ -1,35 +1,27 @@
 # fake_vel_transform
 
-本功能包启动时，Fake Velocity Transform 会在底盘 `robot_base_frame` 上创建一个稳定的 `fake_robot_base_frame`（默认 `gimbal_yaw_fake`）。它与底盘原点一致，但使用 `/odom` 的底盘 yaw 做反向补偿，使该速度参考系不随底盘航向变化。云台真实的 `base_link -> gimbal_link -> mid360_link` TF 保持不变，供 LiDAR/LIO 使用。节点同时会订阅 `input_cmd_vel_topic`，将速度转换到底盘 `robot_base_frame` 后发布到 `output_cmd_vel_topic`。
+上位机小陀螺与导航速度适配节点。详细职责、TF、启动及回归说明见
+[小陀螺导航说明](../../tools/navigation/README.md)。
 
-主要目的是适配 LiDAR 固连在旋转云台上的 NAV2 链路：NAV2 使用稳定的 `gimbal_yaw_fake` 作为速度参考系，云台继续使用真实旋转 TF 扫描；输出命令再转换为底盘 `base_link` 坐标系，交给底盘轮速逆解。
+- 读取真实 `/odom`，发布唯一的稳定坐标系 `gimbal_yaw_fake`。
+- fake TF 的父坐标系是 `/odom.child_frame_id`（项目中为 `base_footprint`）。
+- 发布 `/odom_nav`：稳定参考系的位姿与平面速度，虚拟角速度为零。
+- 将稳定参考系的导航平移指令转为 `base_link` 指令，移动时叠加 `spin_speed`。
+- 真实的 `base_link → gimbal_link → 雷达` TF 保持独立，供传感器补偿与定位使用。
 
-## Published Topics
+| 参数 | 默认值 | 说明 |
+|---|---|---|
+| `odom_topic` | `Odometry` | 原始底盘里程计；项目 launch 设置为 `/odom` |
+| `nav_odom_topic` | `/odom_nav` | 导航用里程计 |
+| `robot_base_frame` | `base_link` | 输出指令坐标系 |
+| `fake_robot_base_frame` | `gimbal_yaw_fake` | 唯一稳定导航参考系 |
+| `input_cmd_vel_topic` | `cmd_vel` | 项目使用 `/cmd_vel_collision` |
+| `output_cmd_vel_topic` | `aft_cmd_vel` | 项目使用 `/cmd_vel_transformed` |
+| `spin_speed` | `0.0` | 可运行时更新；项目仿真/实车入口默认传入 `1.5` rad/s |
+| `gyro_linear_threshold` | `0.01` | 叠加自旋的平移速度阈值 |
+| `publish_rate` | `100.0` | 按最新底盘航向重算输出的频率 |
+| `command_timeout` | `0.3` | 原始速度指令超时 |
+| `odom_timeout` | `0.5` | 里程计接收超时 |
 
-* `tf` (`tf2_msgs/msg/TFMessage`) - 与机器人可移动关节相对应的变换
-* `output_cmd_vel_topic` (`geometry_msgs/msg/TwistStamped`) - 转换后的速度指令，保留并更新坐标系信息
-
-## Subscribed Topics
-
-* `input_cmd_vel_topic` (`geometry_msgs/msg/TwistStamped`) - 机器人的速度指令
-* `odom_topic` (`nav_msgs/msg/Odometry`) - 里程计数据
-
-## Parameters
-
-* `odom_topic` (`string`, default: "odom") - 里程计话题；节点使用 odometry 的时间戳建立 yaw 历史
-* `robot_base_frame` (`string`, default: "base_link") - 底盘速度执行坐标系，也是 fake frame 的父坐标系
-* `fake_robot_base_frame` (`string`, default: "gimbal_yaw_fake") - 稳定的 NAV2 速度参考坐标系
-* `input_cmd_vel_topic` (`string`, default: "") - 输入速度指令的话题
-* `output_cmd_vel_topic` (`string`, default: "") - 输出速度指令的话题。将原本基于 `fake_robot_base_frame` 的速度变换到 `robot_base_frame` 后发布
-* `spin_speed` (`double`, default: 0.0) - 移动时叠加到底盘角速度上的小陀螺速度；输入速度指令中的 `angular.z` 会被保留，设为 `0` 禁用
-* `gyro_linear_threshold` (`double`, default: 0.01) - 判定机器人正在平移的速度阈值（m/s）
-
-## Launch 集成
-
-在 `xxu_description`、`xxu_bringup`、`xxu_slam_toolbox` 的主启动链路中，fake frame 模式默认关闭。需要启用时添加：
-
-```bash
-use_fake_frame:=true
-```
-
-默认关闭时，NAV2 使用 `base_link`；启用后，NAV2 使用 `gimbal_yaw_fake`，并启动 `fake_vel_transform` 将碰撞监测后的 `/cmd_vel_collision` 转换为 `/cmd_vel_transformed`。最终由 watchdog 发布到 `/cmd_vel`，再交给底盘控制器执行。
+到点/碰撞零指令会停止底盘自旋。无输入时不输出运动；断流时输出零速度。
+运行时只支持修改 `spin_speed`；其余节点参数修改后重启。

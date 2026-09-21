@@ -62,6 +62,11 @@ namespace small_point_lio {
 
         // 数据发布
         publish_odometry_without_downsample = node.declare_parameter<bool>("publish_odometry_without_downsample");
+        deskew_pose_history_duration = node.declare_parameter<double>(
+                "deskew_pose_history_duration", 5.0);
+        if (!std::isfinite(deskew_pose_history_duration) || deskew_pose_history_duration <= 0.0) {
+            throw std::invalid_argument("deskew_pose_history_duration must be finite and positive");
+        }
     }
 
 }// namespace small_point_lio

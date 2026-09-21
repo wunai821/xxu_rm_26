@@ -11,6 +11,7 @@ install(
 install(
   PROGRAMS
     scripts/auto_initial_pose.py
+    scripts/amcl_particle_diagnostic.py
     scripts/mock_robot_io.py
     scripts/nav2_navigation_startup.py
     scripts/wait_for_odom.py

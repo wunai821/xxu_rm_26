@@ -226,17 +226,17 @@ GicpLocalizationNode::GicpLocalizationNode(const rclcpp::NodeOptions & options)
   odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
   base_frame_ = declare_parameter<std::string>("base_frame", "base_footprint");
   cloud_topic_ = declare_parameter<std::string>(
-    "cloud_topic", "/mid360/livox_points_compensated");
+    "cloud_topic", "/cloud_deskewed");
   amcl_topic_ = declare_parameter<std::string>("amcl_topic", "/amcl_pose");
   pose_topic_ = declare_parameter<std::string>("pose_topic", "/gicp_pose");
-  expected_cloud_frame_ = declare_parameter<std::string>("cloud_frame", "lio_base_sensor");
+  expected_cloud_frame_ = declare_parameter<std::string>("cloud_frame", "base_footprint");
   downsampling_resolution_ = declare_parameter<double>("downsampling_resolution", 0.20);
   num_neighbors_ = declare_parameter<int>("num_neighbors", 20);
   num_threads_ = declare_parameter<int>("num_threads", 4);
   max_iterations_ = declare_parameter<int>("max_iterations", 32);
   max_correspondence_distance_ = declare_parameter<double>(
     "max_correspondence_distance", 1.0);
-  tf_lookup_timeout_ = declare_parameter<double>("tf_lookup_timeout", 0.10);
+  tf_lookup_timeout_ = declare_parameter<double>("tf_lookup_timeout", 0.25);
   min_range_ = declare_parameter<double>("min_range", 0.5);
   max_range_ = declare_parameter<double>("max_range", 50.0);
   min_cloud_points_ = declare_parameter<int>("min_cloud_points", 80);
@@ -258,7 +258,7 @@ GicpLocalizationNode::GicpLocalizationNode(const rclcpp::NodeOptions & options)
     max_iterations_ < 1 || max_correspondence_distance_ <= 0.0 || min_range_ < 0.0 ||
     max_range_ <= min_range_ || min_cloud_points_ < 3 || min_inliers_ < 3 ||
     max_error_ <= 0.0 || max_pose_jump_ <= 0.0 || max_yaw_jump_ <= 0.0 ||
-    amcl_timeout_ <= 0.0 || cloud_timeout_ <= 0.0)
+      amcl_timeout_ <= 0.0 || cloud_timeout_ <= 0.0)
   {
     throw std::invalid_argument("xxu_gicp_localization received an invalid parameter");
   }
@@ -290,6 +290,24 @@ GicpLocalizationNode::GicpLocalizationNode(const rclcpp::NodeOptions & options)
     get_logger(), "AMCL-seeded small_gicp localization started: cloud=%s map=%s",
       cloud_topic_.c_str(),
     pcd_map_.empty() ? "<unset>" : pcd_map_.c_str());
+}
+
+GicpLocalizationNode::~GicpLocalizationNode()
+{
+  RCLCPP_INFO(
+    get_logger(),
+    "GICP summary: registration_attempts=%zu converged=%zu accepted=%zu "
+    "clouds_received=%zu dropped_map_not_ready=%zu dropped_no_frame=%zu "
+    "dropped_unexpected_frame=%zu dropped_stale=%zu dropped_cloud_points=%zu "
+    "dropped_no_amcl=%zu dropped_tf=%zu dropped_preprocess_sparse=%zu "
+    "rejected_not_converged=%zu rejected_inliers=%zu rejected_error=%zu "
+    "rejected_jump=%zu rejected_yaw_jump=%zu registration_exceptions=%zu",
+    registration_attempts_, converged_results_, accepted_results_,
+    clouds_received_, dropped_map_not_ready_, dropped_no_frame_,
+    dropped_unexpected_frame_, dropped_stale_, dropped_cloud_points_,
+    dropped_no_amcl_, dropped_tf_, dropped_preprocess_sparse_,
+    rejected_not_converged_, rejected_inliers_, rejected_error_,
+    rejected_jump_, rejected_yaw_jump_, registration_exceptions_);
 }
 
 void GicpLocalizationNode::amclCallback(
@@ -401,20 +419,6 @@ bool GicpLocalizationNode::lookupTransform(
       target, source, stamp, rclcpp::Duration::from_seconds(tf_lookup_timeout_));
     return convert(tf);
   } catch (const tf2::TransformException & exception) {
-    try {
-      const auto latest = tf_buffer_->lookupTransform(
-        target, source, rclcpp::Time(0, 0, get_clock()->get_clock_type()),
-        rclcpp::Duration::from_seconds(tf_lookup_timeout_));
-      if (convert(latest)) {
-        RCLCPP_WARN_THROTTLE(
-          get_logger(), *get_clock(), 5000,
-          "Exact-time TF unavailable (%s <- %s); using latest transform: %s",
-          target.c_str(), source.c_str(), exception.what());
-        return true;
-      }
-    } catch (const tf2::TransformException &) {
-      // Report the original timestamped lookup error below.
-    }
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "TF lookup failed (%s <- %s): %s",
       target.c_str(), source.c_str(), exception.what());
@@ -559,17 +563,24 @@ void GicpLocalizationNode::publishResult(
 
 void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
-  if (!msg || !map_ready_) {
+  if (!msg) {
+    return;
+  }
+  ++clouds_received_;
+  if (!map_ready_) {
+    ++dropped_map_not_ready_;
     return;
   }
   const std::string source_frame = msg->header.frame_id.empty() ? expected_cloud_frame_ :
     msg->header.frame_id;
   if (source_frame.empty()) {
+    ++dropped_no_frame_;
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Dropping cloud with no frame_id");
     return;
   }
   if (!expected_cloud_frame_.empty() && source_frame != expected_cloud_frame_) {
+    ++dropped_unexpected_frame_;
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Dropping cloud from unexpected frame %s (expected %s)",
       source_frame.c_str(), expected_cloud_frame_.c_str());
@@ -579,6 +590,7 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
   const rclcpp::Time stamp(msg->header.stamp, get_clock()->get_clock_type());
   const rclcpp::Time now = get_clock()->now();
   if (!cloudIsFresh(now, stamp)) {
+    ++dropped_stale_;
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Dropping stale cloud (age %.3f s)",
       (now - stamp).seconds());
@@ -587,6 +599,7 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
 
   std::vector<Point> source_points;
   if (!cloudToPoints(*msg, source_points)) {
+    ++dropped_cloud_points_;
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Dropping cloud with fewer than %d usable points",
       min_cloud_points_);
@@ -600,6 +613,7 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
   }
   const bool fresh_amcl = amclIsFresh(now, amcl);
   if (!have_last_pose_ && !fresh_amcl) {
+    ++dropped_no_amcl_;
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Waiting for a fresh AMCL pose before GICP");
     return;
@@ -610,6 +624,7 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
   if (!lookupTransform(odom_frame_, base_frame_, stamp, odom_base) ||
     !lookupTransform(base_frame_, source_frame, stamp, base_sensor))
   {
+    ++dropped_tf_;
     return;
   }
   odom_base = planar(odom_base);
@@ -634,6 +649,7 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
     if (!source_preprocessed.first || source_preprocessed.first->size() <
       static_cast<size_t>(min_inliers_))
     {
+      ++dropped_preprocess_sparse_;
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 5000, "Cloud became too sparse after downsampling");
       return;
@@ -646,9 +662,14 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
     setting.num_threads = num_threads_;
     setting.rotation_eps = 0.001;
     setting.translation_eps = 0.001;
+    ++registration_attempts_;
     result = small_gicp::align(
       *target_points_, *source_preprocessed.first, *target_tree_, initial_map_sensor, setting);
+    if (result.converged) {
+      ++converged_results_;
+    }
   } catch (const std::exception & exception) {
+    ++registration_exceptions_;
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "small_gicp failed: %s", exception.what());
     return;
@@ -658,17 +679,42 @@ void GicpLocalizationNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
   const Transform reference = have_last_pose_ && !reinitialized ?
     planar(last_map_base_ * last_odom_base_.inverse() * odom_base) : amcl.map_base;
   if (!acceptResult(map_base, reference, result, reinitialized)) {
+    const double mean_error = result.num_inliers == 0 ?
+      std::numeric_limits<double>::infinity() : result.error / result.num_inliers;
+    if (!result.converged) {
+      ++rejected_not_converged_;
+    } else if (result.num_inliers < static_cast<size_t>(min_inliers_)) {
+      ++rejected_inliers_;
+    } else if (!std::isfinite(mean_error) || mean_error > max_error_ || !finiteTransform(map_base)) {
+      ++rejected_error_;
+    } else if (reinitialized && planarDistance(map_base, reference) > max_relocalization_jump_) {
+      ++rejected_jump_;
+    } else if (reinitialized && planarYawDistance(map_base, reference) > max_relocalization_yaw_) {
+      ++rejected_yaw_jump_;
+    } else if (!reinitialized && planarDistance(map_base, reference) > max_pose_jump_) {
+      ++rejected_jump_;
+    } else if (!reinitialized && planarYawDistance(map_base, reference) > max_yaw_jump_) {
+      ++rejected_yaw_jump_;
+    } else {
+      ++rejected_error_;
+    }
+    const bool exhausted_iterations = !result.converged &&
+      result.iterations + 1 >= static_cast<std::size_t>(max_iterations_);
+    const char * termination = result.converged ? "criteria" :
+      (exhausted_iterations ? "max_iterations" : "no_decreasing_step");
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "Rejected GICP result: converged=%s inliers=%zu mean_error=%.4f jump=%.3f "
-      "yaw_jump=%.3f",
+      "yaw_jump=%.3f iterations=%zu/%d termination=%s",
       result.converged ? "true" : "false", result.num_inliers,
       result.error / std::max<size_t>(result.num_inliers, 1),
-      planarDistance(map_base, reference), planarYawDistance(map_base, reference));
+      planarDistance(map_base, reference), planarYawDistance(map_base, reference),
+      result.iterations + 1, max_iterations_, termination);
     return;
   }
 
   publishResult(map_base, odom_base, stamp, result);
+  ++accepted_results_;
   last_map_base_ = map_base;
   last_odom_base_ = odom_base;
   have_last_pose_ = true;

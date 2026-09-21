@@ -29,11 +29,13 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     start_navigation = LaunchConfiguration("start_navigation")
+    enable_localization = LaunchConfiguration("enable_localization")
     map_file = LaunchConfiguration("map")
     nav2_params_file = LaunchConfiguration("nav2_params_file")
     rviz = LaunchConfiguration("rviz")
     rviz_config = LaunchConfiguration("rviz_config")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
+    gyro_spin_rate = LaunchConfiguration("gyro_spin_rate")
     enable_lio = LaunchConfiguration("enable_lio")
     enable_gicp = LaunchConfiguration("enable_gicp")
     gicp_pcd_map = LaunchConfiguration("gicp_pcd_map")
@@ -127,7 +129,7 @@ def generate_launch_description():
             "crop_max_y": 40.0,
         }],
         remappings=[
-            ("cloud_in", "/livox/lidar_compensated"),
+            ("cloud_in", "/cloud_deskewed"),
             ("scan", "/scan"),
             ("processed_cloud", "/mid360/points_navigation"),
         ],
@@ -137,7 +139,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([bringup_share, "launch", "navigation.launch.py"])
         ]),
-        condition=IfCondition(start_navigation),
+        condition=IfCondition(AndSubstitution(start_navigation, enable_localization)),
         launch_arguments={
             "use_sim_time": use_sim_time,
             "map": map_file,
@@ -146,6 +148,7 @@ def generate_launch_description():
             "rviz_config": rviz_config,
             "use_fake_frame": use_fake_frame,
             "enable_gicp": enable_gicp,
+            "enable_localization": enable_localization,
             "gicp_pcd_map": gicp_pcd_map,
             "cmd_vel_in_topic": "cmd_vel_smoothed",
             "cmd_vel_out_topic": "/cmd_vel_collision",
@@ -165,7 +168,7 @@ def generate_launch_description():
             "odom_topic": "/odom",
             "input_cmd_vel_topic": "/cmd_vel_collision",
             "output_cmd_vel_topic": "/cmd_vel_transformed",
-            "spin_speed": 0.0,
+            "spin_speed": ParameterValue(gyro_spin_rate, value_type=float),
             "gyro_linear_threshold": 0.01,
             "odom_timeout": 0.5,
         }],
@@ -187,7 +190,7 @@ def generate_launch_description():
             "output_topic": "/cmd_vel",
             "status_topic": "/cmd_vel_watchdog/healthy",
             "timeout": 0.3,
-            "publish_rate": 20.0,
+            "publish_rate": 100.0,
             "output_frame_id": "base_link",
             "require_odom": True,
             "odom_topic": "/odom",
@@ -275,6 +278,11 @@ def generate_launch_description():
             default_value="true",
             description="Start localization, Nav2, collision monitoring, and RViz option",
         ),
+        DeclareLaunchArgument(
+            "enable_localization",
+            default_value="false",
+            description="Re-enable paused AMCL/GICP localization and map navigation",
+        ),
         DeclareLaunchArgument("map", default_value=default_map, description="Map YAML"),
         DeclareLaunchArgument(
             "nav2_params_file",
@@ -289,6 +297,11 @@ def generate_launch_description():
             "use_fake_frame",
             default_value="true",
             description="Use gimbal_yaw_fake as Nav2 frame and transform commands to base_link",
+        ),
+        DeclareLaunchArgument(
+            "gyro_spin_rate",
+            default_value="1.5",
+            description="Upper-computer chassis spin while translating (rad/s); 0 disables",
         ),
         DeclareLaunchArgument(
             "enable_lio",

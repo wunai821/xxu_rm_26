@@ -1,0 +1,71 @@
+flybrain_node:
+  ros__parameters:
+    use_sim_time: true
+    # Shadow mode subscribes to the existing /cmd_vel_nav and never publishes to
+    # the safety chain. Active mode is deliberately opt-in and requires a
+    # distinct upstream /cmd_vel_mppi topic.
+    mode: shadow
+    control_group: flybrain
+    input_cmd_topic: /cmd_vel_nav
+    output_cmd_topic: /cmd_vel_nav
+    scan_topic: /scan
+    odom_topic: /odom
+    # Confirmed in the current Gazebo pipeline. This frame is base-aligned and
+    # preserves REP-103 sector signs; configure explicitly for other robots.
+    expected_scan_frame: base_footprint
+    scan_timeout_s: 0.5
+
+    threat:
+      front_angle_deg: 20.0
+      side_angle_deg: 90.0
+      min_valid_points: 3
+      distance_percentile: 0.10
+      distance_filter_alpha: 0.45
+      closing_filter_alpha: 0.35
+      min_closing_speed_mps: 0.03
+      max_closing_speed_mps: 8.0
+      ttc_safe_s: 1.5
+      ttc_full_escape_s: 0.5
+      distance_emergency_m: 0.25
+
+    fusion:
+      max_aux_vx: 0.5
+      max_aux_vy: 0.7
+      max_aux_wz: 0.8
+
+    heuristic:
+      front_reverse_vx: 0.5
+      front_lateral_vy: 0.5
+
+    # Matches the currently configured Nav2 MPPI command and acceleration
+    # limits; values must be updated only by reading the actual robot config.
+    safety:
+      max_vx: 1.5
+      max_vy: 1.5
+      max_wz: 0.8
+      max_ax: 0.6
+      max_ay: 0.4
+      max_awz: 1.2
+      # Explicit jerk caps are bridge-local and shared by every group.
+      max_jx: 4.0
+      max_jy: 4.0
+      max_jwz: 8.0
+
+    brain:
+      source_dir: /home/naiwu/fly_brain
+      # Required for Group D. This must be a separate weights/brain asset,
+      # never the original MaleCNS data directory.
+      rewired_data_dir: ""
+      module_name: controller
+      class_name: FlyBrainController
+      device: auto
+      # Removes V1's standalone cruise term so the neural output is only a
+      # threat-response bias added to the same MPPI command as Group B.
+      nominal_speed: 0.0
+      # V1 raw commands are right-positive. Convert once to ROS REP-103.
+      ros_vy_sign: -1.0
+      ros_wz_sign: -1.0
+
+    logging:
+      enabled: false
+      root_dir: /home/naiwu/fly_brain/gazebo_results

@@ -42,6 +42,7 @@ def generate_launch_description():
         launch_arguments={
             "use_sim_time": use_sim_time,
             "start_navigation": "true",
+            "enable_localization": LaunchConfiguration("enable_localization"),
             "map": map_file,
             "nav2_params_file": nav2_params_file,
             "rviz": rviz,
@@ -64,6 +65,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            "enable_localization",
+            default_value="false",
+            description="Re-enable paused AMCL/GICP localization and map navigation",
+        ),
         DeclareLaunchArgument(
             "use_sim_time",
             default_value="true",
@@ -106,7 +112,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "gyro_spin_rate",
-            default_value="31.4159265359",
+            default_value="1.5",
             description="Chassis gyro angular speed while translating (rad/s); 0 disables it",
         ),
         DeclareLaunchArgument(

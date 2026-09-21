@@ -154,6 +154,7 @@ PointCloudToLaserScanNode::PointCloudToLaserScanNode(const rclcpp::NodeOptions &
   scan_time_ = this->declare_parameter("scan_time", 1.0 / 30.0);
   range_min_ = this->declare_parameter("range_min", 0.0);
   range_max_ = this->declare_parameter("range_max", std::numeric_limits<double>::max());
+  robot_self_filter_radius_ = this->declare_parameter("robot_self_filter_radius", 0.0);
   inf_epsilon_ = this->declare_parameter("inf_epsilon", 1.0);
   use_inf_ = this->declare_parameter("use_inf", true);
   publish_processed_cloud_ = this->declare_parameter("publish_processed_cloud", false);
@@ -186,9 +187,9 @@ PointCloudToLaserScanNode::PointCloudToLaserScanNode(const rclcpp::NodeOptions &
     RCLCPP_INFO(
       this->get_logger(),
       "Publishing processed cloud frame=%s, crop_x=[%.3f, %.3f], crop_y=[%.3f, %.3f], "
-      "height=[%.3f, %.3f], range=[%.3f, %.3f], project_to_2d=%s",
+      "height=[%.3f, %.3f], range=[%.3f, %.3f], self_filter_radius=%.3f, project_to_2d=%s",
       processed_cloud_frame_.c_str(), crop_min_x_, crop_max_x_, crop_min_y_, crop_max_y_,
-      min_height_, max_height_, range_min_, range_max_,
+      min_height_, max_height_, range_min_, range_max_, robot_self_filter_radius_,
       processed_cloud_project_to_2d_ ? "true" : "false");
   }
 
@@ -266,6 +267,9 @@ void PointCloudToLaserScanNode::cloudCallback(
   scan_msg->angle_min = angle_min_;
   scan_msg->angle_max = angle_max_;
   scan_msg->angle_increment = angle_increment_;
+  // The input cloud is already a single-time-slice cloud. Every point has
+  // been deskewed to the cloud header stamp upstream, so LaserScan rays do
+  // not represent a rolling acquisition.
   scan_msg->time_increment = 0.0;
   scan_msg->scan_time = scan_time_;
   scan_msg->range_min = range_min_;
@@ -316,6 +320,12 @@ void PointCloudToLaserScanNode::cloudCallback(
     }
 
     double range = hypot(*iter_x, *iter_y);
+    // The cloud is in base_footprint.  Suppress returns from the chassis and
+    // wheels before creating the shared navigation/safety LaserScan.  This is
+    // a physical sensor self-filter, not a controller-specific safety rule.
+    if (range < robot_self_filter_radius_) {
+      continue;
+    }
     if (range < range_min_) {
       RCLCPP_DEBUG(
         this->get_logger(),
@@ -342,6 +352,9 @@ void PointCloudToLaserScanNode::cloudCallback(
 
     // overwrite range at laserscan ray if new range is smaller
     int index = (angle - scan_msg->angle_min) / scan_msg->angle_increment;
+    if (index < 0 || static_cast<size_t>(index) >= scan_msg->ranges.size()) {
+      continue;
+    }
     if (range < scan_msg->ranges[index]) {
       scan_msg->ranges[index] = range;
     }
@@ -434,7 +447,7 @@ void PointCloudToLaserScanNode::publishProcessedCloud(
       }
 
       const double range = std::hypot(x, y);
-      if (range < range_min_ || range > range_max_) {
+      if (range < robot_self_filter_radius_ || range < range_min_ || range > range_max_) {
         continue;
       }
 

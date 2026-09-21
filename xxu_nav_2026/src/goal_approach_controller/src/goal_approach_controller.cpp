@@ -22,6 +22,9 @@
 #include "pluginlib/class_list_macros.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tf2/utils.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "nav2_core/controller_exceptions.hpp"
 
 namespace goal_approach_controller
 {
@@ -49,6 +52,7 @@ public:
   {
     auto node = parent.lock();
     logger_ = node->get_logger();
+    tf_ = tf;
 
     // 声明本wrapper的命名空间下所有参数，若无用户覆盖则使用默认值
     nav2_util::declare_parameter_if_not_declared(
@@ -113,6 +117,9 @@ public:
   {
     if (!path.poses.empty()) {
       goal_ = path.poses.back();
+      if (goal_.header.frame_id.empty()) {
+        goal_.header.frame_id = path.header.frame_id;
+      }
     }
     inner_controller_->setPlan(path);
   }
@@ -140,8 +147,20 @@ public:
     auto cmd = inner_controller_->computeVelocityCommands(pose, velocity, goal_checker);
 
     // 计算当前位姿到目标点的欧氏距离
-    double dx = goal_.pose.position.x - pose.pose.position.x;
-    double dy = goal_.pose.position.y - pose.pose.position.y;
+    auto goal = goal_;
+    if (goal.header.frame_id.empty() || pose.header.frame_id.empty()) {
+      throw nav2_core::ControllerTFError("Goal and robot pose require frame IDs");
+    }
+    if (goal.header.frame_id != pose.header.frame_id) {
+      goal.header.stamp = pose.header.stamp;
+      try {
+        goal = tf_->transform(goal, pose.header.frame_id);
+      } catch (const tf2::TransformException & ex) {
+        throw nav2_core::ControllerTFError(ex.what());
+      }
+    }
+    double dx = goal.pose.position.x - pose.pose.position.x;
+    double dy = goal.pose.position.y - pose.pose.position.y;
     double dist = std::hypot(dx, dy);
 
     if (dist < direct_approach_distance_) {
@@ -149,8 +168,9 @@ public:
       double target_speed = std::min(approach_velocity_, dist * direct_approach_kp_);
       if (dist > 0.01) {
         // 将目标速度按单位方向向量分解到 x、y 轴
-        cmd.twist.linear.x = target_speed * (dx / dist);
-        cmd.twist.linear.y = target_speed * (dy / dist);
+        const double yaw = tf2::getYaw(pose.pose.orientation);
+        cmd.twist.linear.x = target_speed * (std::cos(yaw) * dx + std::sin(yaw) * dy) / dist;
+        cmd.twist.linear.y = target_speed * (-std::sin(yaw) * dx + std::cos(yaw) * dy) / dist;
       } else {
         // 已到达目标点（0.01m 内），停止运动
         cmd.twist.linear.x = 0.0;
@@ -240,6 +260,7 @@ private:
   rclcpp::Logger logger_{rclcpp::get_logger("goal_approach_controller")};
   // 缓存的目标位姿，由 setPlan() 更新
   geometry_msgs::msg::PoseStamped goal_;
+  std::shared_ptr<tf2_ros::Buffer> tf_;
   // 开始减速的距离阈值 (m)
   double approach_distance_{1.5};
   // 减速后的最大合速度 (m/s)

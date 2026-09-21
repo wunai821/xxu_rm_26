@@ -33,6 +33,7 @@ namespace small_point_lio {
         is_init = false;
         active_map_scan_id = 0;
         pending_scan_map_points.clear();
+        pose_history.clear();
         planar_reference_initialized = false;
         planar_tilt_rotation.setIdentity();
     }
@@ -97,7 +98,7 @@ namespace small_point_lio {
                 estimator.kf.x.acceleration = -estimator.kf.x.rotation.transpose() * estimator.kf.x.gravity;
                 apply_planar_constraint();
 
-                // init map: transform points to world frame so they match runtime pointcloud_odom_frame
+                // init map: transform sparse measurement points to the LIO world frame.
                 for (const auto &point: preprocess.point_deque) {
                     Eigen::Matrix<state::value_type, 3, 1> point_imu_frame;
                     if (parameters.extrinsic_est_en) {
@@ -124,32 +125,27 @@ namespace small_point_lio {
                 preprocess.dense_point_deque.clear();
                 preprocess.imu_deque.clear();
                 is_init = true;
+                record_pose_history(time_current);
             }
             return;
         }
 
-        // Dense points are only used for the registered-cloud visualization.
-        // Never advance the primary filter for them: doing so changes the
-        // state integration according to display-point density without a
-        // matching covariance prediction or sensor update.
-        bool is_publish_odometry = !preprocess.imu_deque.empty() && !preprocess.dense_point_deque.empty() && !preprocess.point_deque.empty() &&
+        // Dense points are deliberately absent from this loop. They are
+        // navigation observations, not filter measurements: feeding them to
+        // the primary filter would make its trajectory depend on display
+        // point density. The deskew path consumes them only after this loop,
+        // using the pose history recorded below.
+        bool is_publish_odometry = !preprocess.imu_deque.empty() && !preprocess.point_deque.empty() &&
                                    preprocess.imu_deque.front().timestamp < preprocess.point_deque.back().timestamp;
-        while (!preprocess.imu_deque.empty() && !preprocess.dense_point_deque.empty() && !preprocess.point_deque.empty()) {
-            const common::Point &point_lidar_frame = preprocess.point_deque.front();
-            const common::Point &dense_point_lidar_frame = preprocess.dense_point_deque.front();
+        // Keep the estimator on the common sensor-time frontier.  IMU data
+        // that arrives before the next lidar frame must remain queued; if we
+        // consume it here, a later frame can be older than time_current and
+        // its lidar updates would be discarded as late measurements.
+        while (!preprocess.imu_deque.empty() && !preprocess.point_deque.empty()) {
             const common::ImuMsg &imu_msg = preprocess.imu_deque.front();
-            if (dense_point_lidar_frame.timestamp < point_lidar_frame.timestamp &&
-                dense_point_lidar_frame.timestamp < imu_msg.timestamp) {
-                Eigen::Matrix<state::value_type, 3, 1> dense_point_imu_frame;
-                if (parameters.extrinsic_est_en) {
-                    dense_point_imu_frame = estimator.kf.x.offset_R_L_I * dense_point_lidar_frame.position.cast<state::value_type>() + estimator.kf.x.offset_T_L_I;
-                } else {
-                    dense_point_imu_frame = estimator.Lidar_R_wrt_IMU * dense_point_lidar_frame.position.cast<state::value_type>() + estimator.Lidar_T_wrt_IMU;
-                }
-                pointcloud_odom_frame.emplace_back((estimator.kf.x.rotation * dense_point_imu_frame + estimator.kf.x.position).cast<float>());
-
-                preprocess.dense_point_deque.pop_front();
-            } else if (point_lidar_frame.timestamp < imu_msg.timestamp) {
+            if (!preprocess.point_deque.empty() &&
+                preprocess.point_deque.front().timestamp < imu_msg.timestamp) {
+                const common::Point &point_lidar_frame = preprocess.point_deque.front();
                 // point update
                 if (point_lidar_frame.timestamp < time_current) {
                     if (parameters.motion_diagnostics_en) { ++estimator.diagnostics.late_points; }
@@ -177,6 +173,7 @@ namespace small_point_lio {
                     estimator.kf.update_point();
                 }
                 apply_planar_constraint();
+                record_pose_history(time_current);
 
                 // publish odometry
                 if (parameters.publish_odometry_without_downsample) {
@@ -218,6 +215,7 @@ namespace small_point_lio {
                     estimator.kf.update_imu();
                 }
                 apply_planar_constraint();
+                record_pose_history(time_current);
 
                 preprocess.imu_deque.pop_front();
             }
@@ -229,17 +227,16 @@ namespace small_point_lio {
             if (!parameters.publish_odometry_without_downsample) {
                 publish_odometry(time_current);
             }
-            if (!pointcloud_odom_frame.empty()) {
-                if (pointcloud_callback) {
-                    pointcloud_callback(pointcloud_odom_frame);
-                }
-                pointcloud_odom_frame.clear();
-            }
         }
+        publish_ready_deskew_scans();
     }
 
-    void SmallPointLio::set_pointcloud_callback(const std::function<void(const std::vector<Eigen::Vector3f> &pointcloud)> &pointcloud_callback) {
-        this->pointcloud_callback = pointcloud_callback;
+    void SmallPointLio::set_deskew_scan_callback(const DeskewScanCallback &callback) {
+        deskew_scan_callback = callback;
+    }
+
+    void SmallPointLio::set_pose_history_callback(const PoseHistoryCallback &callback) {
+        pose_history_callback = callback;
     }
 
     void SmallPointLio::set_odometry_callback(const std::function<void(const common::Odometry &odometry)> &odometry_callback) {
@@ -262,6 +259,99 @@ namespace small_point_lio {
             estimator.ivox->add_point(point);
         }
         pending_scan_map_points.clear();
+    }
+
+    void SmallPointLio::record_pose_history(double timestamp) {
+        auto odometry = make_lidar_odometry(timestamp);
+        constexpr double timestamp_epsilon = 1e-9;
+        if (!pose_history.empty() && timestamp < pose_history.back().timestamp - timestamp_epsilon) {
+            return;
+        }
+        if (!pose_history.empty() && std::abs(timestamp - pose_history.back().timestamp) <= timestamp_epsilon) {
+            pose_history.back() = odometry;
+        } else {
+            pose_history.push_back(odometry);
+        }
+        while (pose_history.size() > 2 &&
+               pose_history.back().timestamp - pose_history.front().timestamp > parameters.deskew_pose_history_duration) {
+            pose_history.pop_front();
+        }
+        if (pose_history_callback) {
+            pose_history_callback(odometry);
+        }
+    }
+
+    common::Odometry SmallPointLio::make_lidar_odometry(double timestamp) const {
+        const auto &x = estimator.kf.x;
+        Eigen::Matrix<state::value_type, 3, 1> lidar_T_wrt_IMU;
+        Eigen::Matrix<state::value_type, 3, 3> lidar_R_wrt_IMU;
+        if (parameters.extrinsic_est_en) {
+            lidar_T_wrt_IMU = x.offset_T_L_I;
+            lidar_R_wrt_IMU = x.offset_R_L_I;
+        } else {
+            lidar_T_wrt_IMU = estimator.Lidar_T_wrt_IMU;
+            lidar_R_wrt_IMU = estimator.Lidar_R_wrt_IMU;
+        }
+
+        common::Odometry odometry;
+        odometry.timestamp = timestamp;
+        // The filter state is expressed at the IMU origin.  The public LIO
+        // pose is expressed at the lidar (or compensated virtual-sensor)
+        // origin, so the lever-arm terms must be applied to velocity too.
+        // lidar_R_wrt_IMU maps lidar vectors into the IMU frame.
+        const Eigen::Matrix<state::value_type, 3, 3> imu_from_lidar = lidar_R_wrt_IMU;
+        const Eigen::Matrix<state::value_type, 3, 3> lidar_from_imu = imu_from_lidar.transpose();
+        const Eigen::Vector3d omega_imu = x.omg.cast<double>();
+        const Eigen::Vector3d omega_world = x.rotation.cast<double>() * omega_imu;
+        const Eigen::Vector3d lidar_offset_world =
+                x.rotation.cast<double>() * lidar_T_wrt_IMU.cast<double>();
+
+        odometry.position = (x.rotation * lidar_T_wrt_IMU + x.position).cast<double>();
+        odometry.orientation = Eigen::Quaterniond(
+                (x.rotation * imu_from_lidar).cast<double>()).normalized();
+        odometry.velocity = x.velocity.cast<double>() + omega_world.cross(lidar_offset_world);
+        odometry.angular_velocity = lidar_from_imu.cast<double>() * omega_imu;
+        return odometry;
+    }
+
+    void SmallPointLio::publish_ready_deskew_scans() {
+        constexpr double timestamp_epsilon = 1e-9;
+        while (!preprocess.dense_point_deque.empty()) {
+            const auto scan_id = preprocess.dense_point_deque.front().scan_id;
+            auto scan_end = preprocess.dense_point_deque.begin();
+            while (scan_end != preprocess.dense_point_deque.end() && scan_end->scan_id == scan_id) {
+                ++scan_end;
+            }
+            if (scan_end == preprocess.dense_point_deque.begin()) {
+                preprocess.dense_point_deque.pop_front();
+                continue;
+            }
+
+            const double scan_start_timestamp = preprocess.dense_point_deque.front().timestamp;
+            const double scan_end_timestamp = std::prev(scan_end)->timestamp;
+            if (pose_history.empty() ||
+                pose_history.back().timestamp + timestamp_epsilon < scan_end_timestamp) {
+                return;
+            }
+            if (pose_history.front().timestamp - timestamp_epsilon > scan_start_timestamp) {
+                RCLCPP_WARN(
+                        logger,
+                        "Dropping scan %llu: LIO pose history no longer covers %.6f..%.6f",
+                        static_cast<unsigned long long>(scan_id),
+                        scan_start_timestamp,
+                        scan_end_timestamp);
+                preprocess.dense_point_deque.erase(preprocess.dense_point_deque.begin(), scan_end);
+                continue;
+            }
+
+            std::vector<common::Point> scan;
+            scan.reserve(static_cast<size_t>(std::distance(preprocess.dense_point_deque.begin(), scan_end)));
+            scan.insert(scan.end(), preprocess.dense_point_deque.begin(), scan_end);
+            preprocess.dense_point_deque.erase(preprocess.dense_point_deque.begin(), scan_end);
+            if (deskew_scan_callback) {
+                deskew_scan_callback(scan);
+            }
+        }
     }
 
     void SmallPointLio::predict_state_with_diagnostics(double timestamp) {
@@ -390,13 +480,7 @@ namespace small_point_lio {
 
     void SmallPointLio::publish_odometry(double timestamp) {
         if (odometry_callback) {
-            common::Odometry odometry;
-            odometry.timestamp = timestamp;
-            odometry.position = estimator.kf.x.position.cast<double>();
-            odometry.velocity = estimator.kf.x.velocity.cast<double>();
-            odometry.orientation = estimator.kf.x.rotation.cast<double>();
-            odometry.angular_velocity = estimator.kf.x.omg.cast<double>();
-            odometry_callback(odometry);
+            odometry_callback(make_lidar_odometry(timestamp));
         }
     }
 

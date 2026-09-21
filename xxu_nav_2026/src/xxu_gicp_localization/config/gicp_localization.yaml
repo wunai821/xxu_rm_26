@@ -6,16 +6,18 @@ gicp_localization:
     map_frame: map
     odom_frame: odom
     base_frame: base_footprint
-    cloud_topic: /mid360/livox_points_compensated
+    cloud_topic: /cloud_deskewed
     amcl_topic: /amcl_pose
     pose_topic: /gicp_pose
-    cloud_frame: lio_base_sensor
+    cloud_frame: base_footprint
     downsampling_resolution: 0.20
     num_neighbors: 20
     num_threads: 4
     max_iterations: 32
     max_correspondence_distance: 1.0
-    tf_lookup_timeout: 0.10
+    # Wait for the exact scan-time TF sample; never substitute the latest pose.
+    # The odom publisher runs at a lower rate than the point-cloud stream.
+    tf_lookup_timeout: 0.25
     min_range: 0.5
     max_range: 50.0
     min_cloud_points: 80

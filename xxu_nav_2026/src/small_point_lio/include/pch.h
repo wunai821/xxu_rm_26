@@ -17,6 +17,7 @@
 #include <list>
 #include <memory>
 #include <queue>
+#include <stdexcept>
 #include <vector>
 // Eigen
 #include <Eigen/Core>

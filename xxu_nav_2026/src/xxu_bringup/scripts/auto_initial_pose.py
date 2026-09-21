@@ -10,6 +10,7 @@ import numpy as np
 import rclpy
 import yaml
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from lifecycle_msgs.srv import ChangeState, GetState
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.duration import Duration
 from rclpy.executors import MultiThreadedExecutor
@@ -318,14 +319,16 @@ class AutoInitialPose(Node):
         self.declare_parameter("x", 0.02)
         self.declare_parameter("y", 0.03)
         self.declare_parameter("yaw", 0.0)
-        # The AMCL subscription is confirmed before publishing, so one message
-        # is enough and avoids repeatedly resetting a converging particle set.
+        # One message is enough and avoids repeatedly resetting a converging
+        # particle set. Lifecycle/service gates below prove that AMCL exists;
+        # a topic subscriber count would also include diagnostics.
         self.declare_parameter("publish_count", 1)
         self.declare_parameter("publish_period", 0.5)
         self.declare_parameter("covariance_x", 0.25)
         self.declare_parameter("covariance_y", 0.25)
         self.declare_parameter("covariance_yaw", 0.06853891945200942)
         self.declare_parameter("relocalize", True)
+        self.declare_parameter("defer_amcl_activation", False)
         self.declare_parameter("map_yaml", "")
         self.declare_parameter("scan_topic", "/scan")
         self.declare_parameter("scan_timeout", 8.0)
@@ -352,6 +355,9 @@ class AutoInitialPose(Node):
         self.publish_count = int(self.get_parameter("publish_count").value)
         self.publish_period = float(self.get_parameter("publish_period").value)
         self.relocalize = parameter_bool(self.get_parameter("relocalize").value)
+        self.defer_amcl_activation = parameter_bool(
+            self.get_parameter("defer_amcl_activation").value
+        )
         self.map_yaml = str(self.get_parameter("map_yaml").value)
         self.scan_topic = str(self.get_parameter("scan_topic").value)
         self.odom_frame = str(self.get_parameter("odom_frame").value)
@@ -363,6 +369,15 @@ class AutoInitialPose(Node):
         self.pub = self.create_publisher(PoseWithCovarianceStamped, "/initialpose", 10)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.amcl_state_client = self.create_client(GetState, "/amcl/get_state")
+        self.amcl_state_future = None
+        self.map_state_client = self.create_client(GetState, "/map_server/get_state")
+        self.map_change_client = self.create_client(ChangeState, "/map_server/change_state")
+        self.amcl_change_client = self.create_client(ChangeState, "/amcl/change_state")
+        self.lifecycle_future = None
+        self.lifecycle_stage = "wait_services"
+        self.amcl_prepared = not self.defer_amcl_activation
+        self.amcl_activation_timer = None
         self.sent = 0
         self.timer = None
         self.scan_sub = None
@@ -373,21 +388,51 @@ class AutoInitialPose(Node):
         self.publish_odom_reference = None
         self.scan_callback_group = ReentrantCallbackGroup()
         self.prerequisites_ready = False
-        self.ready_timer = self.create_timer(0.5, self.wait_for_prerequisites)
+        # Poll frequently enough to catch the short interval after AMCL has
+        # created its initial-pose subscription but before lifecycle activation.
+        # Publishing in that interval lets AMCL retain the request and handle
+        # it during activation, without racing a moving simulation clock.
+        self.ready_timer = self.create_timer(0.05, self.wait_for_prerequisites)
 
     def wait_for_prerequisites(self):
         """Do not publish an initial pose until AMCL and odometry are usable."""
-        if self.pub.get_subscription_count() == 0:
+        if self.defer_amcl_activation and not self.amcl_prepared:
+            if not self.prepare_amcl_before_pose():
+                return
+
+        # A diagnostic subscriber may also listen to /initialpose.  Subscriber
+        # count alone therefore cannot prove that AMCL exists or is ready.
+        if not self.amcl_state_client.service_is_ready():
             self.get_logger().info(
-                "Waiting for AMCL initial-pose subscription", throttle_duration_sec=5.0
+                "Waiting for AMCL lifecycle service", throttle_duration_sec=5.0
             )
             return
 
-        if not self.tf_buffer.can_transform(
-            self.odom_frame, self.base_frame, Time(), timeout=Duration(seconds=0.0)
+        if self.amcl_state_future is None:
+            self.amcl_state_future = self.amcl_state_client.call_async(GetState.Request())
+            return
+        if not self.amcl_state_future.done():
+            return
+        try:
+            amcl_state = self.amcl_state_future.result().current_state.id
+        except Exception as exc:  # pylint: disable=broad-except
+            self.get_logger().warn(f"AMCL lifecycle state query failed: {exc}")
+            self.amcl_state_future = None
+            return
+        self.amcl_state_future = None
+        if amcl_state not in (2, 3):  # inactive or active
+            self.get_logger().info(
+                f"Waiting for AMCL to reach inactive/active state (state={amcl_state})",
+                throttle_duration_sec=5.0,
+            )
+            return
+
+        now = self.get_clock().now()
+        if now.nanoseconds == 0 or not self.tf_buffer.can_transform(
+            self.odom_frame, self.base_frame, now, timeout=Duration(seconds=0.25)
         ):
             self.get_logger().info(
-                f"Waiting for odometry transform {self.odom_frame} -> {self.base_frame}",
+                f"Waiting for current odometry transform {self.odom_frame} -> {self.base_frame}",
                 throttle_duration_sec=5.0,
             )
             return
@@ -410,6 +455,121 @@ class AutoInitialPose(Node):
             )
         else:
             self.start_publishing(self.x, self.y, self.yaw, "fixed")
+
+    def prepare_amcl_before_pose(self):
+        """Configure AMCL while inactive, then activate it after /initialpose.
+
+        This is used by simulation tests to remove the AMCL callback-time race:
+        a topic message received while AMCL is inactive is retained by Nav2 and
+        applied during activation, so AMCL does not have to extrapolate a
+        moving odometry transform while handling the message.
+        """
+        if self.lifecycle_stage == "wait_services":
+            clients = (
+                self.map_state_client,
+                self.map_change_client,
+                self.amcl_state_client,
+                self.amcl_change_client,
+            )
+            if not all(client.service_is_ready() for client in clients):
+                self.get_logger().info(
+                    "Waiting for map_server/AMCL lifecycle services before initialization",
+                    throttle_duration_sec=5.0,
+                )
+                return False
+            self.lifecycle_stage = "query_map"
+
+        if self.lifecycle_future is not None:
+            if not self.lifecycle_future.done():
+                return False
+            previous_stage = self.lifecycle_stage
+            try:
+                response = self.lifecycle_future.result()
+            except Exception as exc:  # pylint: disable=broad-except
+                self.get_logger().warn(f"Lifecycle request failed: {exc}")
+                self.lifecycle_future = None
+                return False
+            self.lifecycle_future = None
+
+            if previous_stage in (
+                "query_map", "query_map_after_configure", "query_amcl",
+                "query_amcl_after_configure",
+            ):
+                state = response.current_state.id
+                if previous_stage == "query_map":
+                    if state == 1:
+                        self.lifecycle_stage = "configure_map"
+                    elif state == 2:
+                        self.lifecycle_stage = "activate_map"
+                    elif state == 3:
+                        self.lifecycle_stage = "query_amcl"
+                    else:
+                        self.lifecycle_stage = "query_map"
+                elif previous_stage == "query_map_after_configure":
+                    if state == 2:
+                        self.lifecycle_stage = "activate_map"
+                    elif state == 3:
+                        self.lifecycle_stage = "query_amcl"
+                    else:
+                        self.lifecycle_stage = "query_map_after_configure"
+                elif previous_stage == "query_amcl":
+                    if state == 1:
+                        self.lifecycle_stage = "configure_amcl"
+                    elif state in (2, 3):
+                        self.amcl_prepared = True
+                        self.lifecycle_stage = "ready"
+                    else:
+                        self.lifecycle_stage = "query_amcl"
+                else:  # query_amcl_after_configure
+                    if state in (2, 3):
+                        self.amcl_prepared = True
+                        self.lifecycle_stage = "ready"
+                    else:
+                        self.lifecycle_stage = "query_amcl_after_configure"
+            else:
+                if not response.success:
+                    self.get_logger().warn(
+                        f"Lifecycle transition rejected at stage {previous_stage}"
+                    )
+                    self.lifecycle_stage = "wait_services"
+                    return False
+                if previous_stage == "configure_map":
+                    self.lifecycle_stage = "query_map_after_configure"
+                elif previous_stage == "activate_map":
+                    self.lifecycle_stage = "query_amcl"
+                elif previous_stage == "configure_amcl":
+                    self.lifecycle_stage = "query_amcl_after_configure"
+
+        if self.lifecycle_stage == "ready":
+            return True
+        if self.lifecycle_stage == "query_map":
+            self.lifecycle_future = self.map_state_client.call_async(GetState.Request())
+            return False
+        if self.lifecycle_stage == "query_map_after_configure":
+            self.lifecycle_future = self.map_state_client.call_async(GetState.Request())
+            return False
+        if self.lifecycle_stage == "query_amcl":
+            self.lifecycle_future = self.amcl_state_client.call_async(GetState.Request())
+            return False
+        if self.lifecycle_stage == "query_amcl_after_configure":
+            self.lifecycle_future = self.amcl_state_client.call_async(GetState.Request())
+            return False
+        if self.lifecycle_stage == "configure_map":
+            request = ChangeState.Request()
+            request.transition.id = 1  # TRANSITION_CONFIGURE
+            self.lifecycle_future = self.map_change_client.call_async(request)
+            return False
+        if self.lifecycle_stage == "activate_map":
+            request = ChangeState.Request()
+            request.transition.id = 3  # TRANSITION_ACTIVATE
+            self.lifecycle_future = self.map_change_client.call_async(request)
+            return False
+        if self.lifecycle_stage == "configure_amcl":
+            request = ChangeState.Request()
+            request.transition.id = 1  # TRANSITION_CONFIGURE
+            self.lifecycle_future = self.amcl_change_client.call_async(request)
+            return False
+        return False
 
     def scan_callback(self, scan_msg):
         if self.matching_started:
@@ -514,15 +674,18 @@ class AutoInitialPose(Node):
             self.timer = self.create_timer(self.publish_period, self.publish_pose)
 
     def publish_pose(self):
-        if self.pub.get_subscription_count() == 0:
-            self.get_logger().warn("AMCL subscription disappeared; delaying initial-pose publish")
-            return
         try:
-            latest_odom_tf = self.tf_buffer.lookup_transform(
+            # AMCL integrates odometry from the message stamp to its current
+            # clock time. Require a real transform at that same time before
+            # publishing; a historical/latest TF is not a valid substitute.
+            current_time = self.get_clock().now()
+            if current_time.nanoseconds == 0:
+                raise RuntimeError("simulation time is not available")
+            current_odom_tf = self.tf_buffer.lookup_transform(
                 self.odom_frame,
                 self.base_frame,
-                Time(),
-                timeout=Duration(seconds=0.0),
+                current_time,
+                timeout=Duration(seconds=0.25),
             )
         except Exception as exc:  # pylint: disable=broad-except
             self.get_logger().warn(
@@ -535,7 +698,7 @@ class AutoInitialPose(Node):
         yaw = self.yaw
         if self.publish_odom_reference is not None:
             if (
-                stamp_seconds(latest_odom_tf.header.stamp)
+                stamp_seconds(current_odom_tf.header.stamp)
                 < stamp_seconds(self.publish_odom_reference.header.stamp)
             ):
                 self.get_logger().warn(
@@ -546,13 +709,13 @@ class AutoInitialPose(Node):
             x, y, yaw = advance_map_pose(
                 (self.x, self.y, self.yaw),
                 self.publish_odom_reference,
-                latest_odom_tf,
+                current_odom_tf,
             )
         msg = PoseWithCovarianceStamped()
-        # AMCL must receive a timestamp that has an odom -> base transform.
-        # Using now() here can be ahead of LIO's latest transform and triggers
-        # a future-extrapolation failure during initial-pose handling.
-        msg.header.stamp = latest_odom_tf.header.stamp
+        # The transform was successfully queried at this same time. Keep the
+        # message stamp at the query time so AMCL's now-to-stamp integration
+        # has a valid TF interval.
+        msg.header.stamp = current_time.to_msg()
         msg.header.frame_id = self.frame_id
         msg.pose.pose.position.x = x
         msg.pose.pose.position.y = y
@@ -582,6 +745,35 @@ class AutoInitialPose(Node):
             if self.timer is not None:
                 self.timer.cancel()
                 self.timer = None
+            if self.defer_amcl_activation and self.amcl_activation_timer is None:
+                # Leave enough time for the DDS sample to reach AMCL while it
+                # is inactive. The transition is then explicit and observable.
+                self.amcl_activation_timer = self.create_timer(
+                    0.5, self.activate_deferred_amcl
+                )
+
+    def activate_deferred_amcl(self):
+        if self.amcl_activation_timer is not None:
+            self.amcl_activation_timer.cancel()
+            self.amcl_activation_timer = None
+        if not self.amcl_change_client.service_is_ready():
+            self.get_logger().warn("AMCL change_state service disappeared; keeping AMCL inactive")
+            return
+        request = ChangeState.Request()
+        request.transition.id = 3  # TRANSITION_ACTIVATE
+        future = self.amcl_change_client.call_async(request)
+
+        def activation_done(result):
+            try:
+                response = result.result()
+                if response.success:
+                    self.get_logger().info("AMCL activated after initial-pose delivery")
+                else:
+                    self.get_logger().error("AMCL activation was rejected")
+            except Exception as exc:  # pylint: disable=broad-except
+                self.get_logger().error(f"AMCL activation failed: {exc}")
+
+        future.add_done_callback(activation_done)
 
 
 def main():

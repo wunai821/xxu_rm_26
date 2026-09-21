@@ -11,18 +11,23 @@
 #include "parameters.h"
 #include "preprocess.h"
 #include <pch.h>
+#include <deque>
 
 namespace small_point_lio {
 
     class SmallPointLio {
     private:
+        using DeskewScanCallback = std::function<void(const std::vector<common::Point> &pointcloud)>;
+        using PoseHistoryCallback = std::function<void(const common::Odometry &odometry)>;
+
         rclcpp::Logger logger;
         Parameters parameters;
         Preprocess preprocess;
         Estimator estimator;
         double time_current = 0.0;
-        std::vector<Eigen::Vector3f> pointcloud_odom_frame;
-        std::function<void(const std::vector<Eigen::Vector3f> &pointcloud)> pointcloud_callback;
+        std::deque<common::Odometry> pose_history;
+        DeskewScanCallback deskew_scan_callback;
+        PoseHistoryCallback pose_history_callback;
         std::function<void(const common::Odometry &odometry)> odometry_callback;
         bool is_init = false;
         std::uint64_t active_map_scan_id = 0;
@@ -44,7 +49,9 @@ namespace small_point_lio {
 
         void handle_once();
 
-        void set_pointcloud_callback(const std::function<void(const std::vector<Eigen::Vector3f> &pointcloud)> &pointcloud_callback);
+        void set_deskew_scan_callback(const DeskewScanCallback &callback);
+
+        void set_pose_history_callback(const PoseHistoryCallback &callback);
 
         void set_odometry_callback(const std::function<void(const common::Odometry &odometry)> &odometry_callback);
 
@@ -58,6 +65,12 @@ namespace small_point_lio {
         void begin_map_scan(std::uint64_t scan_id);
 
         void flush_pending_map_points();
+
+        void record_pose_history(double timestamp);
+
+        [[nodiscard]] common::Odometry make_lidar_odometry(double timestamp) const;
+
+        void publish_ready_deskew_scans();
 
         void publish_odometry(double timestamp);
     };

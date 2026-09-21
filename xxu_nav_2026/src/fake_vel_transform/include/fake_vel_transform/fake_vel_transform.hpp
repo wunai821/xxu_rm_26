@@ -25,6 +25,8 @@ private:
 
   double yawAt(const rclcpp::Time & stamp) const;
 
+  void publishCommand();
+
   bool odomIsFresh() const;
 
   struct OdomYawSample
@@ -38,7 +40,14 @@ private:
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_vel_chassis_pub_;
 
-  // Broadcast the stable velocity frame from the chassis frame.  The real
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr nav_odom_pub_;
+  rclcpp::TimerBase::SharedPtr command_timer_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_;
+  geometry_msgs::msg::TwistStamped::SharedPtr last_command_;
+  std::chrono::steady_clock::time_point last_command_receive_time_{};
+  double command_timeout_{0.3};
+
+  // Broadcast the stable velocity frame from the odometry child frame. The real
   // gimbal_link TF remains dynamic and is never replaced by this frame.
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
@@ -47,7 +56,7 @@ private:
   std::string odom_topic_;
   std::string input_cmd_vel_topic_;
   std::string output_cmd_vel_topic_;
-  float spin_speed_;
+  double spin_speed_;
   double gyro_linear_threshold_{0.01};
   double odom_history_duration_{2.0};
   double odom_timeout_{0.5};

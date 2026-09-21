@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain id="any">
+    <Discovery>
+      <!-- Gazebo, Nav2, bridges and benchmark observers exceed Cyclone's
+           conservative automatic participant-index default in one process
+           group. This changes discovery capacity only, not control timing. -->
+      <MaxAutoParticipantIndex>512</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

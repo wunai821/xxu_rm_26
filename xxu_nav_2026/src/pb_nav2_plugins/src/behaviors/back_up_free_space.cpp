@@ -117,7 +117,7 @@ nav2_behaviors::ResultStatus BackUpFreeSpace::onRun(
 
   const double relative_angle = static_cast<double>(best_angle) - pose.theta;
   twist_x_ = std::cos(relative_angle) * command_speed;
-  twist_y_ = -std::sin(relative_angle) * command_speed;
+  twist_y_ = std::sin(relative_angle) * command_speed;
   command_x_ = std::fabs(command->target.x);
   command_time_allowance_ = command->time_allowance;
   end_time_ = clock_->now() + command_time_allowance_;

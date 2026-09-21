@@ -8,11 +8,14 @@ small_point_lio:
         lidar_type: livox_pointcloud2
         lidar_frame: lio_base_sensor
         odom_topic: /odom
-        registered_cloud_topic: /cloud_registered
+        deskewed_cloud_topic: /cloud_deskewed
         odom_frame: odom
         base_frame: base_footprint
         tf_lookup_timeout: 0.1
         save_pcd: false
+        deskew_pose_history_duration: 5.0
+        deskew_pending_timeout: 0.25
+        deskew_pending_queue_size: 3
         scan_period: 0.1
 
         point_filter_num: 1
