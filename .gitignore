@@ -9,3 +9,7 @@ __pycache__/
 
 # clangd generated indexes
 **/.cache/clangd/
+
+# Generated TF inspection snapshots
+/xxu_nav_2026/frames*.gv
+/xxu_nav_2026/frames*.pdf
