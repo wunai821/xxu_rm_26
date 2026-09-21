@@ -12,6 +12,12 @@
 python3 -m unittest discover -s src/xxu_bringup/test -v
 ```
 
+只验证速度适配与里程计超时保护（包含重复、倒序、延迟和未来时间戳）：
+
+```bash
+python3 tools/navigation/validate_gyro_navigation.py --adapter-only
+```
+
 本项目的导航按二维平面全向底盘处理。底盘自旋、雷达云台旋转是两个独立运动：
 
 | 模块 | 负责什么 |

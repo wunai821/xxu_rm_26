@@ -50,7 +50,7 @@ FakeVelTransform::FakeVelTransform(const rclcpp::NodeOptions & options)
     odom_history_duration_ = 2.0;
   }
   this->get_parameter("odom_timeout", odom_timeout_);
-  if (odom_timeout_ <= 0.0) {
+  if (!std::isfinite(odom_timeout_) || odom_timeout_ <= 0.0) {
     odom_timeout_ = 0.5;
   }
 
@@ -99,20 +99,24 @@ void FakeVelTransform::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg
   // /odom is published for base_footprint by Small Point-LIO after applying
   // the time-matched base<->LiDAR TF.  Its yaw is therefore the chassis yaw,
   // not the instantaneous gimbal joint angle.
-  const rclcpp::Time stamp(msg->header.stamp);
+  const rclcpp::Time stamp(msg->header.stamp, this->get_clock()->get_clock_type());
+  const double stamp_age = (this->now() - stamp).seconds();
   const double yaw = tf2::getYaw(msg->pose.pose.orientation);
+  if (stamp_age < -0.1 || stamp_age > odom_timeout_ || !std::isfinite(yaw)) {
+    return;
+  }
 
   {
     std::lock_guard<std::mutex> lock(odom_mutex_);
+    // Replayed/out-of-order samples must not refresh the watchdog or heading.
+    if (!odom_history_.empty() && stamp <= odom_history_.back().stamp) {
+      return;
+    }
     last_odom_receive_time_ = std::chrono::steady_clock::now();
     current_robot_base_angle_ = yaw;
     has_odom_ = true;
 
-    if (odom_history_.empty() || stamp > odom_history_.back().stamp) {
-      odom_history_.push_back({stamp, yaw});
-    } else if (stamp == odom_history_.back().stamp) {
-      odom_history_.back().yaw = yaw;
-    }
+    odom_history_.push_back({stamp, yaw});
 
     while (odom_history_.size() > 2 &&
            (stamp - odom_history_.front().stamp).seconds() > odom_history_duration_) {
@@ -201,7 +205,9 @@ bool FakeVelTransform::odomIsFresh() const
   }
   const auto age = std::chrono::duration<double>(
     std::chrono::steady_clock::now() - last_odom_receive_time_).count();
-  return age >= 0.0 && age <= odom_timeout_;
+  const double stamp_age = (this->now() - odom_history_.back().stamp).seconds();
+  return age >= 0.0 && age <= odom_timeout_ &&
+         stamp_age >= -0.1 && stamp_age <= odom_timeout_;
 }
 
 // Navigation commands describe translation in the fixed odom-aligned frame.

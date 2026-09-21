@@ -9,6 +9,7 @@ import math
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -49,6 +50,7 @@ def main():
         'params_file': str(root / 'src/xxu_bringup/config/nav2_navigation.yaml'),
         'use_fake_frame': 'true', 'use_sim_time': 'false',
         'cmd_vel_in_topic': 'cmd_vel_smoothed', 'cmd_vel_out_topic': '/cmd_vel_collision',
+        'planner_tolerance': '1.0',
     })
     selected = next(n for n in nodes if n.get('executable') == 'controller_server')['parameters'][0]
     params = yaml.safe_load(Path(selected.perform(context)).read_text())
@@ -90,6 +92,7 @@ def main():
     static_tf.sendTransform(static)
     state = {'x': 0.0, 'y': 0.0, 'yaw': math.pi / 2, 'vx': 0.0, 'vy': -0.2, 'wz': 1.5}
     flags = {'plant': False, 'odom': True}
+    replay = {'stamp': None, 'offset': 0.0}
     last_tick = time.monotonic()
 
     def tick():
@@ -108,6 +111,12 @@ def main():
             return
         odom = Odometry()
         odom.header.stamp = node.get_clock().now().to_msg()
+        if replay['stamp'] is not None:
+            odom.header.stamp = replay['stamp']
+        elif replay['offset']:
+            odom.header.stamp = rclpy.time.Time(
+                nanoseconds=node.get_clock().now().nanoseconds +
+                int(replay['offset'] * 1e9)).to_msg()
         odom.header.frame_id = 'odom'
         odom.child_frame_id = 'base_footprint'
         odom.pose.pose.position.x, odom.pose.pose.position.y = state['x'], state['y']
@@ -198,10 +207,38 @@ def main():
             spin(0.1)
         assert received['/cmd_vel_transformed'].twist == TwistStamped().twist
         flags['odom'] = True
+        spin(0.1)
+        for mode in ('duplicate', 'backward', 'delayed', 'future'):
+            flags['odom'] = False
+            spin(0.1)  # Drain valid samples before starting the replay.
+            replay['stamp'] = received['/odom_nav'].header.stamp
+            if mode == 'backward':
+                replay['stamp'] = rclpy.time.Time(
+                    nanoseconds=rclpy.time.Time.from_msg(replay['stamp']).nanoseconds -
+                    100000000).to_msg()
+            elif mode in ('delayed', 'future'):
+                replay['stamp'] = None
+                replay['offset'] = -2.0 if mode == 'delayed' else 2.0
+            accepted_stamp = received['/odom_nav'].header.stamp
+            flags['odom'] = True
+            for _ in range(8):
+                command(0.2)
+                spin(0.1)
+            assert received['/cmd_vel_transformed'].twist == TwistStamped().twist, mode
+            assert received['/odom_nav'].header.stamp == accepted_stamp, mode
+            replay.update(stamp=None, offset=0.0)
+            spin(0.1)
+            command(0.2)
+            spin(0.05)
+            assert abs(received['/cmd_vel_transformed'].twist.linear.x) > 0.1, mode
+        print('PASS: duplicate, backward, delayed and future odometry stop output; fresh odometry restores it', flush=True)
         command()
         state.update(x=0.0, y=0.0, yaw=0.0, vx=0.0, vy=0.0, wz=0.0)
         flags['plant'] = True
         print('PASS: frame conversion, held-command rotation, runtime spin switch, zero command, stale command/odom', flush=True)
+
+        if '--adapter-only' in sys.argv:
+            return
 
         params_file = Path(temp.name) / 'nav2.yaml'
         params_file.write_text(yaml.safe_dump(params))

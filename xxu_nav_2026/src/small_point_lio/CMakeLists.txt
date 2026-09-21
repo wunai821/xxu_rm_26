@@ -32,7 +32,8 @@ endif()
 # optimize performance
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options("-march=native")
-    add_compile_options("-ffast-math")
+    # Sensor validation relies on IEEE NaN/Inf semantics.
+    add_compile_options("-fno-fast-math")
     add_compile_options("-fno-math-errno")
 endif()
 
@@ -122,6 +123,11 @@ install(TARGETS ${PROJECT_NAME}
 #############
 
 if(BUILD_TESTING)
+    add_executable(odometry_math_test test/odometry_math_test.cpp)
+    target_include_directories(odometry_math_test PRIVATE src)
+    target_link_libraries(odometry_math_test Eigen3::Eigen)
+    target_compile_options(odometry_math_test PRIVATE -UNDEBUG)
+    add_test(NAME odometry_math_test COMMAND odometry_math_test)
     add_executable(validated_livox_cloud_test test/validated_livox_cloud_test.cpp)
     target_include_directories(validated_livox_cloud_test PRIVATE src)
     ament_target_dependencies(validated_livox_cloud_test sensor_msgs)

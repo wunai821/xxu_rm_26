@@ -5,6 +5,7 @@
  */
 
 #include "small_point_lio_node.hpp"
+#include "odometry_math.h"
 #include "io/pcd_io.h"
 #include "lidar_adapter/custom_mid360_driver.h"
 #include "lidar_adapter/generic_pointcloud2.h"
@@ -243,15 +244,15 @@ bool interpolatePose(
 
             // Odometry.twist is expressed in child_frame_id.  The LIO
             // callback velocity is at the lidar origin in odom coordinates;
-            // first remove the lidar->base lever arm, then rotate to the
+            // first shift velocity from the lidar to the base origin, then rotate to the
             // published base frame.  This remains correct for a spinning
             // gimbal and for a non-zero lidar/IMU extrinsic.
             const Eigen::Vector3d omega_odom =
                     odom_from_lidar.rotation * odometry.angular_velocity;
-            const Eigen::Vector3d lidar_offset_odom =
+            const Eigen::Vector3d lidar_to_base_odom =
                     odom_from_lidar.rotation * lidar_from_base.translation;
             const Eigen::Vector3d base_velocity_odom =
-                    odometry.velocity - omega_odom.cross(lidar_offset_odom);
+                    baseVelocityFromLidar(odometry.velocity, omega_odom, lidar_to_base_odom);
             const Eigen::Vector3d instantaneous_base_velocity =
                     odom_from_base.rotation.conjugate() * base_velocity_odom;
             const Eigen::Vector3d instantaneous_base_angular_velocity =
