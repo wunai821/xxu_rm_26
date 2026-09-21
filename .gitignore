@@ -6,3 +6,6 @@ log/
 # Python cache artifacts
 __pycache__/
 *.py[cod]
+
+# clangd generated indexes
+**/.cache/clangd/

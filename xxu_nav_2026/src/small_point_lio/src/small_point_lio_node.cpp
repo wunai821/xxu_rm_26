@@ -12,7 +12,6 @@
 #include "lidar_adapter/livox_pointcloud2.h"
 #include "lidar_adapter/unitree_lidar.h"
 #include <geometry_msgs/msg/transform_stamped.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <algorithm>
 #include <chrono>
@@ -225,25 +224,22 @@ bool interpolatePose(
                     odometry.position};
             const auto odom_from_base = compose(odom_from_lidar, lidar_from_base);
 
-            tf2::Transform tf_lidar_odom_to_lidar_frame;
-            tf_lidar_odom_to_lidar_frame.setOrigin(tf2::Vector3(odometry.position.x(), odometry.position.y(), odometry.position.z()));
-            tf_lidar_odom_to_lidar_frame.setRotation(tf2::Quaternion(odometry.orientation.x(), odometry.orientation.y(), odometry.orientation.z(), odometry.orientation.w()));
-            tf2::Transform tf_base_link_to_lidar_frame;
-            tf2::fromMsg(base_link_to_lidar_frame_transform.transform, tf_base_link_to_lidar_frame);
-            tf2::Transform tf_odom_to_base_link = tf_lidar_odom_to_lidar_frame * tf_base_link_to_lidar_frame;
-            transform_stamped.transform = tf2::toMsg(tf_odom_to_base_link);
+            auto &transform = transform_stamped.transform;
+            transform.translation.x = odom_from_base.translation.x();
+            transform.translation.y = odom_from_base.translation.y();
+            transform.translation.z = odom_from_base.translation.z();
+            transform.rotation.x = odom_from_base.rotation.x();
+            transform.rotation.y = odom_from_base.rotation.y();
+            transform.rotation.z = odom_from_base.rotation.z();
+            transform.rotation.w = odom_from_base.rotation.w();
 
             nav_msgs::msg::Odometry odometry_msg;
-            odometry_msg.header.stamp = time_msg;
-            odometry_msg.header.frame_id = odom_frame;
-            odometry_msg.child_frame_id = this->base_frame;
+            odometry_msg.header = transform_stamped.header;
+            odometry_msg.child_frame_id = transform_stamped.child_frame_id;
             odometry_msg.pose.pose.position.x = transform_stamped.transform.translation.x;
             odometry_msg.pose.pose.position.y = transform_stamped.transform.translation.y;
             odometry_msg.pose.pose.position.z = transform_stamped.transform.translation.z;
-            odometry_msg.pose.pose.orientation.x = transform_stamped.transform.rotation.x;
-            odometry_msg.pose.pose.orientation.y = transform_stamped.transform.rotation.y;
-            odometry_msg.pose.pose.orientation.z = transform_stamped.transform.rotation.z;
-            odometry_msg.pose.pose.orientation.w = transform_stamped.transform.rotation.w;
+            odometry_msg.pose.pose.orientation = transform_stamped.transform.rotation;
 
             // Odometry.twist is expressed in child_frame_id.  The LIO
             // callback velocity is at the lidar origin in odom coordinates;
