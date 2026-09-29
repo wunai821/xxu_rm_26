@@ -11,7 +11,7 @@ import rclpy
 import yaml
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from lifecycle_msgs.srv import ChangeState, GetState
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.duration import Duration
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -183,7 +183,7 @@ class ScanMapMatcher:
         self.free = self.image > 180
         self.distance = compute_distance_cells(self.occupied)
 
-    def estimate(self, scan_msg):
+    def scan_rays(self, scan_msg):
         ranges = np.asarray(scan_msg.ranges, dtype=np.float32)
         angles = scan_msg.angle_min + np.arange(ranges.size, dtype=np.float32) * scan_msg.angle_increment
         valid = np.isfinite(ranges)
@@ -197,6 +197,18 @@ class ScanMapMatcher:
         if ranges.size < 40:
             raise RuntimeError("Not enough valid laser rays for relocalization")
 
+        return ranges, angles
+
+    def validate(self, pose, scan_msg):
+        """Score an odometry-propagated candidate against a new observation."""
+        ranges, angles = self.scan_rays(scan_msg)
+        ranges, angles = self.downsample(ranges, angles, 360)
+        if not self.is_free_world(pose[0], pose[1]):
+            return -1.0
+        return self.score_pose(*pose, ranges, angles)
+
+    def estimate(self, scan_msg):
+        ranges, angles = self.scan_rays(scan_msg)
         coarse_ranges, coarse_angles = self.downsample(ranges, angles, 180)
         refine_ranges, refine_angles = self.downsample(ranges, angles, 360)
 
@@ -333,6 +345,7 @@ class AutoInitialPose(Node):
         self.declare_parameter("scan_topic", "/scan")
         self.declare_parameter("scan_timeout", 8.0)
         self.declare_parameter("scan_tf_timeout", 0.25)
+        self.declare_parameter("max_scan_age", 0.5)
         self.declare_parameter("scan_warmup_count", 20)
         self.declare_parameter("min_range", 0.6)
         self.declare_parameter("max_range", 6.0)
@@ -363,6 +376,9 @@ class AutoInitialPose(Node):
         self.odom_frame = str(self.get_parameter("odom_frame").value)
         self.base_frame = str(self.get_parameter("base_frame").value)
         self.scan_tf_timeout = float(self.get_parameter("scan_tf_timeout").value)
+        self.max_scan_age = float(self.get_parameter("max_scan_age").value)
+        if not math.isfinite(self.max_scan_age) or self.max_scan_age <= 0.0:
+            raise ValueError("max_scan_age must be finite and positive")
         self.scan_warmup_count = int(self.get_parameter("scan_warmup_count").value)
         self.min_match_score = float(self.get_parameter("min_match_score").value)
 
@@ -386,7 +402,10 @@ class AutoInitialPose(Node):
         self.scans_seen = 0
         self.publish_source = ""
         self.publish_odom_reference = None
-        self.scan_callback_group = ReentrantCallbackGroup()
+        self.matcher = None
+        self.pending_match = None
+        # Serialize scan validation and publication, leaving TF callbacks free.
+        self.scan_callback_group = MutuallyExclusiveCallbackGroup()
         self.prerequisites_ready = False
         # Poll frequently enough to catch the short interval after AMCL has
         # created its initial-pose subscription but before lifecycle activation.
@@ -448,7 +467,9 @@ class AutoInitialPose(Node):
                 callback_group=self.scan_callback_group,
             )
             timeout = float(self.get_parameter("scan_timeout").value)
-            self.timeout_timer = self.create_timer(timeout, self.scan_timeout)
+            self.timeout_timer = self.create_timer(
+                timeout, self.scan_timeout, callback_group=self.scan_callback_group
+            )
             self.get_logger().info(
                 f"Prerequisites ready; warming up {self.scan_warmup_count} scans "
                 f"from {self.scan_topic} before relocalizing"
@@ -581,6 +602,13 @@ class AutoInitialPose(Node):
                     "Scan warmup complete; the next stable scan will be matched"
                 )
             return
+        scan_age = self.scan_age(scan_msg.header.stamp)
+        if not 0.0 <= scan_age <= self.max_scan_age:
+            self.get_logger().warn(
+                f"Ignoring stale/future scan: age={scan_age:.3f}s",
+                throttle_duration_sec=5.0,
+            )
+            return
         self.matching_started = True
         if self.timeout_timer is not None:
             self.timeout_timer.cancel()
@@ -601,25 +629,46 @@ class AutoInitialPose(Node):
                 f"odom_stamp={stamp_seconds(scan_odom_tf.header.stamp):.9f}, "
                 f"offset_ms={(stamp_seconds(scan_odom_tf.header.stamp) - stamp_seconds(scan_msg.header.stamp)) * 1000.0:.1f}"
             )
+            if self.pending_match is not None:
+                pose, reference_tf = self.pending_match
+                if stamp_seconds(scan_msg.header.stamp) <= stamp_seconds(reference_tf.header.stamp):
+                    self.matching_started = False
+                    return
+                pose = advance_map_pose(pose, reference_tf, scan_odom_tf)
+                score = self.matcher.validate(pose, scan_msg)
+                if not math.isfinite(score) or score < self.min_match_score:
+                    self.pending_match = None
+                    raise RuntimeError(f"Fresh-scan validation rejected candidate: score={score:.3f}")
+                if not 0.0 <= self.scan_age(scan_msg.header.stamp) <= self.max_scan_age:
+                    self.matching_started = False
+                    self.get_logger().warn("Validation scan expired; waiting for another fresh scan")
+                    return
+                self.get_logger().info(
+                    f"Fresh-scan validation passed: score={score:.3f}, "
+                    f"scan_age_ms={self.scan_age(scan_msg.header.stamp) * 1000.0:.1f}"
+                )
+                self.start_publishing(*pose, "relocalized", odom_reference=scan_odom_tf)
+                return
             matching_started = time.monotonic()
-            matcher = ScanMapMatcher(
-                self.map_yaml,
-                float(self.get_parameter("min_range").value),
-                float(self.get_parameter("max_range").value),
-                float(self.get_parameter("min_robot_clearance").value),
-                float(self.get_parameter("obstacle_sigma").value),
-                float(self.get_parameter("min_inside_ratio").value),
-                int(self.get_parameter("coarse_xy_step_cells").value),
-                int(self.get_parameter("coarse_yaw_samples").value),
-                int(self.get_parameter("top_candidates").value),
-                float(self.get_parameter("refine_xy_radius").value),
-                float(self.get_parameter("refine_xy_step").value),
-                float(self.get_parameter("refine_yaw_radius").value),
-                float(self.get_parameter("refine_yaw_step").value),
-            )
-            x, y, yaw, score = matcher.estimate(scan_msg)
+            if self.matcher is None:
+                self.matcher = ScanMapMatcher(
+                    self.map_yaml,
+                    float(self.get_parameter("min_range").value),
+                    float(self.get_parameter("max_range").value),
+                    float(self.get_parameter("min_robot_clearance").value),
+                    float(self.get_parameter("obstacle_sigma").value),
+                    float(self.get_parameter("min_inside_ratio").value),
+                    int(self.get_parameter("coarse_xy_step_cells").value),
+                    int(self.get_parameter("coarse_yaw_samples").value),
+                    int(self.get_parameter("top_candidates").value),
+                    float(self.get_parameter("refine_xy_radius").value),
+                    float(self.get_parameter("refine_xy_step").value),
+                    float(self.get_parameter("refine_yaw_radius").value),
+                    float(self.get_parameter("refine_yaw_step").value),
+                )
+            x, y, yaw, score = self.matcher.estimate(scan_msg)
             matching_elapsed_ms = (time.monotonic() - matching_started) * 1000.0
-            if score < self.min_match_score:
+            if not math.isfinite(score) or score < self.min_match_score:
                 raise RuntimeError(f"Low match score {score:.3f}")
             self.get_logger().info(
                 "Relocalized scan pose: "
@@ -631,25 +680,36 @@ class AutoInitialPose(Node):
                 f"scan_odom_stamp={stamp_seconds(scan_odom_tf.header.stamp):.9f}, "
                 f"search_ms={matching_elapsed_ms:.1f}"
             )
-            self.start_publishing(
-                x,
-                y,
-                yaw,
-                "relocalized",
-                odom_reference=scan_odom_tf,
-            )
+            self.pending_match = ((x, y, yaw), scan_odom_tf)
+            self.matching_started = False
+            self.get_logger().info("Global match is a candidate; waiting for fresh-scan validation")
         except Exception as exc:  # pylint: disable=broad-except
             self.get_logger().warn(
-                f"Relocalization failed ({exc}); falling back to fixed initial pose"
+                f"Relocalization not ready ({exc}); waiting for a fresh scan"
             )
-            self.start_publishing(self.x, self.y, self.yaw, "fixed fallback")
+            self.matching_started = False
 
-        if self.scan_sub is not None:
-            self.destroy_subscription(self.scan_sub)
-            self.scan_sub = None
+    def scan_age(self, stamp):
+        return (self.get_clock().now().nanoseconds * 1.0e-9 - stamp_seconds(stamp))
+
+    def require_fresh_publish_reference(self):
+        if self.publish_odom_reference is None:
+            return True
+        age = self.scan_age(self.publish_odom_reference.header.stamp)
+        if 0.0 <= age <= self.max_scan_age:
+            return True
+        self.get_logger().warn(
+            f"Initial-pose observation expired before publish: age={age:.3f}s; "
+            "waiting for fresh-scan validation"
+        )
+        if self.timer is not None:
+            self.timer.cancel()
+            self.timer = None
+        self.matching_started = False
+        return False
 
     def scan_timeout(self):
-        if self.matching_started:
+        if self.matching_started or self.pending_match is not None:
             return
         self.matching_started = True
         self.get_logger().warn("Timed out waiting for scan; using fixed initial pose")
@@ -659,9 +719,11 @@ class AutoInitialPose(Node):
         self.x = float(x)
         self.y = float(y)
         self.yaw = normalize_angle(float(yaw))
+        self.matching_started = True
+        if self.publish_source != source:
+            self.sent = 0
         self.publish_source = source
         self.publish_odom_reference = odom_reference
-        self.sent = 0
         if self.timer is not None:
             self.timer.cancel()
             self.timer = None
@@ -670,10 +732,14 @@ class AutoInitialPose(Node):
             f"y={self.y:.3f}, yaw={self.yaw:.3f}"
         )
         self.publish_pose()
-        if self.sent < self.publish_count:
-            self.timer = self.create_timer(self.publish_period, self.publish_pose)
+        if self.sent < self.publish_count and self.matching_started:
+            self.timer = self.create_timer(
+                self.publish_period, self.publish_pose, callback_group=self.scan_callback_group
+            )
 
     def publish_pose(self):
+        if not self.require_fresh_publish_reference():
+            return
         try:
             # AMCL integrates odometry from the message stamp to its current
             # clock time. Require a real transform at that same time before
@@ -724,6 +790,9 @@ class AutoInitialPose(Node):
         msg.pose.covariance[0] = float(self.get_parameter("covariance_x").value)
         msg.pose.covariance[7] = float(self.get_parameter("covariance_y").value)
         msg.pose.covariance[35] = float(self.get_parameter("covariance_yaw").value)
+        # TF lookup can block; check observation age again immediately before delivery.
+        if not self.require_fresh_publish_reference():
+            return
         self.pub.publish(msg)
         self.sent += 1
         timing_details = ""

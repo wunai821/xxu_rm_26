@@ -1,5 +1,7 @@
 # MID360 旋转云台实机回归
 
+> AMCL 本轮实验已结束，见[结案说明](amcl_experiments/CURRENT_STATUS.md)。实验代码已清理，历史数据和报告保留；半格修正未合入。
+
 这组工具用于把实机问题固定成可重复的数据集。录包同时保存原始 MID360
 点云/IMU、云台关节、TF、Small Point-LIO 输出和可选的独立里程计。
 

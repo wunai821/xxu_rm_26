@@ -16,6 +16,7 @@ import rclpy
 from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import PoseArray
 from nav_msgs.msg import Odometry
+from rclpy.parameter import Parameter
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import JointState
 
@@ -44,7 +45,13 @@ def relative_truth(first, current):
 
 class MotionValidator:
     def __init__(self):
-        self.node = rclpy.create_node("lio_motion_validator")
+        # Commands pass through fake_vel_transform, which rejects a command
+        # whose stamp is outside the simulation-time watchdog window.  Use
+        # the simulator clock so test commands are valid in Gazebo launches.
+        self.node = rclpy.create_node(
+            "lio_motion_validator",
+            parameter_overrides=[Parameter("use_sim_time", value=True)],
+        )
         self.command_pub = self.node.create_publisher(
             TwistStamped, "/cmd_vel_collision", 10
         )
