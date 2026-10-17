@@ -3,7 +3,7 @@
 这组工具用于把实机问题固定成可重复的数据集。录包同时保存原始 MID360
 点云/IMU、云台关节、TF、Small Point-LIO 输出和可选的独立里程计。
 
-测试、独立传播和区间 IMU 候选源码已于 2026-10-17 清理；历史结论与数据继续保留，不再提供这些候选的启动和测试入口。
+测试、独立传播和区间 IMU 候选源码已于 2026-10-17 清理；历史实验数据及报告也已删除，不再提供这些候选的启动和测试入口。
 
 ## 仿真默认链路与源输入
 
@@ -140,11 +140,7 @@ python3 tools/lio/measure_velocity_noise.py bags/velocity_noise/hold
 python3 tools/lio/analyze_velocity_noise.py bags/velocity_noise
 ```
 
-输出 `results.json`、`REPORT.md` 和 PNG/SVG 图表。首次完整实测及自动启动脚本见
-`bags/odom_velocity_noise_20261004/`；其 ROS 与 Gazebo 使用独立通信域，测试后关闭
-它启动的仿真进程。
-
-2026-10-04 的位姿差分速度与 LIO 状态速度比较及原始数据保留在历史报告中；双源比较与候选实验脚本已清理。
+输出 `results.json`、`REPORT.md` 和 PNG/SVG 图表。
 在线开关为 `nav_velocity_smoothing_window`；0 关闭，默认 0.3 秒。
 
 ## 仿真平移丢失诊断
