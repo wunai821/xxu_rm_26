@@ -4,7 +4,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, LogInfo
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
-from nav2_common.launch import RewrittenYaml
+from ament_index_python.packages import get_package_share_directory
+from xxu_description.launch_helpers import nav2_parameters
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -52,68 +53,15 @@ def generate_launch_description():
     ]
 
     nav2_common_remaps = [("/tf", "tf"), ("/tf_static", "tf_static")]
-    nav2_base_frame = PythonExpression([
-        "'gimbal_yaw_fake' if '",
-        use_fake_frame,
-        "' == 'true' else 'base_link'",
-    ])
-    configured_params = RewrittenYaml(
-        source_file=params_file,
-        root_key="",
-        param_rewrites={
-            # The YAML files keep usable defaults for standalone launches, but
-            # the launch argument is the single source of truth.  A leaf-key
-            # rewrite updates every Nav2 node, including nested costmaps.
-            "use_sim_time": use_sim_time,
-            "bt_navigator.ros__parameters.robot_base_frame": nav2_base_frame,
-            "local_costmap.local_costmap.ros__parameters.robot_base_frame": nav2_base_frame,
-            "global_costmap.global_costmap.ros__parameters.robot_base_frame": nav2_base_frame,
-            "behavior_server.ros__parameters.robot_base_frame": nav2_base_frame,
-            "collision_monitor.ros__parameters.base_frame_id": nav2_base_frame,
+    configured_params, selected_nav_params, _ = nav2_parameters(
+        params_file, use_sim_time, use_fake_frame,
+        get_package_share_directory("xxu_bringup"), mode="navigation",
+        extra_rewrites={
             "collision_monitor.ros__parameters.cmd_vel_in_topic": cmd_vel_in_topic,
             "collision_monitor.ros__parameters.cmd_vel_out_topic": cmd_vel_out_topic,
-            # Benchmark callers may require the exact requested endpoint.
-            # Standalone navigation retains the configuration-file default.
             "planner_server.ros__parameters.GridBased.tolerance": planner_tolerance,
         },
-        convert_types=True,
     )
-
-    # The fake frame is fixed in odom: MPPI controls XY only. Physical chassis
-    # spin is owned by fake_vel_transform and is absent from /odom_nav.
-    gyro_params = RewrittenYaml(
-        source_file=configured_params,
-        root_key="",
-        param_rewrites={
-            "controller_server.ros__parameters.odom_topic": "/odom_nav",
-            "bt_navigator.ros__parameters.odom_topic": "/odom_nav",
-            "velocity_smoother.ros__parameters.odom_topic": "/odom_nav",
-            "controller_server.ros__parameters.goal_checker.plugin": "nav2_controller::PositionGoalChecker",
-            "controller_server.ros__parameters.FollowPath.wz_max": "0.0",
-            "controller_server.ros__parameters.FollowPath.az_max": "0.0",
-            # With yaw decoupled, retain enough goal attraction to overcome
-            # the asymmetric acceleration/deceleration sampling bias.
-            "controller_server.ros__parameters.FollowPath.GoalCritic.cost_weight": "15.0",
-            # Circular swept footprint includes the protruding omni wheels.
-            "local_costmap.local_costmap.ros__parameters.robot_radius": "0.42",
-            "global_costmap.global_costmap.ros__parameters.robot_radius": "0.42",
-            "collision_monitor.ros__parameters.EmergencyStop.points": "[[0.45, 0.0], [0.3182, 0.3182], [0.0, 0.45], [-0.3182, 0.3182], [-0.45, 0.0], [-0.3182, -0.3182], [0.0, -0.45], [0.3182, -0.3182]]",
-            # Keep nonzero sampling variance: MPPI uses its inverse in costs.
-            "controller_server.ros__parameters.FollowPath.GoalAngleCritic.enabled": "false",
-            "controller_server.ros__parameters.FollowPath.PathAngleCritic.enabled": "false",
-            "controller_server.ros__parameters.FollowPath.TwirlingCritic.enabled": "false",
-            "bt_navigator.ros__parameters.default_nav_to_pose_bt_xml": PathJoinSubstitution(
-                [bringup_share, "config", "navigate_to_pose_translation.xml"]),
-            "bt_navigator.ros__parameters.default_nav_through_poses_bt_xml": PathJoinSubstitution(
-                [bringup_share, "config", "navigate_through_poses_translation.xml"]),
-        },
-        convert_types=True,
-    )
-    selected_nav_params = PythonExpression([
-        "'", gyro_params, "' if '", use_fake_frame,
-        "' == 'true' else '", configured_params, "'",
-    ])
-
 
     return LaunchDescription([
         DeclareLaunchArgument(

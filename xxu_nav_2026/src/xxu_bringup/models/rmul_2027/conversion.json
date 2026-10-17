@@ -1,0 +1,39 @@
+{
+  "source_file": "rmul_2027.stl",
+  "source_sha256": "aba82019962f672f819cb90c7be33face70faa4cfbf9ec33b44440e84dc68ce9",
+  "triangles": 3811,
+  "source_bounds": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      12600.0,
+      520.0,
+      8600.0
+    ]
+  ],
+  "transform": "x=X/1000; y=Z/1000; z=(420-Y)/1000",
+  "rotation_determinant": 1,
+  "units": "metre",
+  "ground_z": 0.0,
+  "bounds_m": [
+    [
+      0.0,
+      0.0,
+      -0.10000000000000003
+    ],
+    [
+      12.6,
+      8.6,
+      0.42
+    ]
+  ],
+  "map_resolution": 0.05,
+  "collision_height_band_m": [
+    0.05,
+    0.5
+  ],
+  "map_type": "conservative geometry projection, not measured SLAM"
+}

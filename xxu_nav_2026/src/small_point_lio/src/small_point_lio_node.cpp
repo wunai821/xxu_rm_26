@@ -27,6 +27,34 @@ namespace small_point_lio {
 
 namespace {
 
+geometry_msgs::msg::Vector3 toRosVector(const Eigen::Vector3d &value)
+{
+    geometry_msgs::msg::Vector3 result;
+    result.x = value.x();
+    result.y = value.y();
+    result.z = value.z();
+    return result;
+}
+
+geometry_msgs::msg::Quaternion toRosQuaternion(const Eigen::Quaterniond &value)
+{
+    geometry_msgs::msg::Quaternion result;
+    result.x = value.x();
+    result.y = value.y();
+    result.z = value.z();
+    result.w = value.w();
+    return result;
+}
+
+geometry_msgs::msg::Twist toRosTwist(
+        const Eigen::Vector3d &linear, const Eigen::Vector3d &angular)
+{
+    geometry_msgs::msg::Twist result;
+    result.linear = toRosVector(linear);
+    result.angular = toRosVector(angular);
+    return result;
+}
+
 builtin_interfaces::msg::Time toRosTime(const double timestamp)
 {
     const auto seconds = static_cast<int64_t>(std::floor(timestamp));
@@ -163,6 +191,9 @@ bool interpolatePose(
         }
         odometry_publisher = create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1000);
         pointcloud_publisher = create_publisher<sensor_msgs::msg::PointCloud2>(deskewed_cloud_topic, 10);
+        imu_fault_publisher = create_publisher<std_msgs::msg::Bool>(
+                "~/imu_time_fault", rclcpp::QoS(1).reliable().transient_local());
+        imu_fault_publisher->publish(std_msgs::msg::Bool());
         tf_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         tf_buffer = std::make_unique<tf2_ros::Buffer>(get_clock());
         tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -197,6 +228,7 @@ bool interpolatePose(
         small_point_lio->set_odometry_callback([this, odom_frame](const common::Odometry &odometry) {
             const auto time_msg = toRosTime(odometry.timestamp);
 
+
             geometry_msgs::msg::TransformStamped transform_stamped;
             transform_stamped.header.stamp = time_msg;
             transform_stamped.header.frame_id = odom_frame;
@@ -226,13 +258,8 @@ bool interpolatePose(
             const auto odom_from_base = compose(odom_from_lidar, lidar_from_base);
 
             auto &transform = transform_stamped.transform;
-            transform.translation.x = odom_from_base.translation.x();
-            transform.translation.y = odom_from_base.translation.y();
-            transform.translation.z = odom_from_base.translation.z();
-            transform.rotation.x = odom_from_base.rotation.x();
-            transform.rotation.y = odom_from_base.rotation.y();
-            transform.rotation.z = odom_from_base.rotation.z();
-            transform.rotation.w = odom_from_base.rotation.w();
+            transform.translation = toRosVector(odom_from_base.translation);
+            transform.rotation = toRosQuaternion(odom_from_base.rotation);
 
             nav_msgs::msg::Odometry odometry_msg;
             odometry_msg.header = transform_stamped.header;
@@ -243,10 +270,14 @@ bool interpolatePose(
             odometry_msg.pose.pose.orientation = transform_stamped.transform.rotation;
 
             // Odometry.twist is expressed in child_frame_id.  The LIO
-            // callback velocity is at the lidar origin in odom coordinates;
-            // first shift velocity from the lidar to the base origin, then rotate to the
-            // published base frame.  This remains correct for a spinning
-            // gimbal and for a non-zero lidar/IMU extrinsic.
+            // callback velocity is at the lidar origin in odom coordinates.
+            // This fallback shifts that velocity to the base origin and rotates
+            // it into the published base frame. It assumes a fixed lidar-to-base
+            // transform (one rigid body), as in the compensated lio_base_sensor
+            // path. Raw dynamic-gimbal input also requires relative joint rates;
+            // they are not subtracted here, so this is not a complete twist
+            // conversion for that input. The core already applies IMU-to-lidar
+            // extrinsics before this callback.
             const Eigen::Vector3d omega_odom =
                     odom_from_lidar.rotation * odometry.angular_velocity;
             const Eigen::Vector3d lidar_to_base_odom =
@@ -258,15 +289,16 @@ bool interpolatePose(
             const Eigen::Vector3d instantaneous_base_angular_velocity =
                     odom_from_base.rotation.conjugate() * omega_odom;
 
-            // The pose above is the authoritative odom->base transform.  A
-            // finite difference of that same transform avoids publishing a
-            // velocity from a different state origin/frame when the lidar is
-            // on a rotating or compensated gimbal.  Keep the transformed LIO
-            // velocity as the first-sample/fallback value.
+            // Normal twist uses consecutive time-matched source base poses,
+            // not predicted publications. Linear velocity is an interval finite
+            // difference in the current base frame; angular velocity retains
+            // only the relative yaw rate. The fixed-transform fallback above
+            // remains for the first sample or an unusable source-pose interval.
             Eigen::Vector3d base_velocity = instantaneous_base_velocity;
             Eigen::Vector3d base_angular_velocity = instantaneous_base_angular_velocity;
             const double dt = odometry.timestamp - last_published_pose_timestamp;
-            if (has_last_published_pose && dt > 1.0e-6 && dt <= 1.0) {
+            const bool pose_diff_ready = has_last_published_pose && dt > 1.0e-6 && dt <= 1.0;
+            if (pose_diff_ready) {
                 const Eigen::Vector3d delta_position =
                         odom_from_base.translation - last_published_position;
                 base_velocity = odom_from_base.rotation.conjugate() * delta_position / dt;
@@ -284,12 +316,7 @@ bool interpolatePose(
             last_published_position = odom_from_base.translation;
             last_published_orientation = odom_from_base.rotation;
             has_last_published_pose = true;
-            odometry_msg.twist.twist.linear.x = base_velocity.x();
-            odometry_msg.twist.twist.linear.y = base_velocity.y();
-            odometry_msg.twist.twist.linear.z = base_velocity.z();
-            odometry_msg.twist.twist.angular.x = base_angular_velocity.x();
-            odometry_msg.twist.twist.angular.y = base_angular_velocity.y();
-            odometry_msg.twist.twist.angular.z = base_angular_velocity.z();
+            odometry_msg.twist.twist = toRosTwist(base_velocity, base_angular_velocity);
 
             // Keep the covariance conservative until a calibrated covariance
             // model is available; zeros make consumers treat the estimate as
@@ -301,8 +328,7 @@ bool interpolatePose(
             odometry_msg.twist.covariance[28] = 0.09;
             odometry_msg.twist.covariance[35] = 0.09;
 
-            tf_broadcaster->sendTransform(transform_stamped);
-            odometry_publisher->publish(odometry_msg);
+            publish_odometry(odometry_msg);
         });
         if (lidar_type == "livox_custom_msg") {
 #ifdef HAVE_LIVOX_DRIVER
@@ -338,8 +364,34 @@ bool interpolatePose(
                     imu_msg.linear_acceleration = Eigen::Vector3d(msg.linear_acceleration.x, msg.linear_acceleration.y, msg.linear_acceleration.z);
                     imu_msg.timestamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9;
                     small_point_lio->on_imu_callback(imu_msg);
+                    report_imu_time_fault();
                     small_point_lio->handle_once();
                 });
+    }
+
+    void SmallPointLioNode::report_imu_time_fault() {
+        if (small_point_lio->has_imu_time_fault() && !imu_fault_reported) {
+            std_msgs::msg::Bool fault;
+            fault.data = true;
+            imu_fault_publisher->publish(fault);
+            imu_fault_reported = true;
+        }
+    }
+
+    void SmallPointLioNode::publish_odometry(const nav_msgs::msg::Odometry &message) {
+        const double timestamp = message.header.stamp.sec + message.header.stamp.nanosec*1e-9;
+        // Repeated or out-of-order source samples must not refresh navigation TF.
+        if (timestamp <= last_odometry_timestamp) return;
+        geometry_msgs::msg::TransformStamped tf;
+        tf.header = message.header;
+        tf.child_frame_id = message.child_frame_id;
+        tf.transform.translation.x = message.pose.pose.position.x;
+        tf.transform.translation.y = message.pose.pose.position.y;
+        tf.transform.translation.z = message.pose.pose.position.z;
+        tf.transform.rotation = message.pose.pose.orientation;
+        tf_broadcaster->sendTransform(tf);
+        odometry_publisher->publish(message);
+        last_odometry_timestamp = timestamp;
     }
 
     void SmallPointLioNode::on_pose_history(const common::Odometry &odometry) {
@@ -374,7 +426,7 @@ bool interpolatePose(
     }
 
     void SmallPointLioNode::on_dense_scan(const std::vector<common::Point> &pointcloud) {
-        if (pointcloud.empty()) {
+        if (small_point_lio->has_imu_time_fault() || pointcloud.empty()) {
             return;
         }
         double start_timestamp = std::numeric_limits<double>::infinity();
@@ -412,6 +464,12 @@ bool interpolatePose(
 
     void SmallPointLioNode::process_pending_deskew_scans() {
         std::lock_guard<std::mutex> process_lock(deskew_process_mutex);
+        if (small_point_lio->has_imu_time_fault()) {
+            std::lock_guard<std::mutex> lock(deskew_mutex);
+            pending_deskew_scans.clear();
+            pose_history.clear();
+            return;
+        }
         while (rclcpp::ok()) {
             PendingDeskewScan pending;
             std::deque<common::Odometry> history;

@@ -34,6 +34,9 @@ small_point_lio:
         satu_acc: 29.43
         satu_gyro: 35.0
         acc_norm: 9.81
+        # A missing IMU interval invalidates inertial propagation. The fault
+        # stops odom/cloud output until localization is restarted.
+        max_imu_sample_gap: 0.25
 
         map_resolution: 0.2
         init_map_size: 20

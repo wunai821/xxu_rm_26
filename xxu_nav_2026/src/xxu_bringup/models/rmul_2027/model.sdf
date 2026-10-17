@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9"><model name="rmul_2027">
+      <static>true</static><link name="field">
+        <visual name="field"><geometry><mesh><uri>meshes/rmul_2027_m_zup.stl</uri>
+          </mesh></geometry><material><ambient>0.32 0.35 0.39 1</ambient>
+          <diffuse>0.55 0.59 0.64 1</diffuse><specular>0.03 0.03 0.03 1</specular>
+          </material></visual>
+        <collision name="field"><geometry><mesh><uri>meshes/rmul_2027_m_zup.stl</uri>
+          </mesh></geometry></collision>
+      </link></model></sdf>

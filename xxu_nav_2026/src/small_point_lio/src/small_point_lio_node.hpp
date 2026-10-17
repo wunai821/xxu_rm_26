@@ -18,6 +18,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.hpp>
 #include <tf2_ros/transform_listener.h>
@@ -41,6 +42,8 @@ namespace small_point_lio {
         std::shared_ptr<rclcpp::Subscription<sensor_msgs::msg::Imu>> imu_subsciber;
         std::shared_ptr<rclcpp::Publisher<nav_msgs::msg::Odometry>> odometry_publisher;
         std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::PointCloud2>> pointcloud_publisher;
+        std::shared_ptr<rclcpp::Publisher<std_msgs::msg::Bool>> imu_fault_publisher;
+        bool imu_fault_reported = false;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
         std::unique_ptr<tf2_ros::Buffer> tf_buffer;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener;
@@ -61,6 +64,7 @@ namespace small_point_lio {
         double last_published_pose_timestamp = 0.0;
         Eigen::Vector3d last_published_position = Eigen::Vector3d::Zero();
         Eigen::Quaterniond last_published_orientation = Eigen::Quaterniond::Identity();
+        double last_odometry_timestamp = -1.0;
 
     public:
         explicit SmallPointLioNode(const rclcpp::NodeOptions &options);
@@ -71,6 +75,8 @@ namespace small_point_lio {
         void on_dense_scan(const std::vector<common::Point> &pointcloud);
 
         void process_pending_deskew_scans();
+        void report_imu_time_fault();
+        void publish_odometry(const nav_msgs::msg::Odometry &message);
     };
 
 }// namespace small_point_lio

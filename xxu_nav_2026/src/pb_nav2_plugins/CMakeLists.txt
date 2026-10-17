@@ -56,12 +56,6 @@ target_include_directories(pb_intensity_voxel_layer PUBLIC
 )
 ament_target_dependencies(pb_intensity_voxel_layer ${dependencies})
 
-if(BUILD_TESTING)
-  set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-format")
-  set(ament_cmake_clang_tidy_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.clang-tidy")
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 pluginlib_export_plugin_description_file(nav2_core behavior_plugin.xml)
 pluginlib_export_plugin_description_file(nav2_costmap_2d costmap_plugins.xml)

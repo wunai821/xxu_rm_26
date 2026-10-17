@@ -24,6 +24,7 @@ namespace small_point_lio {
         double satu_acc;
         double satu_gyro;
         double acc_norm;
+        double max_imu_sample_gap = 0.25;
 
         double map_resolution;
         size_t init_map_size;

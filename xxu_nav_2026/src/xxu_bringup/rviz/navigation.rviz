@@ -187,6 +187,8 @@ Visualization Manager:
           Value: true
         lio_base_sensor:
           Value: true
+        map:
+          Value: true
         mid360_link:
           Value: true
         odom:
@@ -205,7 +207,25 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        {}
+        map:
+          odom:
+            base_footprint:
+              base_link:
+                gimbal_link:
+                  mid360_link:
+                    {}
+                lio_base_sensor:
+                  {}
+                wheel_fl:
+                  {}
+                wheel_fr:
+                  {}
+                wheel_rl:
+                  {}
+                wheel_rr:
+                  {}
+              gimbal_yaw_fake:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -218,7 +238,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz_default_plugins/LaserScan
       Color: 255; 255; 255
-      Color Transformer: ""
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -227,7 +247,7 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: LaserScan
-      Position Transformer: ""
+      Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.009999999776482582
@@ -357,7 +377,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.874998688697815
+      Angle: -1.4900026321411133
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -367,23 +387,23 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: -35.2573127746582
+      Scale: 141.7877655029297
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 0
-      Y: 0
+      X: -0.7546805143356323
+      Y: -5.65471887588501
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1033
+  Height: 1015
   Hide Left Dock: false
   Hide Right Dock: false
   Navigation 2:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000100000000000001f30000039ffc0200000003fb000000100044006900730070006c0061007900730100000048000000f3000000f300fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007301000001420000006f0000006f00fffffffb00000018004e0061007600690067006100740069006f006e0020003201000001b80000022f0000022f00ffffff000002b60000039f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000100000000000001f30000038dfc0200000003fb000000100044006900730070006c0061007900730100000048000000f3000000f300fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007301000001420000006f0000006f00fffffffb00000018004e0061007600690067006100740069006f006e0020003201000001b80000021d0000021700ffffff000005860000038d00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Tool Properties:
     collapsed: false
-  Width: 1200
-  X: 100
-  Y: 0
+  Width: 1920
+  X: 0
+  Y: 28

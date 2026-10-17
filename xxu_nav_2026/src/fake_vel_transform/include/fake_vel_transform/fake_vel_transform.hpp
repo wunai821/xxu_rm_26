@@ -2,8 +2,9 @@
 #define FAKE_VEL_TRANSFORM__FAKE_VEL_TRANSFORM_HPP_
 
 #include <chrono>
-#include <deque>
 #include <mutex>
+
+#include "fake_vel_transform/velocity_window.hpp"
 
 #include <tf2_ros/transform_broadcaster.h>
 
@@ -23,11 +24,9 @@ private:
 
   void cmdVelCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
 
-  double yawAt(const rclcpp::Time & stamp) const;
-
   void publishCommand();
 
-  bool odomIsFresh() const;
+  bool currentYaw(double & yaw) const;
 
   struct OdomYawSample
   {
@@ -53,18 +52,16 @@ private:
 
   std::string robot_base_frame_;
   std::string fake_robot_base_frame_;
-  std::string odom_topic_;
-  std::string input_cmd_vel_topic_;
-  std::string output_cmd_vel_topic_;
   double spin_speed_;
   double gyro_linear_threshold_{0.01};
-  double odom_history_duration_{2.0};
   double odom_timeout_{0.5};
+  std::unique_ptr<VelocityWindow> nav_velocity_window_;
+  std::string velocity_parent_frame_;
+  std::string velocity_child_frame_;
 
-  double current_robot_base_angle_{0.0};
-  bool has_odom_{false};
   mutable std::mutex odom_mutex_;
-  std::deque<OdomYawSample> odom_history_;
+  OdomYawSample latest_odom_{rclcpp::Time(0, 0, RCL_ROS_TIME), 0.0};
+  bool has_odom_{false};
   std::chrono::steady_clock::time_point last_odom_receive_time_{};
 };
 

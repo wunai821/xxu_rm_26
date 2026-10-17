@@ -2,6 +2,14 @@
 
 Store Nav2 map files here.
 
+`rmuc_2025.yaml` / `rmuc_2025.pgm` belong to the pinned rm_sim_26 field.
+They are rasterized from collision geometry, including low barriers; they are
+not a measured SLAM map. The upstream version is pinned in
+[simulation.repos](../../../simulation.repos); regenerate with
+[generate_rmuc_map.py](../../../tools/navigation/generate_rmuc_map.py).
+Use `ros2 launch xxu_bringup rm_sim_navigation.launch.py` for this field.
+The examples below retain the old XXU field entry points.
+
 Use `nav2_map_server` to save a map:
 
 ```bash

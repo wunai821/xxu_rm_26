@@ -1,12 +1,13 @@
 # MID360 旋转云台实机回归
 
-> AMCL 本轮实验已结束，见[结案说明](amcl_experiments/CURRENT_STATUS.md)。实验代码已清理，历史数据和报告保留；半格修正未合入。
-
 这组工具用于把实机问题固定成可重复的数据集。录包同时保存原始 MID360
 点云/IMU、云台关节、TF、Small Point-LIO 输出和可选的独立里程计。
 
-## 仿真默认链路与 A/B 基线
+测试、独立传播和区间 IMU 候选源码已于 2026-10-17 清理；历史结论与数据继续保留，不再提供这些候选的启动和测试入口。
 
+## 仿真默认链路与源输入
+
+IMU 缺口超过配置阈值后停止输出并锁存故障，需要重新启动和初始化定位。
 `gazebo.launch.py` 默认启用 `compensate_gimbal_for_lio:=true`：按点时间将
 云台旋转从点云和 IMU 中补偿到刚性虚拟帧 `lio_base_sensor`，再运行
 Small Point-LIO。这是旋转云台仿真的正常运行链路。原始未补偿路径只用于
@@ -95,23 +96,7 @@ tools/lio/inspect_mid360_bag.py bags/lio_regression/<bag-directory>
 的净位移。这样可将“旋转时漂移”拆分为输入时序/格式问题、静止旋转漂移和运动尺度
 误差三个层次。
 
-## 仿真动作验证与小陀螺速度上限
-
-启动仿真后，可用 Gazebo 真值桥接和动作验证器检查 `/odom` 的帧、位姿和速度：
-
-```bash
-ros2 run ros_gz_bridge parameter_bridge \
-  '/world/complex_mapping/dynamic_pose/info@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V'
-python3 tools/lio/validate_motion.py static --duration 3
-python3 tools/lio/validate_motion.py translate --duration 2.5 --speed 0.2
-python3 tools/lio/validate_motion.py rotate --duration 2.5 --angular-speed 0.5
-python3 tools/lio/validate_motion.py gyro_translate --duration 2.5 --speed 0.2
-```
-
-基础定位验收建议用 `gyro_spin_rate:=0`；组合工况可用键盘默认的小陀螺
-`gyro_spin_rate:=1.5`。验证器要求 `/odom` 的 `header.frame_id=odom`、
-`child_frame_id=base_footprint`，并同时报告 Gazebo 真值误差、`Odometry.twist`、
-轮速和云台速度。
+## 小陀螺速度与轮速边界
 
 当前底盘参数为轮半径 0.0762 m、轮速上限 100 rad/s。对纯 X 平移叠加小陀螺角速度，
 轮速逆解为：
@@ -133,6 +118,34 @@ wheel_i = (tx_i (vx - wz y_i) + ty_i (wz x_i)) / wheel_radius
 超过该范围时控制器会按比例缩放四个轮速，不能把输入命令值当作实际底盘速度。
 仿真中 `gyro_spin_rate:=1.5`、`vx=5.0` 的轮速峰值约 66.3 rad/s，`vx=10.5`
 达到 100 rad/s 饱和；这两个高速度点仅用于测边界，不代表安全运行速度。
+
+### 静止速度噪声采样
+
+仿真启动、底盘保持静止后，使用只读采样器按每条消息的时间戳记录 `/odom`、
+`/odom_nav`、关节速度和最终命令。采样器不发送运动命令，默认从第一条 `/odom`
+开始预热 15 秒，再记录 60 秒仿真时间；整个运行超过 240 秒墙钟时间会报错。
+
+```bash
+python3 tools/lio/measure_velocity_noise.py bags/velocity_noise/hold
+```
+
+应同步录制独立 Gazebo 模型真值为同目录的 `truth.csv`，字段为
+`t,world_x,world_y,world_z,qx,qy,qz,qw`。必须按模型名称选择 `xxu`，不要假定
+动态位姿列表的第一项就是底盘。每组独立启动后分别测云台 `hold` 和默认 `spin`。
+分析器验证真值的水平速度、角速度及相对位移均小于 0.001（对应 m/s、rad/s、m），
+随后输出速度均值、轴向标准差、RMS、绝对值 P95/P99、峰值、位姿漂移和采样质量。
+这个阈值只用于确认静止，速度噪声是否合格仍需要具体业务验收标准。
+
+```bash
+python3 tools/lio/analyze_velocity_noise.py bags/velocity_noise
+```
+
+输出 `results.json`、`REPORT.md` 和 PNG/SVG 图表。首次完整实测及自动启动脚本见
+`bags/odom_velocity_noise_20261004/`；其 ROS 与 Gazebo 使用独立通信域，测试后关闭
+它启动的仿真进程。
+
+2026-10-04 的位姿差分速度与 LIO 状态速度比较及原始数据保留在历史报告中；双源比较与候选实验脚本已清理。
+在线开关为 `nav_velocity_smoothing_window`；0 关闭，默认 0.3 秒。
 
 ## 仿真平移丢失诊断
 
@@ -187,6 +200,7 @@ ros2 launch xxu_description gazebo.launch.py \
 原因；匹配率高但水平法向特征值弱时，检查场景几何。内部位置已跟随真值而 `/odom`
 未跟随时，再追踪 TF 与发布链路。单个指标不足以直接认定根因。
 
+
 ```bash
 rg 'LIO_DIAG|LIO_MATCH' /tmp/lio_locked_diagnostics.log
 ```
@@ -200,3 +214,11 @@ python3 tools/lio/check_cloud_truth_alignment.py <bag目录> <dynamic_pose.jsonl
 
 该工具比较相隔 10 秒的两段点云。静态场景在真值对齐后应提高体素重叠，并降低
 较大分位数的最近邻误差；中位数会受重复 Livox 扫描图样影响，不能单独作为结论。
+
+### 输入时序记录
+
+`record_input_timing.py --output 新目录` 只读记录原始/转发/补偿 IMU、关节、点云、odom 与 scan 的时间戳、接收间隔和 LIO 错误状态；不会发送命令或目标。
+
+实测与适用范围见 `docs/lio_readiness_20261007.md`。历史长时断流触发原因尚未确认，不要把组件故障注入当作历史原因已查明。
+
+位姿预测 B 已撤除，当前输出使用 LIO 源测量时间。

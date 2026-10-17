@@ -15,7 +15,7 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.duration import Duration
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import QoSProfile, qos_profile_sensor_data
 from rclpy.time import Time
 from sensor_msgs.msg import LaserScan
 from tf2_ros import Buffer, TransformListener
@@ -463,7 +463,15 @@ class AutoInitialPose(Node):
                 LaserScan,
                 self.scan_topic,
                 self.scan_callback,
-                qos_profile_sensor_data,
+                # Global matching and TF waits can outlast several scans.
+                # Keep only the newest unprocessed observation: queued old
+                # scans can pass validation, then expire during publish TF waits.
+                QoSProfile(
+                    depth=1,
+                    history=qos_profile_sensor_data.history,
+                    reliability=qos_profile_sensor_data.reliability,
+                    durability=qos_profile_sensor_data.durability,
+                ),
                 callback_group=self.scan_callback_group,
             )
             timeout = float(self.get_parameter("scan_timeout").value)

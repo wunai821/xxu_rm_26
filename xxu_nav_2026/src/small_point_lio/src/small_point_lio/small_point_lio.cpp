@@ -11,6 +11,7 @@ namespace small_point_lio {
     SmallPointLio::SmallPointLio(rclcpp::Node &node) : logger(node.get_logger()) {
         // init param
         parameters.read_parameters(node);
+        imu_time_guard = ImuTimeGuard(parameters.max_imu_sample_gap);
         preprocess.parameters = &parameters;
         estimator.parameters = &parameters;
         estimator.Lidar_T_wrt_IMU = parameters.extrinsic_T.cast<state::value_type>();
@@ -31,6 +32,7 @@ namespace small_point_lio {
         estimator.reset();
         estimator.diagnostics = {};
         is_init = false;
+        imu_time_guard.reset();
         active_map_scan_id = 0;
         pending_scan_map_points.clear();
         pose_history.clear();
@@ -39,14 +41,36 @@ namespace small_point_lio {
     }
 
     void SmallPointLio::on_point_cloud_callback(const std::vector<common::Point> &pointcloud) {
+        if (has_imu_time_fault()) { return; }
         preprocess.on_point_cloud_callback(pointcloud);
     }
 
     void SmallPointLio::on_imu_callback(const common::ImuMsg &imu_msg) {
+        if (has_imu_time_fault()) { return; }
+        if (!std::isfinite(imu_msg.timestamp) || !imu_msg.angular_velocity.allFinite() ||
+            !imu_msg.linear_acceleration.allFinite()) {
+            RCLCPP_WARN_ONCE(logger, "Dropping non-finite IMU measurement");
+            return;
+        }
+        if (is_init) {
+            const auto result = imu_time_guard.observe(imu_msg.timestamp);
+            if (result == ImuTimeGuard::Result::Stale) { return; }
+            if (result == ImuTimeGuard::Result::Fault) {
+                RCLCPP_ERROR(logger,
+                        "IMU_TIME_FAULT gap=%.6f s last=%.6f next=%.6f: "
+                        "stopping odometry and deskewed clouds; restart localization and reinitialize map pose",
+                        imu_time_guard.gap(), imu_time_guard.last_timestamp(), imu_msg.timestamp);
+                preprocess.reset();
+                pending_scan_map_points.clear();
+                pose_history.clear();
+                return;
+            }
+        }
         preprocess.on_imu_callback(imu_msg);
     }
 
     void SmallPointLio::handle_once() {
+        if (has_imu_time_fault()) { return; }
         // we need to init small point lio
         if (!is_init) {
             if ((!preprocess.point_deque.empty() || !preprocess.imu_deque.empty()) &&
@@ -117,6 +141,11 @@ namespace small_point_lio {
                     time_current = std::max(preprocess.point_deque.back().timestamp, preprocess.imu_deque.back().timestamp);
                 }
                 estimator.kf.init_timestamp(time_current);
+                // Startup may wait for gravity calibration. Start gap checks
+                // from the newest IMU only after the estimator is initialized.
+                imu_time_guard.reset(preprocess.imu_deque.empty()
+                        ? std::numeric_limits<double>::quiet_NaN()
+                        : preprocess.imu_deque.back().timestamp);
                 estimator.diagnostics = {};
                 estimator.diagnostics.start = time_current;
                 estimator.diagnostics.position_start = estimator.kf.x.position;

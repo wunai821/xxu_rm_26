@@ -5,6 +5,11 @@ XXU 全向机器人 ROS 2 Jazzy + Gazebo Harmonic 仿真、定位、导航与底
 ROS 工作空间位于 `xxu_nav_2026/`。仓库根目录用于项目说明和版本管理，工作空间内的
 `src/` 存放 ROS 包，`build/`、`install/`、`log/` 等目录是构建或运行产物。
 
+## 文档入口
+
+本文保存项目用途和基本使用方式，专项说明见下方入口。历史实验数据及报告已清理；
+构建产物、运行日志和用户原始 CAD 输入不随源码发布。
+
 相关专项文档：
 
 - [小陀螺导航与回归验证](xxu_nav_2026/tools/navigation/README.md)
@@ -19,27 +24,36 @@ ROS 工作空间位于 `xxu_nav_2026/`。仓库根目录用于项目说明和版
 ```bash
 cd ~/xxu_2026/xxu_nav_2026
 source /opt/ros/jazzy/setup.zsh
+git -C .. submodule update --init --recursive
+vcs import src < simulation.repos
 colcon build --symlink-install
 source install/setup.zsh
 ```
 
 ### 2. 启动单点导航仿真
 
-这是最适合检查 Gazebo、RViz、LIO、AMCL 和 Nav2 主链路的入口：
+采用 [rm_sim_26](https://github.com/Neomelt/rm_sim_26) 的哨兵模型和 RMUC 2025 场地，
+接现有 LIO、AMCL、Nav2 与速度保护。外部源码固定版本见
+[simulation.repos](xxu_nav_2026/simulation.repos)，使用说明见
+[导航工具说明](xxu_nav_2026/tools/navigation/README.md)。先停止已有仿真，避免重复节点。
 
 ```bash
 cd ~/xxu_2026/xxu_nav_2026
 source install/setup.zsh
-src/xxu_description/scripts/kill_simulation.sh
-ros2 launch xxu_bringup single_point_simulation.launch.py \
-  enable_localization:=true \
+ros2 launch xxu_bringup rm_sim_navigation.launch.py \
   rviz:=true \
   gazebo_gui:=true
 ```
 
 启动后等待自动初始位姿完成，再在 RViz 中使用 `Nav2 Goal` 发送一个目标点。
-默认地图为 `src/xxu_bringup/maps/complex_map.yaml`，默认世界为
-`src/xxu_description/worlds/complex_mapping.sdf`。
+默认地图为 `src/xxu_bringup/maps/rmuc_2025.yaml`，由固定版本场地碰撞几何生成，
+默认世界取自 `rm_sim_26/worlds/rmuc_2025_world.world`。使用 RGL Mid360，首次需执行
+`tools/navigation/build_rgl.sh`；可显式选择 `lidar_mode:=gpu_lidar`。
+雷达对地航向保持；出生点与地图初始位姿默认 `(3.4, 9.5, 0)`。
+
+用户提供的 RMUL 场地入口为 `ros2 launch xxu_bringup rmul_navigation.launch.py`，
+出生点 `(2,2,0)`，目前仍使用上游原车。EGA 折叠车模正在转换，当前 GLB 为展开草稿；
+折叠模型需在 SolidWorks 中切换配合后导出整车 STEP，操作边界见[CAD 说明](xxu_nav_2026/tools/navigation/cad/README.md)。
 
 ### 3. 检查地图显示
 
@@ -49,11 +63,12 @@ RViz 中应满足：
 - `Map` Display 话题：`/map`
 - `map_server` 已激活
 
-地图初始化依赖 `/scan`、`/odom` 和 TF。自动初始位姿节点会先等待数据，再用扫描和栅格地图匹配初始位姿。
+地图初始化依赖 `/scan`、`/odom` 和 TF。新入口按出生点发送初始位姿；
+旧入口的扫描匹配初始化方式保留。
 
 ## 启动入口
 
-### 完整仿真与 Nav2
+### 旧 XXU 仿真与 Nav2（兼容入口）
 
 ```bash
 cd ~/xxu_2026/xxu_nav_2026
@@ -69,8 +84,7 @@ ros2 launch xxu_bringup simulation.launch.py \
 ### 仅启动 Gazebo
 
 ```bash
-src/xxu_description/scripts/kill_simulation.sh
-ros2 launch xxu_bringup simulation.launch.py \
+ros2 launch xxu_bringup rm_sim_navigation.launch.py \
   start_navigation:=false \
   rviz:=false \
   gazebo_gui:=true
@@ -80,6 +94,7 @@ ros2 launch xxu_bringup simulation.launch.py \
 
 ```bash
 ros2 launch xxu_bringup navigation.launch.py \
+  map:=$(ros2 pkg prefix --share xxu_bringup)/maps/rmuc_2025.yaml \
   enable_localization:=true \
   rviz:=true
 ```
@@ -97,6 +112,11 @@ ros2 launch xxu_bringup real_robot.launch.py
 
 ## 重要启动参数
 
+下表保留旧 `simulation.launch.py` 的默认值。新 `rm_sim_navigation.launch.py`
+默认启用导航、定位、Gazebo GUI 和 RViz，并使用新场地的地图、出生点及扫描高度。
+
+基础导航参数在 `nav2_navigation.yaml` / `nav2_exploration.yaml`；fake 模式的覆盖参数统一在 [nav2_fake_profile.yaml](xxu_nav_2026/src/xxu_bringup/config/nav2_fake_profile.yaml)。两种来源的职责与共享速度链见[配置说明](xxu_nav_2026/tools/navigation/README.md#共享启动与参数来源)。
+
 | 参数 | 默认值 | 说明 |
 | --- | --- | --- |
 | `start_navigation` | `false` | 是否启动 Nav2 |
@@ -109,6 +129,7 @@ ros2 launch xxu_bringup real_robot.launch.py
 | `enable_lio` | `true` | 是否启动 Small Point-LIO |
 | `use_fake_frame` | `true` | 是否使用 `gimbal_yaw_fake` 作为 Nav2 参考底盘帧 |
 | `gyro_spin_rate` | `1.5` | 移动时底盘自旋角速度，单位 rad/s；设为 `0` 可关闭 |
+| `nav_velocity_smoothing_window` | `0.3` | fake 模式导航速度平均窗口，单位秒；设为 `0` 可关闭，重启节点生效 |
 | `auto_initial_pose` | `true` | 是否自动匹配并发布 AMCL 初始位姿 |
 | `initial_pose_relocalize` | `true` | 是否使用 `/scan` 对地图进行初始重定位 |
 
@@ -134,13 +155,7 @@ ros2 launch xxu_bringup real_robot.launch.py
 - `xxu_chassis_controller` 把 `TwistStamped` 转成四个全向轮的角速度指令。
 - 底盘控制器默认命令超时为 `0.3 s`，最大轮速参数为 `100 rad/s`。
 
-接口测试和安全停车验证：
-
-```bash
-ros2 launch xxu_bringup interface_validation.launch.py
-```
-
-测试节点输出 `PASS` 表示故障前有非零轮速、故障后轮速为零；输出 `FAIL` 或进程异常退出都应视为回归问题。
+测试源码及实验候选已于 2026-10-17 清理；当前保留的导航链路见上文，历史实验数据及报告已按用户要求删除。
 
 ## 建图与探索
 

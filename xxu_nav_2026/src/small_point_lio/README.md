@@ -69,6 +69,39 @@ small_point_lio:
         publish_odometry_without_downsample: false # Whether to publish high-frequency odometry. Note that this does not enhance the real-time nature of the odometry and but degrades performance. It is recommended to increase the point cloud publishing rate to achieve highly real-time odometry.
 ```
 
+## IMU time continuity
+
+The estimator checks IMU sensor-time continuity after initialization.
+`max_imu_sample_gap` defaults to 0.25 seconds and must be finite and positive.
+If a larger gap occurs, it latches `~/imu_time_fault=true` and stops odometry,
+TF, and deskewed navigation-cloud output before propagating across the gap.
+Restart localization and reinitialize the map pose to recover; fresh IMU
+messages alone do not clear the fault. The fault topic uses reliable,
+transient-local QoS. Existing downstream freshness gates remain enabled.
+
+
+Interval IMU, independent propagation and alternate velocity-source candidate code was removed on 2026-10-17. Historical experiment reports and data have also been removed.
+
+## Published base twist and fallback
+
+The normal base twist uses consecutive LIO source poses after time-matched
+base TF conversion, not consecutive predicted publications. For source-pose
+intervals `1e-6 < dt <= 1.0` seconds, linear velocity is the position difference
+divided by `dt`, rotated into the current child frame; angular velocity contains
+only the relative yaw rate (X/Y components are zero). This is an interval
+estimate, not a full instantaneous three-dimensional twist.
+
+The first sample or an unusable interval falls back to transformed LIO velocity.
+That fallback assumes a fixed lidar-to-base transform and one rigid body, as in
+the compensated `lio_base_sensor` path. It does not subtract relative joint
+motion, so raw dynamic-gimbal input is outside its complete instantaneous-twist
+conversion scope. Public TF and odometry use the corrected source timestamp; repeated or out-of-order outputs are rejected.
+Implementation: [odometry callback](src/small_point_lio_node.cpp).
+
+## Source-time navigation output
+
+The optional navigation pose prediction (B) was removed on 2026-10-17. The node publishes corrected source poses directly, without a prediction timer, extrapolation state, prediction parameters or prediction diagnostic topic. IMU gap latching, deskew history, base-frame velocity conversion and conservative covariance remain.
+
 ## Save map
 
 **Step 1**: set `save_pcd` to `true` in config file.
@@ -92,7 +125,7 @@ Small Point-LIO is built in on and with the aid of the following open source pro
 |           [Eigen](https://gitlab.com/libeigen/eigen)           |           A C++ template library for linear algebra            | [Mozilla Public License Version 2.0](https://gitlab.com/libeigen/eigen/-/blob/master/LICENSE) |
 | [unordered_dense](https://github.com/martinus/unordered_dense) |          A fast & densely stored hashmap and hashset           |         [MIT License](https://github.com/martinus/unordered_dense/blob/main/LICENSE)          |
 |       [small_gicp](https://github.com/koide3/small_gicp)       | Efficient and parallel algorithms for point cloud registration |            [MIT License](https://github.com/koide3/small_gicp/blob/master/LICENSE)            |
-|          [Open3D](https://github.com/isl-org/Open3D)           |            A Modern Library for 3D Data Processing             |                  [MIT License](github.com/isl-org/Open3D/blob/main/LICENSE)                   |
+|          [Open3D](https://github.com/isl-org/Open3D)           |            A Modern Library for 3D Data Processing             |                  [MIT License](https://github.com/isl-org/Open3D/blob/main/LICENSE)                   |
 
 ## License
 

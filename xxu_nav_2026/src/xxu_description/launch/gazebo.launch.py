@@ -1,6 +1,7 @@
 """启动 Gazebo Harmonic 并加载 XXU 机器人模型."""
 
 from launch import LaunchDescription
+from xxu_description.launch_helpers import velocity_chain
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
@@ -64,6 +65,7 @@ def generate_launch_description():
     gimbal_spin_rate = LaunchConfiguration("gimbal_spin_rate")
     gimbal_spin_start_delay = LaunchConfiguration("gimbal_spin_start_delay")
     gyro_spin_rate = LaunchConfiguration("gyro_spin_rate")
+    nav_velocity_smoothing_window = LaunchConfiguration("nav_velocity_smoothing_window")
     gazebo_gui = LaunchConfiguration("gazebo_gui")
     world = LaunchConfiguration("world")
     spawn_x = LaunchConfiguration("spawn_x")
@@ -121,6 +123,10 @@ def generate_launch_description():
     declare_lio_motion_diagnostics = DeclareLaunchArgument(
         "lio_motion_diagnostics", default_value="false",
         description="Log LIO motion propagation and matching diagnostics once per simulation second",
+    )
+    declare_nav_velocity_smoothing_window = DeclareLaunchArgument(
+        "nav_velocity_smoothing_window", default_value="0.3",
+        description="Navigation velocity average window in seconds; 0 disables filtering",
     )
     declare_enable_lio = DeclareLaunchArgument(
         "enable_lio",
@@ -363,25 +369,11 @@ def generate_launch_description():
         }],
     )
 
-    fake_vel_transform = Node(
-        package="fake_vel_transform",
-        executable="fake_vel_transform_node",
-        name="fake_vel_transform",
-        output="screen",
-        condition=IfCondition(use_fake_frame),
-        parameters=[{
-            "use_sim_time": use_sim_time,
-            "robot_base_frame": "base_link",
-            # Stable velocity frame located at the chassis origin.  The real
-            # base_link -> gimbal_link TF remains dynamic for LiDAR/LIO.
-            "fake_robot_base_frame": "gimbal_yaw_fake",
-            "odom_topic": "/odom",
-            "input_cmd_vel_topic": cmd_vel_out_topic,
-            "output_cmd_vel_topic": "/cmd_vel_transformed",
-            "spin_speed": gyro_spin_rate,
-            "gyro_linear_threshold": 0.01,
-            "odom_timeout": 0.5,
-        }],
+    fake_vel_transform, cmd_vel_watchdog = velocity_chain(
+        use_sim_time=use_sim_time, use_fake_frame=use_fake_frame,
+        cmd_vel_topic=cmd_vel_out_topic, spin_speed=gyro_spin_rate,
+        velocity_window=ParameterValue(nav_velocity_smoothing_window, value_type=float),
+        watchdog_parameters={"status_topic": "/cmd_vel_watchdog/healthy", "tf_topic": "/tf"},
     )
     # IMU bridge (GZ -> ROS 单向)
     bridge_imu = Node(
@@ -645,43 +637,6 @@ def generate_launch_description():
         output="screen",
     )
 
-    cmd_vel_watchdog = Node(
-        package="xxu_description",
-        executable="cmd_vel_watchdog.py",
-        name="cmd_vel_watchdog",
-        output="screen",
-        parameters=[{
-            "use_sim_time": use_sim_time,
-            "input_topic": PythonExpression([
-                "'/cmd_vel_transformed' if '",
-                use_fake_frame,
-                "' == 'true' else '", cmd_vel_out_topic, "'",
-            ]),
-            "output_topic": "/cmd_vel",
-            "status_topic": "/cmd_vel_watchdog/healthy",
-            "timeout": 0.3,
-            "publish_rate": 100.0,
-            "output_frame_id": "base_link",
-            "require_odom": True,
-            "odom_topic": "/odom",
-            "odom_timeout": 0.5,
-            "require_scan": True,
-            "scan_topic": "/scan",
-            "scan_timeout": 0.5,
-            "require_joint_states": True,
-            "joint_states_topic": "/joint_states",
-            "joint_states_timeout": 0.5,
-            "require_tf": True,
-            "tf_topic": "/tf",
-            "tf_target_frame": "odom",
-            "tf_source_frame": "base_link",
-            "tf_timeout": 0.5,
-            "required_tf_pairs": [
-                "odom->base_footprint",
-                "base_link->gimbal_link",
-            ],
-        }],
-    )
 
     cmd_vel_odometry = Node(
         package="xxu_description",
@@ -707,6 +662,7 @@ def generate_launch_description():
         declare_use_sim_time,
         declare_enable_lio,
         declare_lio_motion_diagnostics,
+        declare_nav_velocity_smoothing_window,
         declare_compensate_gimbal_for_lio,
         declare_enable_cmd_vel_odom,
         declare_use_livox_native,

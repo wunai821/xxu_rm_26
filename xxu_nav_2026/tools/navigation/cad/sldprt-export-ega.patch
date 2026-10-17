@@ -1,0 +1,126 @@
+diff --git a/src/sldprt/assembly.py b/src/sldprt/assembly.py
+index 9c5e5ea..891a77c 100644
+--- a/src/sldprt/assembly.py
++++ b/src/sldprt/assembly.py
+@@ -75,12 +75,14 @@ class AssemblySummary:
+     nested_subassembly: int = 0
+     no_cached_mesh: int = 0
+     hidden_excluded: int = 0
++    assemblies_traversed: int = 0
++    unresolved: tuple[str, ...] = ()
+     configuration: str = ""
+     configurations: tuple[str, ...] = ()
+ 
+     @property
+     def complete(self) -> bool:
+-        return self.placed + self.suppressed + self.hidden_excluded == self.references
++        return self.placed + self.suppressed + self.hidden_excluded + self.assemblies_traversed == self.references
+ 
+     def summary(self) -> str:
+         bits = [f"{self.placed} of {self.references} components placed"]
+@@ -194,26 +196,35 @@ def read_directory(data: bytes) -> list[DirectoryEntry]:
+     base = struct.unpack_from("<I", data, first_marker - 4)[0]
+ 
+     entries = []
+-    for i in range(count):
+-        signature = struct.pack("<I", base + i) + STRING_MARKER
+-        start = data.find(signature, c.at - 4 if i else first_marker - 4)
+-        if start < 0:
++    pos = 12
++    while True:
++        at = data.find(STRING_MARKER, pos)
++        if at < 0:
+             break
+-        c.at = start + 4
+-
+-        name = c.string()
+-        stamp, config = c.u32(), c.u32()
+-        c.u32()  # reserved
+-        alias = c.key()
+-        ident = c.key()
+-        # Whatever sits between the keys and the chunk name is padding whose
+-        # width varies by writer, so step to the string rather than assume it.
+-        c.align_to_string()
+-        chunk = c.string()
+-        index = c.u32()
+-        entries.append(
+-            DirectoryEntry(name, stamp, config, alias, ident, chunk, index)
+-        )
++        pos = at + 3
++        c.at = at
++        try:
++            name = c.string()
++            if "@" not in name:
++                continue
++            seq = struct.unpack_from("<I", data, at-4)[0]
++            if not 0 < seq <= capacity:
++                continue
++            stamp, config = c.u32(), c.u32()
++            c.u32()
++            alias, ident = c.key(), c.key()
++            c.align_to_string()
++            chunk = c.string()
++            index = c.u32()
++            if chunk and not chunk.startswith("000-"):
++                continue
++            entries.append(DirectoryEntry(name, stamp, config, alias, ident, chunk, index))
++            pos = c.at
++        except (AssemblyError, UnicodeDecodeError, struct.error):
++            continue
++    if len(entries) != count:
++        raise AssemblyError(f"directory count mismatch: {len(entries)} != {count}")
++
+     return entries
+ 
+ 
+@@ -464,7 +475,7 @@ def read_assembly(
+             return None
+         return Mesh(vertices=list(mesh.vertices), triangles=list(mesh.triangles))
+ 
+-    def walk(model, path: str, matrix: list[float], depth: int) -> None:
++    def walk(model, path: str, matrix: list[float], depth: int, parent_hidden: bool = False) -> None:
+         """Place every part under `model`, descending into subassemblies.
+ 
+         The mesh cache is keyed by the full instance path — for example
+@@ -499,19 +510,24 @@ def read_assembly(
+                 report.no_cached_mesh += 1
+                 continue
+             world = compose(placement, matrix)
++            inherited_hidden = parent_hidden or a.get("swHidden") == "YES"
+ 
+             child_file = files.get(child.get("swFileRef"))
+             if child_file is not None and child_file.get("swDocType") == "ASSEMBLY":
+-                walk(child, full, world, depth + 1)
++                report.assemblies_traversed += 1
++                walk(child, full, world, depth + 1, inherited_hidden)
+                 continue
+ 
+             entry = by_name.get(full)
+-            mesh = None
++            mesh = from_part_file(child)
++            if mesh is not None:
++                report.from_part_files += 1
+ 
+-            if entry is None:
++            if entry is None and mesh is None:
+                 mesh = from_part_file(child)
+                 if mesh is None:
+                     report.no_cached_mesh += 1
++                    report.unresolved += (full,)
+                     continue
+                 report.from_part_files += 1
+ 
+@@ -534,11 +550,12 @@ def read_assembly(
+                 mesh = from_part_file(child)
+                 if mesh is None:
+                     report.no_cached_mesh += 1
++                    report.unresolved += (full,)
+                     continue
+                 report.from_part_files += 1
+ 
+             placed = _apply(mesh, world)
+-            hidden = a.get("swHidden") == "YES"
++            hidden = inherited_hidden
+             components.append(
+                 Component(name=full, hidden=hidden, mesh=placed, mirrored=mirrored)
+             )

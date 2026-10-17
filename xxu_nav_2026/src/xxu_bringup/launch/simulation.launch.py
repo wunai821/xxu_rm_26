@@ -18,10 +18,19 @@ from launch.substitutions import (
     PythonExpression,
 )
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+    sim_backend = LaunchConfiguration("sim_backend")
+
+    def backend_default(legacy, rm_sim):
+        return PythonExpression([
+            "'", rm_sim, "' if '", sim_backend,
+            "' == 'rm_sim_26' else '", legacy, "'",
+        ])
+
     bringup_share = FindPackageShare("xxu_bringup")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
@@ -35,6 +44,7 @@ def generate_launch_description():
     use_livox_native = LaunchConfiguration("use_livox_native")
     use_fake_frame = LaunchConfiguration("use_fake_frame")
     gyro_spin_rate = LaunchConfiguration("gyro_spin_rate")
+    nav_velocity_smoothing_window = LaunchConfiguration("nav_velocity_smoothing_window")
     gazebo_gui = LaunchConfiguration("gazebo_gui")
     gimbal_mode = LaunchConfiguration("gimbal_mode")
     world = LaunchConfiguration("world")
@@ -61,7 +71,8 @@ def generate_launch_description():
     scan_min_height = LaunchConfiguration("scan_min_height")
     planner_tolerance = LaunchConfiguration("planner_tolerance")
 
-    default_map = PathJoinSubstitution([bringup_share, "maps", "complex_map.yaml"])
+    default_map = PathJoinSubstitution([
+        bringup_share, "maps", backend_default("complex_map.yaml", "rmuc_2025.yaml")])
     default_nav2_params = PathJoinSubstitution(
         [bringup_share, "config", "nav2_navigation.yaml"]
     )
@@ -98,9 +109,15 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
-                FindPackageShare("xxu_description"),
+                FindPackageShare(PythonExpression([
+                    "'xxu_bringup' if '", sim_backend,
+                    "' == 'rm_sim_26' else 'xxu_description'",
+                ])),
                 "launch",
-                "gazebo.launch.py",
+                PythonExpression([
+                    "'rm_sim_gazebo.launch.py' if '", sim_backend,
+                    "' == 'rm_sim_26' else 'gazebo.launch.py'",
+                ]),
             ])
         ]),
         launch_arguments={
@@ -108,8 +125,12 @@ def generate_launch_description():
             "enable_lio": enable_lio,
             "enable_cmd_vel_odom": effective_cmd_vel_odom,
             "use_livox_native": use_livox_native,
+            "lidar_mode": LaunchConfiguration("lidar_mode"),
+            "rgl_plugin_dir": LaunchConfiguration("rgl_plugin_dir"),
+            "field_model": LaunchConfiguration("field_model"),
             "use_fake_frame": use_fake_frame,
             "gyro_spin_rate": gyro_spin_rate,
+            "nav_velocity_smoothing_window": nav_velocity_smoothing_window,
             "gazebo_gui": gazebo_gui,
             "gimbal_mode": gimbal_mode,
             "world": world,
@@ -153,12 +174,12 @@ def generate_launch_description():
             "use_sim_time": use_sim_time,
             "relocalize": initial_pose_relocalize,
             "map_yaml": map_file,
-            "x": initial_pose_x,
-            "y": initial_pose_y,
-            "yaw": initial_pose_yaw,
-            "covariance_x": initial_pose_covariance_xy,
-            "covariance_y": initial_pose_covariance_xy,
-            "covariance_yaw": initial_pose_covariance_yaw,
+            "x": ParameterValue(initial_pose_x, value_type=float),
+            "y": ParameterValue(initial_pose_y, value_type=float),
+            "yaw": ParameterValue(initial_pose_yaw, value_type=float),
+            "covariance_x": ParameterValue(initial_pose_covariance_xy, value_type=float),
+            "covariance_y": ParameterValue(initial_pose_covariance_xy, value_type=float),
+            "covariance_yaw": ParameterValue(initial_pose_covariance_yaw, value_type=float),
             "defer_amcl_activation": localization_deferred,
         }],
     )
@@ -180,6 +201,14 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            "sim_backend", default_value="xxu", choices=["xxu", "rm_sim_26"],
+            description="Simulator geometry; rm_sim_navigation.launch.py supplies the new field defaults",
+        ),
+        DeclareLaunchArgument('lidar_mode', default_value='rgl',
+                              choices=['rgl', 'gpu_lidar']),
+        DeclareLaunchArgument('rgl_plugin_dir', default_value=''),
+        DeclareLaunchArgument('field_model', default_value=''),
         DeclareLaunchArgument(
             "use_sim_time",
             default_value="true",
@@ -274,13 +303,18 @@ def generate_launch_description():
             description="Chassis gyro angular speed while translating (rad/s); 0 disables it",
         ),
         DeclareLaunchArgument(
+            "nav_velocity_smoothing_window",
+            default_value="0.3",
+            description="Navigation planar velocity averaging window (seconds); 0 disables it",
+        ),
+        DeclareLaunchArgument(
             "gazebo_gui",
             default_value="true",
             description="Start the Gazebo Sim GUI; disable it to reduce CPU load during mapping",
         ),
         DeclareLaunchArgument(
             "gimbal_mode",
-            default_value="spin",
+            default_value=backend_default("spin", "hold"),
             description="Radar gimbal mode: spin or hold",
         ),
         DeclareLaunchArgument(
@@ -293,15 +327,15 @@ def generate_launch_description():
             description="Gazebo world SDF path",
         ),
         DeclareLaunchArgument(
-            "spawn_x", default_value="1.75",
+            "spawn_x", default_value=backend_default("1.75", "3.4"),
             description="Gazebo robot spawn x in world coordinates",
         ),
         DeclareLaunchArgument(
-            "spawn_y", default_value="0.0",
+            "spawn_y", default_value=backend_default("0.0", "9.5"),
             description="Gazebo robot spawn y in world coordinates",
         ),
         DeclareLaunchArgument(
-            "spawn_yaw", default_value="3.14159",
+            "spawn_yaw", default_value=backend_default("3.14159", "0.0"),
             description="Gazebo robot spawn yaw in world coordinates",
         ),
         DeclareLaunchArgument(
@@ -309,7 +343,7 @@ def generate_launch_description():
             description="Base-frame radius that removes chassis self-returns from the shared navigation scan",
         ),
         DeclareLaunchArgument(
-            "scan_min_height", default_value="0.30",
+            "scan_min_height", default_value=backend_default("0.30", "0.10"),
             description="Minimum base-frame point height retained in the shared navigation scan",
         ),
         DeclareLaunchArgument(
@@ -319,22 +353,22 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "initial_pose_relocalize",
-            default_value="true",
+            default_value=backend_default("true", "false"),
             description="Estimate the initial pose by matching /scan against the map",
         ),
         DeclareLaunchArgument(
             "initial_pose_x",
-            default_value="0.02",
+            default_value=backend_default("0.02", spawn_x),
             description="Fixed simulation initial pose x in map",
         ),
         DeclareLaunchArgument(
             "initial_pose_y",
-            default_value="0.03",
+            default_value=backend_default("0.03", spawn_y),
             description="Fixed simulation initial pose y in map",
         ),
         DeclareLaunchArgument(
             "initial_pose_yaw",
-            default_value="0.0",
+            default_value=backend_default("0.0", spawn_yaw),
             description="Fixed simulation initial pose yaw in map",
         ),
         DeclareLaunchArgument(

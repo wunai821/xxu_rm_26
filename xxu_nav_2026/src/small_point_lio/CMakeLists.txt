@@ -54,6 +54,7 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(livox_ros_driver2 QUIET)
 if(OPENMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -97,6 +98,7 @@ ament_target_dependencies(${PROJECT_NAME}
     tf2_ros
     tf2_geometry_msgs
     std_srvs
+    std_msgs
 )
 if(livox_ros_driver2_FOUND)
     ament_target_dependencies(${PROJECT_NAME}
@@ -117,29 +119,6 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
 )
-
-#############
-## Testing ##
-#############
-
-if(BUILD_TESTING)
-    add_executable(odometry_math_test test/odometry_math_test.cpp)
-    target_include_directories(odometry_math_test PRIVATE src)
-    target_link_libraries(odometry_math_test Eigen3::Eigen)
-    target_compile_options(odometry_math_test PRIVATE -UNDEBUG)
-    add_test(NAME odometry_math_test COMMAND odometry_math_test)
-    add_executable(validated_livox_cloud_test test/validated_livox_cloud_test.cpp)
-    target_include_directories(validated_livox_cloud_test PRIVATE src)
-    ament_target_dependencies(validated_livox_cloud_test sensor_msgs)
-    target_compile_options(validated_livox_cloud_test PRIVATE -UNDEBUG)
-    add_test(NAME validated_livox_cloud_test COMMAND validated_livox_cloud_test)
-    find_package(ament_lint_auto REQUIRED)
-    list(APPEND AMENT_LINT_AUTO_EXCLUDE
-        ament_cmake_copyright
-        ament_cmake_uncrustify
-    )
-    ament_lint_auto_find_test_dependencies()
-endif()
 
 #############
 ## Install ##

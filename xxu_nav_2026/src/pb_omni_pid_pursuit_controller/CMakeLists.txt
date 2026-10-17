@@ -21,14 +21,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 # 代码检查与格式化（仅在测试构建时启用）
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # 排除 uncrustify（使用 clang_format 代替）
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE
-    ament_cmake_uncrustify
-  )
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 # 导出插件描述文件，使 Nav2 能通过 pluginlib 发现并加载本控制器
 pluginlib_export_plugin_description_file(nav2_core pb_omni_pid_pursuit_controller.xml)

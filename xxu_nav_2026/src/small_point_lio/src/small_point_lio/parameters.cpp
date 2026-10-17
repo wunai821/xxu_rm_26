@@ -26,6 +26,10 @@ namespace small_point_lio {
         satu_acc = node.declare_parameter<double>("satu_acc") * 0.99;
         satu_gyro = node.declare_parameter<double>("satu_gyro") * 0.99;
         acc_norm = node.declare_parameter<double>("acc_norm");
+        max_imu_sample_gap = node.declare_parameter<double>("max_imu_sample_gap", 0.25);
+        if (!std::isfinite(max_imu_sample_gap) || max_imu_sample_gap <= 0.0) {
+            throw std::invalid_argument("max_imu_sample_gap must be finite and positive");
+        }
 
         // 地图
         map_resolution = node.declare_parameter<float>("map_resolution");

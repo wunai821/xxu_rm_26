@@ -1,0 +1,5 @@
+repositories:
+  rm_sim_26:
+    type: git
+    url: https://github.com/Neomelt/rm_sim_26.git
+    version: fe5979a82684c261ee8a28785cbb410903d136b1

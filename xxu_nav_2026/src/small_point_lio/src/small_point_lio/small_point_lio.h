@@ -10,6 +10,7 @@
 #include "estimator.h"
 #include "parameters.h"
 #include "preprocess.h"
+#include "imu_time_guard.h"
 #include <pch.h>
 #include <deque>
 
@@ -30,6 +31,7 @@ namespace small_point_lio {
         PoseHistoryCallback pose_history_callback;
         std::function<void(const common::Odometry &odometry)> odometry_callback;
         bool is_init = false;
+        ImuTimeGuard imu_time_guard{0.25};
         std::uint64_t active_map_scan_id = 0;
         std::vector<Eigen::Vector3f> pending_scan_map_points;
         bool planar_reference_initialized = false;
@@ -48,6 +50,8 @@ namespace small_point_lio {
         void on_imu_callback(const common::ImuMsg &imu_msg);
 
         void handle_once();
+
+        [[nodiscard]] bool has_imu_time_fault() const { return imu_time_guard.faulted(); }
 
         void set_deskew_scan_callback(const DeskewScanCallback &callback);
 

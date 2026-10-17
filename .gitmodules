@@ -1,0 +1,3 @@
+[submodule "xxu_nav_2026/src/m-explore-ros2"]
+	path = xxu_nav_2026/src/m-explore-ros2
+	url = https://github.com/robo-friends/m-explore-ros2.git

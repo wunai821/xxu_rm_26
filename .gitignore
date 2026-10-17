@@ -3,6 +3,9 @@ build/
 install/
 log/
 
+# Local experiment recordings and generated measurements
+/xxu_nav_2026/bags/
+
 # Python cache artifacts
 __pycache__/
 *.py[cod]
@@ -13,3 +16,9 @@ __pycache__/
 # Generated TF inspection snapshots
 /xxu_nav_2026/frames*.gv
 /xxu_nav_2026/frames*.pdf
+
+# Pinned external simulator; restore with simulation.repos.
+/xxu_nav_2026/src/rm_sim_26/
+
+# User-supplied source assets are kept locally.
+/xxu_nav_2026/local_assets/

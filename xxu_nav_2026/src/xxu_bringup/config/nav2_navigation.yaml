@@ -96,24 +96,28 @@ controller_server:
       time_steps: 24
       # Must match the 15 Hz controller period on Nav2 Jazzy.
       model_dt: 0.0666667
-      batch_size: 1200
+      batch_size: 2000
       iteration_count: 1
-      temperature: 0.3
+      temperature: 0.4
       gamma: 0.015
       vx_std: 0.35
       vy_std: 0.35
       wz_std: 0.25
-      vx_min: -2.0
-      vx_max: 2.0
-      vy_min: -2.0
-      vy_max: 2.0
+      # Gazebo navigation profile; keep velocity_smoother limits in sync.
+      vx_min: -1.6
+      vx_max: 1.6
+      # Omni uses symmetric +/- vy_max; Jazzy does not declare vy_min.
+      vy_max: 1.6
       wz_max: 0.8
-      ax_max: 0.6
+      # Symmetric XY acceleration bounds avoid the slow sampling bias seen
+      # with weaker positive acceleration in the fixed fake reference frame.
+      ax_max: 1.2
       ax_min: -1.2
-      ay_max: 0.4
-      ay_min: -1.0
+      ay_max: 1.2
+      ay_min: -1.2
       az_max: 1.2
-      prune_distance: 1.8
+      # Cover the 1.6 s horizon, including diagonal translation.
+      prune_distance: 2.8
       transform_tolerance: 1.0
       max_robot_pose_search_dist: 2.0
       retry_attempt_limit: 2
@@ -135,7 +139,7 @@ controller_server:
       ObstaclesCritic:
         enabled: true
         cost_power: 1
-        repulsion_weight: 1.5
+        repulsion_weight: 1.0
         critical_weight: 25.0
         consider_footprint: false
         collision_cost: 100000.0
@@ -155,7 +159,7 @@ controller_server:
       PathAlignCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 8.0
+        cost_weight: 24.0
         max_path_occupancy_ratio: 0.05
         trajectory_point_step: 4
         threshold_to_consider: 0.5
@@ -191,12 +195,13 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-      # 2.5 m radius covers the 2.4 m maximum MPPI rollout distance.
-      width: 5
-      height: 5
+      # Each axis can travel 2.56 m in the 1.6 s horizon. A 3 m
+      # half-width also covers the fake-frame swept robot radius (0.42 m).
+      width: 6
+      height: 6
       resolution: 0.05
-      # URDF base radius is 0.265 m; round up instead of underestimating it.
-      robot_radius: 0.27
+      # Cover the omni wheels as well as the 0.265 m body, including spin.
+      robot_radius: 0.42
       transform_tolerance: 1.0
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
@@ -215,7 +220,9 @@ local_costmap:
           obstacle_min_range: 0.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
+        # 0.42 m swept envelope + 0.13 m soft clearance; decay applies to
+        # soft cost, not collision protection or stopping distance.
+        cost_scaling_factor: 7.0
         inflation_radius: 0.55
       always_send_full_costmap: true
 
@@ -227,7 +234,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.27
+      robot_radius: 0.42
       transform_tolerance: 1.0
       resolution: 0.05
       track_unknown_space: false
@@ -251,8 +258,9 @@ global_costmap:
           obstacle_min_range: 0.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.45
+        # Match the local gradient so the planner and controller agree.
+        cost_scaling_factor: 7.0
+        inflation_radius: 0.55
       always_send_full_costmap: true
 
 planner_server:
@@ -323,10 +331,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [2.0, 2.0, 0.8]
-    min_velocity: [-2.0, -2.0, -0.8]
-    max_accel: [0.6, 0.4, 1.2]
-    max_decel: [-1.2, -1.0, -1.8]
+    max_velocity: [1.6, 1.6, 0.8]
+    min_velocity: [-1.6, -1.6, -0.8]
+    max_accel: [1.2, 1.2, 1.2]
+    max_decel: [-1.2, -1.2, -1.8]
     odom_topic: /odom
     odom_duration: 0.5
     stamp_smoothed_velocity_with_smoothing_time: true
