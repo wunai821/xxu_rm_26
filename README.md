@@ -227,7 +227,6 @@ xxu_nav_2026/src/
 ├── pb_nav2_plugins/                # 自定义 Nav2 行为和 costmap 插件
 ├── pb_omni_pid_pursuit_controller/ # 全向 PID 路径追踪控制器
 ├── goal_approach_controller/       # 目标接近控制器
-├── ai_controller_tuner/            # 控制器参数调节工具
 └── m-explore-ros2/                 # explore_lite / map_merge 子模块
 ```
 
